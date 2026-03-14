@@ -1,5 +1,27 @@
 export type ExercisePhase = "visual" | "audio" | "scramble" | "phonetic" | "word-meaning";
 
+export type LevelId = 1 | 2 | "3a" | "3b" | "3c" | 4 | 5 | 6;
+
+export type WordCategory =
+  | "Family"
+  | "Kitchen"
+  | "Actions"
+  | "Nature"
+  | "Food"
+  | "Places"
+  | "Body"
+  | "Colors"
+  | "Numbers"
+  | "Culture"
+  | "Society"
+  | "Descriptors"
+  | "Abstract"
+  | "Time"
+  | "Greetings"
+  | "Objects";
+
+export type CategoryFilter = "All" | WordCategory;
+
 export type Screen =
   | "dashboard"
   | "level-intro"
@@ -17,7 +39,7 @@ export interface Character {
 }
 
 export interface Level {
-  id: number;
+  id: LevelId;
   name: string;
   kannadaName: string;
   description: string;
@@ -29,17 +51,22 @@ export interface WordEntry {
   romanization: string;
   meaning: string;
   requiredChars: string[];
-  minLevel: number;
+  minLevel: LevelId;
+  category: WordCategory;
 }
 
 export interface Exercise {
   id: string;
+  createdAtMs: number;
   phase: ExercisePhase;
   prompt: string;
   correctAnswer: string;
   options?: string[];
   scrambledParts?: string[];
   aliases?: string[];
+  isReview?: boolean;
+  timedMode?: boolean;
+  targetGlyph?: string;
 }
 
 export interface Score {
@@ -49,25 +76,34 @@ export interface Score {
 
 export interface AppState {
   screen: Screen;
-  currentLevel: number;
+  currentLevel: LevelId;
   exercisePhase: ExercisePhase;
   exerciseIndex: number;
   exercises: Exercise[];
   score: Score;
   masteredCharacters: string[];
-  unlockedLevels: number[];
+  unlockedLevels: LevelId[];
+  glyphMastery: Record<string, number>;
+  glyphStreaks: Record<string, number>;
+  confusableQueue: Record<string, number>;
+  activeCategory: CategoryFilter;
   feedbackState: "idle" | "correct" | "incorrect";
   hydrated: boolean;
 }
 
 export type AppAction =
   | { type: "HYDRATE"; state: Partial<AppState> }
-  | { type: "SELECT_LEVEL"; level: number }
+  | { type: "SELECT_LEVEL"; level: LevelId }
   | { type: "START_EXERCISE"; exercises: Exercise[] }
-  | { type: "ANSWER"; correct: boolean }
+  | {
+    type: "ANSWER";
+    correct: boolean;
+    userAnswer?: string;
+    elapsedMs?: number;
+  }
   | { type: "NEXT_EXERCISE" }
-  | { type: "COMPLETE_LEVEL"; newMastered: string[] }
+  | { type: "COMPLETE_LEVEL" }
+  | { type: "SET_CATEGORY_FILTER"; category: CategoryFilter }
   | { type: "GO_HOME" }
   | { type: "RETRY_LEVEL" }
-  | { type: "RESET" }
   | { type: "RESET" };

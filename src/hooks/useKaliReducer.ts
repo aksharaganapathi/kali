@@ -1,10 +1,18 @@
 "use client";
 
-import { useReducer, useEffect, useCallback } from "react";
-import { AppState, AppAction, ExercisePhase } from "@/types";
+import { useReducer, useEffect } from "react";
+import { AppState, AppAction, LevelId } from "@/types";
 import { loadState, saveState } from "@/lib/storage";
 
-const PHASE_ORDER: ExercisePhase[] = ["visual", "audio", "scramble", "phonetic"];
+const LEVEL_ORDER: LevelId[] = [1, 2, "3a", "3b", "3c", 4, 5, 6];
+const CONFUSABLE_MAP: Record<string, string[]> = {
+  "ನ": ["ಹ"],
+};
+
+const FLUENCY_WINDOW_MS = 2000;
+const BASE_MASTERY_GAIN = 8;
+const FLUENCY_BONUS_GAIN = 6;
+const INCORRECT_MASTERY_PENALTY = 6;
 
 const initialState: AppState = {
   screen: "dashboard",
@@ -15,9 +23,33 @@ const initialState: AppState = {
   score: { correct: 0, total: 0 },
   masteredCharacters: [],
   unlockedLevels: [1],
+  glyphMastery: {},
+  glyphStreaks: {},
+  confusableQueue: {},
+  activeCategory: "All",
   feedbackState: "idle",
   hydrated: false,
 };
+
+function getNextLevel(currentLevel: LevelId): LevelId | null {
+  const index = LEVEL_ORDER.indexOf(currentLevel);
+  if (index < 0 || index + 1 >= LEVEL_ORDER.length) return null;
+  return LEVEL_ORDER[index + 1];
+}
+
+function clampScore(score: number): number {
+  return Math.max(0, Math.min(100, score));
+}
+
+function tickConfusableQueue(queue: Record<string, number>): Record<string, number> {
+  const next: Record<string, number> = {};
+  for (const [glyph, remaining] of Object.entries(queue)) {
+    if (remaining > 1) {
+      next[glyph] = remaining - 1;
+    }
+  }
+  return next;
+}
 
 function reducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
@@ -47,15 +79,81 @@ function reducer(state: AppState, action: AppAction): AppState {
       };
     }
 
-    case "ANSWER":
+    case "ANSWER": {
+      const currentExercise = state.exercises[state.exerciseIndex];
+      const isReview = currentExercise?.isReview;
+      const targetGlyph = currentExercise?.targetGlyph;
+      const isSpeedEligible =
+        currentExercise?.timedMode &&
+        (currentExercise.phase === "visual" || currentExercise.phase === "phonetic") &&
+        action.elapsedMs !== undefined &&
+        action.elapsedMs <= FLUENCY_WINDOW_MS;
+
+      let glyphMastery = state.glyphMastery;
+      let glyphStreaks = state.glyphStreaks;
+      let masteredCharacters = state.masteredCharacters;
+      let confusableQueue = state.confusableQueue;
+
+      if (targetGlyph) {
+        const previousMastery = glyphMastery[targetGlyph] ?? 0;
+        const previousStreak = glyphStreaks[targetGlyph] ?? 0;
+
+        if (action.correct) {
+          const gain = BASE_MASTERY_GAIN + (isSpeedEligible ? FLUENCY_BONUS_GAIN : 0);
+          glyphMastery = {
+            ...glyphMastery,
+            [targetGlyph]: clampScore(previousMastery + gain),
+          };
+
+          if (currentExercise?.phase === "phonetic") {
+            const nextStreak = previousStreak + 1;
+            glyphStreaks = {
+              ...glyphStreaks,
+              [targetGlyph]: nextStreak,
+            };
+
+            if (nextStreak >= 3 && !masteredCharacters.includes(targetGlyph)) {
+              masteredCharacters = [...masteredCharacters, targetGlyph];
+            }
+          }
+        } else {
+          glyphMastery = {
+            ...glyphMastery,
+            [targetGlyph]: clampScore(previousMastery - INCORRECT_MASTERY_PENALTY),
+          };
+
+          if (currentExercise?.phase === "phonetic") {
+            glyphStreaks = {
+              ...glyphStreaks,
+              [targetGlyph]: 0,
+            };
+          }
+
+          const forcedConfusables = CONFUSABLE_MAP[targetGlyph] ?? [];
+          if (forcedConfusables.length > 0) {
+            confusableQueue = { ...confusableQueue };
+            for (const glyph of forcedConfusables) {
+              confusableQueue[glyph] = 5;
+            }
+          }
+        }
+      }
+
       return {
         ...state,
         feedbackState: action.correct ? "correct" : "incorrect",
-        score: {
-          correct: state.score.correct + (action.correct ? 1 : 0),
-          total: state.score.total + 1,
-        },
+        glyphMastery,
+        glyphStreaks,
+        masteredCharacters,
+        confusableQueue,
+        score: isReview
+          ? state.score
+          : {
+            correct: state.score.correct + (action.correct ? 1 : 0),
+            total: state.score.total + 1,
+          },
       };
+    }
 
     case "NEXT_EXERCISE": {
       const nextIndex = state.exerciseIndex + 1;
@@ -67,6 +165,7 @@ function reducer(state: AppState, action: AppAction): AppState {
         ...state,
         exerciseIndex: nextIndex,
         exercisePhase: nextPhase,
+        confusableQueue: tickConfusableQueue(state.confusableQueue),
         feedbackState: "idle",
       };
     }
@@ -77,25 +176,25 @@ function reducer(state: AppState, action: AppAction): AppState {
           ? state.score.correct / state.score.total
           : 0;
       const passed = accuracy >= 0.8;
-
-      const newMastered = passed
-        ? [...new Set([...state.masteredCharacters, ...action.newMastered])]
-        : state.masteredCharacters;
-
-      const nextLevel = state.currentLevel + 1;
+      const nextLevel = getNextLevel(state.currentLevel);
       const newUnlocked =
-        passed && !state.unlockedLevels.includes(nextLevel)
+        passed && nextLevel && !state.unlockedLevels.includes(nextLevel)
           ? [...state.unlockedLevels, nextLevel]
           : state.unlockedLevels;
 
       return {
         ...state,
         screen: "dashboard",
-        masteredCharacters: newMastered,
-        unlockedLevels: newUnlocked.filter((l) => l <= 6),
+        unlockedLevels: newUnlocked,
         feedbackState: "idle",
       };
     }
+
+    case "SET_CATEGORY_FILTER":
+      return {
+        ...state,
+        activeCategory: action.category,
+      };
 
     case "RETRY_LEVEL":
       return {
@@ -131,6 +230,15 @@ export function useKaliReducer() {
           masteredCharacters: persisted.masteredCharacters,
           unlockedLevels: persisted.unlockedLevels,
           currentLevel: persisted.currentLevel,
+          glyphMastery: persisted.glyphMastery ?? {},
+          glyphStreaks: persisted.glyphStreaks ?? {},
+          confusableQueue: persisted.confusableQueue ?? {},
+          activeCategory: persisted.activeCategory ?? "All",
+          ...(persisted.screen && { screen: persisted.screen }),
+          ...(persisted.exercisePhase && { exercisePhase: persisted.exercisePhase }),
+          ...(persisted.exerciseIndex !== undefined && { exerciseIndex: persisted.exerciseIndex }),
+          ...(persisted.exercises && { exercises: persisted.exercises }),
+          ...(persisted.score && { score: persisted.score }),
         },
       });
     } else {
@@ -145,8 +253,17 @@ export function useKaliReducer() {
       masteredCharacters: state.masteredCharacters,
       unlockedLevels: state.unlockedLevels,
       currentLevel: state.currentLevel,
+      glyphMastery: state.glyphMastery,
+      glyphStreaks: state.glyphStreaks,
+      confusableQueue: state.confusableQueue,
+      activeCategory: state.activeCategory,
+      screen: state.screen,
+      exercisePhase: state.exercisePhase,
+      exerciseIndex: state.exerciseIndex,
+      exercises: state.exercises,
+      score: state.score,
     });
-  }, [state.masteredCharacters, state.unlockedLevels, state.currentLevel, state.hydrated]);
+  }, [state]);
 
   return { state, dispatch };
 }

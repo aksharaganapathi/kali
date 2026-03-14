@@ -43,8 +43,8 @@ export default function KaliApp() {
 
   const currentExercise = state.exercises[state.exerciseIndex];
 
-  const handleAnswer = (correct: boolean) => {
-    dispatch({ type: "ANSWER", correct });
+  const handleAnswer = (correct: boolean, userAnswer?: string, elapsedMs?: number) => {
+    dispatch({ type: "ANSWER", correct, userAnswer, elapsedMs });
   };
 
   const handleNext = () => {
@@ -78,46 +78,48 @@ export default function KaliApp() {
   };
 
   return (
-    <AnimatePresence mode="wait">
-      {state.screen === "dashboard" && (
-        <motion.div key="dashboard" {...pageTransition}>
-          <Dashboard state={state} dispatch={dispatch} />
-        </motion.div>
-      )}
+    <div className="relative w-full h-full min-h-screen overflow-x-hidden">
+      <AnimatePresence mode="wait">
+        {state.screen === "dashboard" && (
+          <motion.div key="dashboard" {...pageTransition}>
+            <Dashboard state={state} dispatch={dispatch} />
+          </motion.div>
+        )}
 
-      {state.screen === "level-intro" && (
-        <motion.div key="level-intro" {...pageTransition}>
-          <LevelIntro state={state} dispatch={dispatch} />
-        </motion.div>
-      )}
+        {state.screen === "level-intro" && (
+          <motion.div key="level-intro" {...pageTransition}>
+            <LevelIntro state={state} dispatch={dispatch} />
+          </motion.div>
+        )}
 
-      {state.screen === "exercise" && (
-        <motion.div key="exercise" {...pageTransition}>
-          <ExerciseShell
-            state={state}
-            onBack={() => dispatch({ type: "GO_HOME" })}
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentExercise?.id}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.25 }}
-                className="w-full"
-              >
-                {renderExercise()}
-              </motion.div>
-            </AnimatePresence>
-          </ExerciseShell>
-        </motion.div>
-      )}
+        {state.screen === "exercise" && (
+          <motion.div key="exercise" {...pageTransition}>
+            <ExerciseShell
+              state={state}
+              onBack={() => dispatch({ type: "GO_HOME" })}
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentExercise?.id}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.25 }}
+                  className="w-full"
+                >
+                  {renderExercise()}
+                </motion.div>
+              </AnimatePresence>
+            </ExerciseShell>
+          </motion.div>
+        )}
 
-      {state.screen === "level-complete" && (
-        <motion.div key="level-complete" {...pageTransition}>
-          <LevelComplete state={state} dispatch={dispatch} />
-        </motion.div>
-      )}
-    </AnimatePresence>
+        {state.screen === "level-complete" && (
+          <motion.div key="level-complete" {...pageTransition}>
+            <LevelComplete state={state} dispatch={dispatch} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

@@ -26,7 +26,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="antialiased min-h-screen">{children}</body>
+      <body className="antialiased w-full h-full min-h-screen overflow-x-hidden">{children}</body>
     </html>
   );
 }

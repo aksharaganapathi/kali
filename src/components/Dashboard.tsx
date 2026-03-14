@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LEVELS } from "@/lib/curriculum";
+import { DICTIONARY } from "@/lib/dictionary";
 import { clearState } from "@/lib/storage";
 import { AppState, AppAction } from "@/types";
 import GlassCard from "./ui/GlassCard";
 import ProgressRing from "./ui/ProgressRing";
-import Logo from "./Logo";
 
 interface DashboardProps {
   state: AppState;
@@ -31,6 +31,10 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
   const totalChars = LEVELS.flatMap((l) => l.characters).length;
   const masteredCount = state.masteredCharacters.length;
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const categoryOptions = [
+    "All",
+    ...Array.from(new Set(DICTIONARY.map((word) => word.category))).sort(),
+  ];
 
   const handleReset = () => {
     clearState();
@@ -84,15 +88,12 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between mb-12"
       >
-        <div className="flex items-center gap-3">
-          <Logo size={44} />
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">
-              Kali{" "}
-              <span className="font-kannada text-saffron text-lg">ಕಲಿ</span>
-            </h1>
-            <p className="text-xs text-sand-dim">Learn Kannada Script</p>
-          </div>
+        <div className="flex flex-col gap-1">
+          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
+            <span className="font-kannada text-saffron text-[40px] text-glow-saffron drop-shadow-[0_0_15px_rgba(241,178,74,0.4)] leading-none -mt-2">ಕಲಿ</span>
+            Kali
+          </h1>
+          <p className="text-sm text-sand-dim font-medium tracking-wide">Scaffolded script learning</p>
         </div>
 
         {/* Stats + Reset */}
@@ -136,6 +137,25 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
         </div>
       </motion.header>
 
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-6 flex items-center justify-between gap-3"
+      >
+        <p className="text-xs text-sand-dim uppercase tracking-widest">Vocabulary Focus</p>
+        <select
+          value={state.activeCategory}
+          onChange={(e) => dispatch({ type: "SET_CATEGORY_FILTER", category: e.target.value as AppState["activeCategory"] })}
+          className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-sand outline-none focus:border-saffron/40"
+        >
+          {categoryOptions.map((category) => (
+            <option key={category} value={category} className="bg-[#131118] text-sand">
+              {category}
+            </option>
+          ))}
+        </select>
+      </motion.div>
+
       {/* Level Grid */}
       <motion.div
         variants={container}
@@ -156,10 +176,12 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
             <motion.div key={level.id} variants={item}>
               <GlassCard
                 hover={unlocked}
-                className={`p-5 relative overflow-hidden ${
-                  !unlocked ? "opacity-40 pointer-events-none" : ""
+                className={`p-5 relative overflow-hidden transition-all duration-500 ${
+                  unlocked
+                    ? "hover:shadow-[0_0_30px_rgba(241,178,74,0.1)] hover:border-saffron/30"
+                    : "opacity-40 pointer-events-none"
                 }`}
-                whileHover={unlocked ? { scale: 1.02 } : {}}
+                whileHover={unlocked ? { scale: 1.02, y: -4 } : {}}
                 whileTap={unlocked ? { scale: 0.98 } : {}}
                 onClick={() =>
                   unlocked &&
@@ -169,13 +191,19 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
                 {/* Level badge */}
                 <div className="flex items-center justify-between mb-3">
                   <span
-                    className={`text-xs font-medium uppercase tracking-widest ${
-                      isComplete ? "text-correct" : "text-sand-dim"
-                    }`}
+                    className={`text-xs font-medium uppercase tracking-widest ${isComplete ? "text-correct" : "text-sand-dim"
+                      }`}
                   >
                     Level {level.id}
                   </span>
-                  <ProgressRing progress={progress} size={36} strokeWidth={2.5} />
+                  <div className="relative flex items-center justify-center">
+                    <ProgressRing progress={progress} size={36} strokeWidth={2.5} />
+                    {isComplete && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-correct text-sm font-bold">✓</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Title */}
@@ -192,11 +220,10 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
                   {level.characters.slice(0, 8).map((c) => (
                     <span
                       key={c.glyph}
-                      className={`font-kannada text-sm px-1.5 py-0.5 rounded ${
-                        state.masteredCharacters.includes(c.glyph)
+                      className={`font-kannada text-sm px-1.5 py-0.5 rounded ${state.masteredCharacters.includes(c.glyph)
                           ? "text-saffron bg-saffron/10"
                           : "text-sand-dim bg-white/5"
-                      }`}
+                        }`}
                     >
                       {c.context ?? c.glyph}
                     </span>
@@ -210,29 +237,27 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
 
                 {/* Lock overlay */}
                 {!unlocked && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-onyx/60 rounded-2xl">
-                    <svg
-                      className="w-6 h-6 text-sand-dim"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-                      />
-                    </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-onyx/80 backdrop-blur-[2px] rounded-2xl transition-all">
+                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-2">
+                       <svg
+                         className="w-5 h-5 text-sand-dim/70"
+                         fill="none"
+                         viewBox="0 0 24 24"
+                         stroke="currentColor"
+                         strokeWidth={1.5}
+                       >
+                         <path
+                           strokeLinecap="round"
+                           strokeLinejoin="round"
+                           d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                         />
+                       </svg>
+                    </div>
+                    <span className="text-[10px] uppercase tracking-widest text-sand-dim/60 font-medium">Locked</span>
                   </div>
                 )}
 
-                {/* Completion badge */}
-                {isComplete && (
-                  <div className="absolute top-3 right-3">
-                    <span className="text-correct text-xs font-medium">✓</span>
-                  </div>
-                )}
+
               </GlassCard>
             </motion.div>
           );

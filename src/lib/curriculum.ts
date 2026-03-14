@@ -37,20 +37,28 @@ const basicConsonants: Character[] = [
   { glyph: "ಹ", romanization: "ha", aliases: ["ha"], type: "consonant", audioLabel: "ಹ" },
 ];
 
-/* ─── L3: Vowel Signs / Kagunita ──────────────────────────── */
-const vowelSigns: Character[] = [
-  { glyph: "ಾ", romanization: "aa", aliases: ["aa", "ā"], type: "vowel-sign", audioLabel: "ಕಾ", context: "ಕಾ" },
+/* ─── L3a: Top Signs / Kagunita Hats ──────────────────────── */
+const topVowelSigns: Character[] = [
   { glyph: "ಿ", romanization: "i", aliases: ["i"], type: "vowel-sign", audioLabel: "ಕಿ", context: "ಕಿ" },
   { glyph: "ೀ", romanization: "ee", aliases: ["ee", "ii", "ī"], type: "vowel-sign", audioLabel: "ಕೀ", context: "ಕೀ" },
-  { glyph: "ು", romanization: "u", aliases: ["u"], type: "vowel-sign", audioLabel: "ಕು", context: "ಕು" },
-  { glyph: "ೂ", romanization: "uu", aliases: ["uu", "oo", "ū"], type: "vowel-sign", audioLabel: "ಕೂ", context: "ಕೂ" },
-  { glyph: "ೃ", romanization: "ru", aliases: ["ru", "ṛ", "ri"], type: "vowel-sign", audioLabel: "ಕೃ", context: "ಕೃ" },
   { glyph: "ೆ", romanization: "e", aliases: ["e"], type: "vowel-sign", audioLabel: "ಕೆ", context: "ಕೆ" },
   { glyph: "ೇ", romanization: "ae", aliases: ["ae", "ē", "ay"], type: "vowel-sign", audioLabel: "ಕೇ", context: "ಕೇ" },
   { glyph: "ೈ", romanization: "ai", aliases: ["ai"], type: "vowel-sign", audioLabel: "ಕೈ", context: "ಕೈ" },
+];
+
+/* ─── L3b: Side / Wrap Signs ─────────────────────────────── */
+const sideWrapVowelSigns: Character[] = [
+  { glyph: "ಾ", romanization: "aa", aliases: ["aa", "ā"], type: "vowel-sign", audioLabel: "ಕಾ", context: "ಕಾ" },
   { glyph: "ೊ", romanization: "o", aliases: ["o"], type: "vowel-sign", audioLabel: "ಕೊ", context: "ಕೊ" },
   { glyph: "ೋ", romanization: "oo", aliases: ["oo", "ō", "oh"], type: "vowel-sign", audioLabel: "ಕೋ", context: "ಕೋ" },
   { glyph: "ೌ", romanization: "au", aliases: ["au", "ow"], type: "vowel-sign", audioLabel: "ಕೌ", context: "ಕೌ" },
+];
+
+/* ─── L3c: Bottom Signs / Footers ────────────────────────── */
+const bottomVowelSigns: Character[] = [
+  { glyph: "ು", romanization: "u", aliases: ["u"], type: "vowel-sign", audioLabel: "ಕು", context: "ಕು" },
+  { glyph: "ೂ", romanization: "uu", aliases: ["uu", "oo", "ū"], type: "vowel-sign", audioLabel: "ಕೂ", context: "ಕೂ" },
+  { glyph: "ೃ", romanization: "ru", aliases: ["ru", "ṛ", "ri"], type: "vowel-sign", audioLabel: "ಕೃ", context: "ಕೃ" },
 ];
 
 /* ─── L4: Retroflex & Aspirated Consonants ────────────────── */
@@ -110,11 +118,25 @@ export const LEVELS: Level[] = [
     characters: basicConsonants,
   },
   {
-    id: 3,
-    name: "Vowel Signs",
-    kannadaName: "ಕಾಗುಣಿತ",
-    description: "Vowel marks that attach to consonants — unlocking syllable combinations.",
-    characters: vowelSigns,
+    id: "3a",
+    name: "Top Signs",
+    kannadaName: "ಮೇಲ್ಭಾಗದ ಕಾಗುಣಿತ",
+    description: "Hat-like vowel signs for fast top-shape discrimination.",
+    characters: topVowelSigns,
+  },
+  {
+    id: "3b",
+    name: "Side/Wrap Signs",
+    kannadaName: "ಪಕ್ಕದ ಕಾಗುಣಿತ",
+    description: "Wrapper signs that reshape syllables around the consonant body.",
+    characters: sideWrapVowelSigns,
+  },
+  {
+    id: "3c",
+    name: "Bottom Signs",
+    kannadaName: "ಕೆಳಭಾಗದ ಕಾಗುಣಿತ",
+    description: "Footer signs that hang below the base glyph.",
+    characters: bottomVowelSigns,
   },
   {
     id: 4,

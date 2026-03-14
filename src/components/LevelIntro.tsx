@@ -28,7 +28,9 @@ export default function LevelIntro({ state, dispatch }: LevelIntroProps) {
   const handleStart = () => {
     const exercises = generateExerciseSet(
       level.id,
-      state.masteredCharacters
+      state.masteredCharacters,
+      state.confusableQueue,
+      state.activeCategory
     );
     dispatch({ type: "START_EXERCISE", exercises });
   };

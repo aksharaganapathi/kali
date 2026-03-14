@@ -22,10 +22,9 @@ export default function LevelComplete({
       : 0;
 
   const passed = accuracy >= 80;
-  const newMastered = level?.characters.map((c) => c.glyph) ?? [];
 
   const handleContinue = () => {
-    dispatch({ type: "COMPLETE_LEVEL", newMastered });
+    dispatch({ type: "COMPLETE_LEVEL" });
   };
 
   const handleRetry = () => {
@@ -36,15 +35,18 @@ export default function LevelComplete({
     dispatch({ type: "GO_HOME" });
   };
 
-  // Particle positions for celebration
-  const particles = Array.from({ length: 20 }, (_, i) => ({
-    id: i,
-    x: Math.random() * 300 - 150,
-    y: -(Math.random() * 200 + 50),
-    rotation: Math.random() * 720 - 360,
-    scale: Math.random() * 0.6 + 0.4,
-    delay: Math.random() * 0.5,
-  }));
+  // Deterministic particle positions avoid non-idempotent render math.
+  const particles = Array.from({ length: 20 }, (_, i) => {
+    const phase = i * 0.618;
+    return {
+      id: i,
+      x: Math.sin(phase * 4.2) * 150,
+      y: -(90 + (i % 5) * 28),
+      rotation: Math.cos(phase * 3.1) * 360,
+      scale: 0.45 + ((i * 7) % 6) * 0.08,
+      delay: (i % 8) * 0.06,
+    };
+  });
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-8 flex flex-col items-center justify-center relative overflow-hidden">

@@ -1,11 +1,51 @@
-import { WordEntry } from "@/types";
+import { WordEntry, WordCategory, LevelId } from "@/types";
+
+type RawWordEntry = Omit<WordEntry, "minLevel" | "category"> & {
+  minLevel: number;
+  category?: WordCategory;
+};
+
+const TOP_SIGNS = new Set(["ಿ", "ೀ", "ೆ", "ೇ", "ೈ"]);
+const SIDE_WRAP_SIGNS = new Set(["ಾ", "ೊ", "ೋ", "ೌ"]);
+const BOTTOM_SIGNS = new Set(["ು", "ೂ", "ೃ"]);
+
+function recategorizeLevel(entry: RawWordEntry): LevelId {
+  if (entry.minLevel !== 3) return entry.minLevel as LevelId;
+
+  if (entry.requiredChars.some((char) => TOP_SIGNS.has(char))) return "3a";
+  if (entry.requiredChars.some((char) => SIDE_WRAP_SIGNS.has(char))) return "3b";
+  if (entry.requiredChars.some((char) => BOTTOM_SIGNS.has(char))) return "3c";
+
+  // Level 3 words should always have kagunita signs, but default to top-sign track.
+  return "3a";
+}
+
+function inferCategory(entry: RawWordEntry): WordCategory {
+  if (entry.category) return entry.category;
+
+  const text = `${entry.meaning} ${entry.romanization}`.toLowerCase();
+
+  if (/(mother|father|brother|sister|son|daughter|family|child|children|baby|people)/.test(text)) return "Family";
+  if (/(rice|lentil|salt|sugar|coffee|meal|cook|cooking|kitchen|flour|vegetable|drink|milk|honey|fruit|apple|mango)/.test(text)) return "Kitchen";
+  if (/(eat|drink|walk|go|come|read|write|learn|play|sleep|hold|wash|tell|listen|ask|pour|do|make|work|join)/.test(text)) return "Actions";
+  if (/(river|ocean|mountain|forest|tree|flower|wind|sun|moon|star|sky|earth|rain|cloud|nature|plant|leaf|root|lake)/.test(text)) return "Nature";
+  if (/(car|bus|road|door|book|table|wall|school|temple|lamp|picture|story|lesson|wheel|pond|house|city|country|place)/.test(text)) return "Objects";
+  if (/(head|eye|ear|mouth|nose|face|stomach|leg|hand)/.test(text)) return "Body";
+  if (/(red|blue|green|white|black|colour|color)/.test(text)) return "Colors";
+  if (/(one|two|three|four|five|six|seven|hundred|thousand|number)/.test(text)) return "Numbers";
+  if (/(yes|no|what|why|who|where|hello|greeting|thank|worship|festival|freedom|victory|music|dance|language|india|karnataka|mysore|bangalore)/.test(text)) return "Culture";
+  if (/(government|knowledge|teacher|poet|life|death|memory|time|week|month|night|morning|day|journey|health|success|friendship|love|happiness)/.test(text)) return "Abstract";
+  if (/(big|small|long|new|old|hard|soft|good|bad|hot|cold|sweet|bitter)/.test(text)) return "Descriptors";
+
+  return "Objects";
+}
 
 /**
  * 200+ common Kannada words organised by minimum level required.
  * requiredChars lists the base consonants / vowel-signs / special symbols
  * needed — the engine checks these against the user's mastered set.
  */
-export const DICTIONARY: WordEntry[] = [
+const RAW_DICTIONARY: RawWordEntry[] = [
   /* ───────────────────────────────────────────────────────────
    * Level 2 — words using only basic consonants (inherent 'a')
    * ─────────────────────────────────────────────────────────── */
@@ -246,3 +286,9 @@ export const DICTIONARY: WordEntry[] = [
   { kannada: "ಪದವಿ", romanization: "padavi", meaning: "degree / rank", requiredChars: ["ಪ", "ದ", "ವ", "ಿ"], minLevel: 3 },
   { kannada: "ಯಶಸ್ಸು", romanization: "yashassu", meaning: "success", requiredChars: ["ಯ", "ಶ", "ಸ", "ು"], minLevel: 4 },
 ];
+
+export const DICTIONARY: WordEntry[] = RAW_DICTIONARY.map((entry) => ({
+  ...entry,
+  minLevel: recategorizeLevel(entry),
+  category: inferCategory(entry),
+}));
