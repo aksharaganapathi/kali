@@ -35,7 +35,6 @@ export default function LevelComplete({
     dispatch({ type: "GO_HOME" });
   };
 
-  // Deterministic particle positions avoid non-idempotent render math.
   const particles = Array.from({ length: 20 }, (_, i) => {
     const phase = i * 0.618;
     return {
@@ -50,7 +49,6 @@ export default function LevelComplete({
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-8 flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Celebration particles */}
       {particles.map((p) => (
         <motion.div
           key={p.id}
@@ -77,14 +75,12 @@ export default function LevelComplete({
         />
       ))}
 
-      {/* Content */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="text-center max-w-sm relative z-10"
       >
-        {/* Big check / retry icon */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -138,7 +134,6 @@ export default function LevelComplete({
           </p>
         )}
 
-        {/* Stats */}
         <div className="flex justify-center gap-8 mb-8 mt-4">
           <div className="text-center">
             <ProgressRing

@@ -1,8 +1,6 @@
-import { Exercise, Character, LevelId, CategoryFilter } from "@/types";
+import { Character, Exercise, LevelId, WordEntry } from "@/types";
 import { LEVELS, ALL_CHARACTERS } from "./curriculum";
 import { DICTIONARY } from "./dictionary";
-
-/* ─── Utilities ───────────────────────────────────────────── */
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -25,6 +23,7 @@ function uid(): string {
 const LEVEL_ORDER: LevelId[] = [1, 2, "3a", "3b", "3c", 4, 5, 6];
 
 const TIMED_PHASES = new Set(["visual", "phonetic"]);
+const CONFUSABLE_PAIR_SEPARATOR = "~";
 
 function levelIndex(levelId: LevelId): number {
   return LEVEL_ORDER.indexOf(levelId);
@@ -41,27 +40,19 @@ function maybeTimedMode(phase: "visual" | "phonetic"): boolean {
   return Math.random() < 0.55;
 }
 
-/* ─── Dynamic Word Filter ─────────────────────────────────── */
-
 export function getDynamicWords(
   masteredCharacters: string[],
-  currentLevelId: LevelId,
-  categoryFilter: CategoryFilter = "All"
+  currentLevelId: LevelId
 ) {
   const set = new Set(masteredCharacters);
   return DICTIONARY.filter((w) => {
     if (!isUnlockedLevel(w.minLevel, currentLevelId)) return false;
-    if (categoryFilter !== "All" && w.category !== categoryFilter) return false;
-    // Exclude conjuncts (\u0CCD is Virama) if the user hasn't reached Level 5
     if (levelIndex(currentLevelId) < levelIndex(5) && w.kannada.includes("\u0CCD")) return false;
-    // Exclude Anusvara/Visarga if the user hasn't reached Level 6
     if (levelIndex(currentLevelId) < levelIndex(6) && (w.kannada.includes("\u0C82") || w.kannada.includes("\u0C83"))) return false;
 
     return w.requiredChars.every((c) => set.has(c));
   });
 }
-
-/* ─── Distractor Generation ───────────────────────────────── */
 
 function generateDistractors(
   correct: string,
@@ -71,8 +62,6 @@ function generateDistractors(
   const others = pool.filter((p) => p !== correct);
   return pick(others, Math.min(count, others.length));
 }
-
-/* ─── Spaced Repetition: Review Characters ────────────────── */
 
 function getReviewCharacters(currentLevelId: LevelId, masteredChars: string[]): Character[] {
   const masteredSet = new Set(masteredChars);
@@ -90,8 +79,6 @@ function getReviewCharacters(currentLevelId: LevelId, masteredChars: string[]): 
 
   return reviewPool;
 }
-
-/* ─── Exercise Generators ─────────────────────────────────── */
 
 function createVisualExercise(
   char: Character,
@@ -135,6 +122,8 @@ function createVisualExercise(
     aliases: char.aliases,
     timedMode: maybeTimedMode("visual"),
     targetGlyph: char.glyph,
+    hintText: `Sound anchor: ${char.romanization}`,
+    teachingNote: `Spot ${char.context ?? char.glyph} by its unique outer stroke before deciding.`,
   };
 }
 
@@ -161,18 +150,43 @@ function createAudioExercise(
     prompt: char.audioLabel,
     correctAnswer: char.context ?? char.glyph,
     options,
+    targetGlyph: char.glyph,
+    hintText: `Listen again and match the sound for ${char.romanization}.`,
+  };
+}
+
+function createMinimalPairExercise(target: Character, contrast: Character): Exercise {
+  const targetPrompt = target.context ?? target.glyph;
+  const contrastPrompt = contrast.context ?? contrast.glyph;
+  return {
+    id: uid(),
+    createdAtMs: Date.now(),
+    phase: "minimal-pair",
+    prompt: target.audioLabel,
+    correctAnswer: targetPrompt,
+    options: shuffle([targetPrompt, contrastPrompt]),
+    targetGlyph: target.glyph,
+    contrastGlyph: contrast.glyph,
+    hintText: `Compare ${targetPrompt} with ${contrastPrompt} and focus on the first stroke shape.`,
+    teachingNote: `${targetPrompt} sounds like ${target.romanization}; ${contrastPrompt} sounds like ${contrast.romanization}.`,
   };
 }
 
 function createWordMeaningExercise(
-  word: { kannada: string; romanization: string; meaning: string },
-  pool: { meaning: string }[]
+  word: WordEntry,
+  pool: WordEntry[]
 ): Exercise {
   const distractorMeanings = generateDistractors(
     word.meaning,
     pool.map((w) => w.meaning)
   );
   const options = shuffle([word.meaning, ...distractorMeanings]);
+  const anchorGlyph = word.keyCharacter ?? word.requiredChars[0];
+  const teachingNote =
+    word.scaffoldingNote ??
+    (anchorGlyph
+      ? `Anchor on ${anchorGlyph} while decoding this word.`
+      : "Decode by mapping one glyph sound at a time.");
 
   return {
     id: uid(),
@@ -182,6 +196,9 @@ function createWordMeaningExercise(
     correctAnswer: word.meaning,
     options,
     aliases: [word.romanization],
+    hintText: `Pronunciation: ${word.romanization}`,
+    teachingNote,
+    targetGlyph: anchorGlyph,
   };
 }
 
@@ -197,6 +214,8 @@ function createScrambleExercise(
     correctAnswer: word.kannada,
     scrambledParts: shuffle(parts),
     aliases: [word.romanization],
+    hintText: `Sound it out as ${word.romanization}.`,
+    teachingNote: "Place the starting syllable first, then attach the vowel-marked syllable.",
   };
 }
 
@@ -211,14 +230,10 @@ function createPhoneticExercise(
     correctAnswer: word.romanization,
     aliases: [word.romanization.toLowerCase()],
     timedMode: maybeTimedMode("phonetic"),
+    hintText: `Try sounding each part slowly: ${word.romanization}.`,
   };
 }
 
-/**
- * Creates a character-level typing exercise — user sees a glyph and types
- * its romanization. Works without dictionary words, ensuring variety even
- * on early levels like Vowels.
- */
 function createCharPhoneticExercise(char: Character): Exercise {
   return {
     id: uid(),
@@ -229,10 +244,29 @@ function createCharPhoneticExercise(char: Character): Exercise {
     aliases: char.aliases,
     timedMode: maybeTimedMode("phonetic"),
     targetGlyph: char.glyph,
+    hintText: `Base sound: ${char.romanization}`,
+    teachingNote: `Say ${char.romanization} and map it to ${char.context ?? char.glyph}.`,
   };
 }
 
-/* ─── Kannada Syllable Splitter ───────────────────────────── */
+function createGuidedDecodeExercise(word: WordEntry): Exercise {
+  const steps = splitKannadaWord(word.kannada);
+  const focusGlyph = word.keyCharacter ?? word.requiredChars[0];
+  return {
+    id: uid(),
+    createdAtMs: Date.now(),
+    phase: "guided-decode",
+    prompt: word.kannada,
+    correctAnswer: word.romanization,
+    aliases: [word.romanization.toLowerCase()],
+    decodeSteps: steps,
+    targetGlyph: focusGlyph,
+    hintText: `Read each part in order, then combine: ${word.romanization}.`,
+    teachingNote:
+      word.scaffoldingNote ??
+      `Start with ${steps[0] ?? word.kannada}, then blend into ${word.romanization}.`,
+  };
+}
 
 export function splitKannadaWord(word: string): string[] {
   if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
@@ -267,24 +301,10 @@ export function splitKannadaWord(word: string): string[] {
   return parts;
 }
 
-/* ─── Main Exercise Set Generator ─────────────────────────── */
-
-/**
- * Generates a rich, shuffled set of exercises for a given level.
- *
- * Includes:
- *  - Visual & Audio for every character in the current level
- *  - Spaced-repetition review of earlier levels' characters
- *  - Word-meaning, syllable-scramble, and phonetic-type exercises
- *    using all decodable words (current + mastered)
- *  - All exercises interleaved randomly (no phased grouping)
- *  - No duplicate prompts within a session
- */
 export function generateExerciseSet(
   levelId: LevelId,
   masteredCharacters: string[],
-  confusableQueue: Record<string, number> = {},
-  categoryFilter: CategoryFilter = "All"
+  confusableQueue: Record<string, number> = {}
 ): Exercise[] {
   const level = LEVELS.find((l) => l.id === levelId);
   if (!level) return [];
@@ -293,20 +313,24 @@ export function generateExerciseSet(
   const allPool = ALL_CHARACTERS;
   const exercises: Exercise[] = [];
 
-  // Current level chars combined with mastered for word filtering
   const currentMastered = [
     ...new Set([...masteredCharacters, ...chars.map((c) => c.glyph)]),
   ];
 
   const oldMasteredSet = new Set(masteredCharacters);
 
-  // Force visual confusables into distractor options while queue is active.
-  const forcedConfusableGlyphs = Object.keys(confusableQueue).filter(
-    (glyph) => (confusableQueue[glyph] ?? 0) > 0
+  const activeQueueKeys = Object.keys(confusableQueue).filter(
+    (key) => (confusableQueue[key] ?? 0) > 0
   );
+  const forcedConfusableGlyphs = activeQueueKeys.filter(
+    (key) => !key.includes(CONFUSABLE_PAIR_SEPARATOR)
+  );
+  const forcedPairs = activeQueueKeys
+    .filter((key) => key.includes(CONFUSABLE_PAIR_SEPARATOR))
+    .map((key) => key.split(CONFUSABLE_PAIR_SEPARATOR))
+    .filter((pair): pair is [string, string] => pair.length === 2);
   const forcedDistractors = allPool.filter((char) => forcedConfusableGlyphs.includes(char.glyph));
 
-  // 1. New character drills, weighted toward fast visual + phonetic decoding.
   const distractorPool = chars.length >= 4 ? chars : allPool;
   for (const char of chars) {
     for (let i = 0; i < 3; i++) {
@@ -318,7 +342,16 @@ export function generateExerciseSet(
     exercises.push(createAudioExercise(char, distractorPool, forcedDistractors));
   }
 
-  // 2. Spaced repetition — review earlier levels
+  const minimalPairExercises: Exercise[] = [];
+  for (const [targetGlyph, contrastGlyph] of forcedPairs) {
+    const target = allPool.find((c) => c.glyph === targetGlyph);
+    const contrast = allPool.find((c) => c.glyph === contrastGlyph);
+    if (!target || !contrast) continue;
+    minimalPairExercises.push(createMinimalPairExercise(target, contrast));
+    if (minimalPairExercises.length >= 3) break;
+  }
+  exercises.push(...minimalPairExercises);
+
   const reviewChars = getReviewCharacters(levelId, masteredCharacters);
 
   for (const char of reviewChars) {
@@ -337,15 +370,13 @@ export function generateExerciseSet(
     }
   }
 
-  // 3. Exhaustive Word decoding
-  const availableWords = getDynamicWords(currentMastered, levelId, categoryFilter);
+  const availableWords = getDynamicWords(currentMastered, levelId);
 
   for (const word of availableWords) {
     const isReviewWord =
       word.requiredChars.every((c) => oldMasteredSet.has(c)) &&
       !word.requiredChars.some((c) => chars.some((nc) => nc.glyph === c));
 
-    // Decoding-heavy weighting: 70%+ of total load stays in visual + phonetic.
     const wordPhoneticA = createPhoneticExercise(word);
     const wordPhoneticB = createPhoneticExercise(word);
     if (isReviewWord) {
@@ -353,6 +384,12 @@ export function generateExerciseSet(
       wordPhoneticB.isReview = true;
     }
     exercises.push(wordPhoneticA, wordPhoneticB);
+
+    if (splitKannadaWord(word.kannada).length >= 2 && Math.random() < 0.35) {
+      const guidedEx = createGuidedDecodeExercise(word);
+      if (isReviewWord) guidedEx.isReview = true;
+      exercises.push(guidedEx);
+    }
 
     if (Math.random() < 0.25) {
       const wExMeaning = createWordMeaningExercise(word, availableWords);
@@ -367,11 +404,15 @@ export function generateExerciseSet(
     }
   }
 
-  // 4. Shuffle everything thoroughly
-  return shuffle(exercises);
-}
+  const guidedFirst = exercises.filter(
+    (exercise) => exercise.phase === "guided-decode" || exercise.phase === "minimal-pair"
+  );
+  const remaining = exercises.filter(
+    (exercise) => exercise.phase !== "guided-decode" && exercise.phase !== "minimal-pair"
+  );
 
-/* ─── Answer Checker ──────────────────────────────────────── */
+  return [...shuffle(guidedFirst), ...shuffle(remaining)];
+}
 
 export function checkAnswer(exercise: Exercise, userAnswer: string): boolean {
   const normalise = (s: string) => s.trim().toLowerCase();

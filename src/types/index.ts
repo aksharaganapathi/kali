@@ -1,4 +1,11 @@
-export type ExercisePhase = "visual" | "audio" | "scramble" | "phonetic" | "word-meaning";
+﻿export type ExercisePhase =
+  | "visual"
+  | "audio"
+  | "scramble"
+  | "phonetic"
+  | "word-meaning"
+  | "guided-decode"
+  | "minimal-pair";
 
 export type LevelId = 1 | 2 | "3a" | "3b" | "3c" | 4 | 5 | 6;
 
@@ -20,8 +27,6 @@ export type WordCategory =
   | "Greetings"
   | "Objects";
 
-export type CategoryFilter = "All" | WordCategory;
-
 export type Screen =
   | "dashboard"
   | "level-intro"
@@ -34,7 +39,6 @@ export interface Character {
   aliases: string[];
   type: "vowel" | "consonant" | "vowel-sign" | "conjunct" | "special";
   audioLabel: string;
-  /** For vowel signs: display in context with a base consonant (e.g. "ಕಾ") */
   context?: string;
 }
 
@@ -53,6 +57,9 @@ export interface WordEntry {
   requiredChars: string[];
   minLevel: LevelId;
   category: WordCategory;
+  keyCharacter?: string;
+  scaffoldingNote?: string;
+  frequencyTier?: "core" | "common" | "extended";
 }
 
 export interface Exercise {
@@ -67,6 +74,10 @@ export interface Exercise {
   isReview?: boolean;
   timedMode?: boolean;
   targetGlyph?: string;
+  contrastGlyph?: string;
+  decodeSteps?: string[];
+  hintText?: string;
+  teachingNote?: string;
 }
 
 export interface Score {
@@ -86,7 +97,6 @@ export interface AppState {
   glyphMastery: Record<string, number>;
   glyphStreaks: Record<string, number>;
   confusableQueue: Record<string, number>;
-  activeCategory: CategoryFilter;
   feedbackState: "idle" | "correct" | "incorrect";
   hydrated: boolean;
 }
@@ -103,7 +113,6 @@ export type AppAction =
   }
   | { type: "NEXT_EXERCISE" }
   | { type: "COMPLETE_LEVEL" }
-  | { type: "SET_CATEGORY_FILTER"; category: CategoryFilter }
   | { type: "GO_HOME" }
   | { type: "RETRY_LEVEL" }
   | { type: "RESET" };

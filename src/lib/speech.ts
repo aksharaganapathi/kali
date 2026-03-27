@@ -1,4 +1,4 @@
-import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
+﻿import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
 
 export function isSpeechAvailable(): boolean {
   return typeof window !== "undefined" && !!process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY;
@@ -26,16 +26,17 @@ async function speakWithElevenLabs(text: string): Promise<void> {
 
   const client = getClient();
 
-  const stream = await client.textToSpeech.convert(voiceId, {
-    text,
-    modelId: "eleven_v3",
-    languageCode: "kn",
-    voiceSettings: {
-      stability: 0.5,
-      similarityBoost: 0.75,
-      style: 0.2,
-    },
-  });
+const stream = await client.textToSpeech.convert(voiceId, {
+  text,
+  modelId: "eleven_v3", // Ensure this matches the version you selected on the site
+  languageCode: "kn",
+  voiceSettings: {
+    stability: 0.7,        // Increased to reduce "randomness"
+    similarityBoost: 0.8,  // Slightly higher for custom voices
+    style: 0.1,            // Lowering this can help with clarity in non-English languages
+    useSpeakerBoost: true, // CRITICAL: This mimics the web 'Speaker Boost' setting
+  },
+});
 
   const reader = stream.getReader();
   const chunks: Uint8Array[] = [];
@@ -78,9 +79,5 @@ export async function speak(text: string): Promise<void> {
   return speakWithElevenLabs(text);
 }
 
-/**
- * Kept for compatibility with existing app initialization.
- */
 export function preloadVoices(): void {
-  // ElevenLabs-only mode does not require local voice warm-up.
 }

@@ -1,5 +1,18 @@
 import type { Metadata } from "next";
+import { Inter, Noto_Sans_Kannada } from "next/font/google";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-sans",
+});
+
+const notoSansKannada = Noto_Sans_Kannada({
+  subsets: ["kannada"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-kannada",
+});
 
 export const metadata: Metadata = {
   title: "Kali — ಕಲಿ | Learn Kannada Script",
@@ -14,19 +27,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Tiro+Kannada&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="antialiased w-full h-full min-h-screen overflow-x-hidden">{children}</body>
+      <body
+        className={`${inter.variable} ${notoSansKannada.variable} antialiased w-full h-full min-h-screen overflow-x-hidden`}
+      >
+        {children}
+      </body>
     </html>
   );
 }

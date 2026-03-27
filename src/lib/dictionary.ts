@@ -1,5 +1,7 @@
 import { WordEntry, WordCategory, LevelId } from "@/types";
 
+const LEVEL_ORDER: LevelId[] = [1, 2, "3a", "3b", "3c", 4, 5, 6];
+
 type RawWordEntry = Omit<WordEntry, "minLevel" | "category"> & {
   minLevel: number;
   category?: WordCategory;
@@ -292,3 +294,84 @@ export const DICTIONARY: WordEntry[] = RAW_DICTIONARY.map((entry) => ({
   minLevel: recategorizeLevel(entry),
   category: inferCategory(entry),
 }));
+
+export type GuideWord = WordEntry & { focusGlyph: string };
+
+const VIRAMA = "\u0CCD";
+const ANUSVARA = "\u0C82";
+const VISARGA = "\u0C83";
+
+function levelRank(level: LevelId): number {
+  const idx = LEVEL_ORDER.indexOf(level);
+  return idx >= 0 ? idx : LEVEL_ORDER.length;
+}
+
+function hasRestrictedGlyphsForLevel(word: string, currentLevel: LevelId): boolean {
+  if (levelRank(currentLevel) < levelRank(5) && word.includes(VIRAMA)) return true;
+  if (
+    levelRank(currentLevel) < levelRank(6) &&
+    (word.includes(ANUSVARA) || word.includes(VISARGA))
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export function getAnchorWordsForCharacters(
+  glyphs: string[],
+  currentLevel: LevelId,
+  knownGlyphs: string[],
+  limit: number = Math.max(glyphs.length, 8)
+): GuideWord[] {
+  const allowedGlyphs = new Set([...glyphs, ...knownGlyphs]);
+
+  const decodableCandidates: WordEntry[] = DICTIONARY
+    .filter((word) => !hasRestrictedGlyphsForLevel(word.kannada, currentLevel))
+    .filter((word) => word.requiredChars.every((glyph) => allowedGlyphs.has(glyph)))
+    .filter((word) => glyphs.some((glyph) => word.requiredChars.includes(glyph) || word.kannada.includes(glyph)))
+    .sort((a, b) => {
+      const levelDelta = levelRank(a.minLevel) - levelRank(b.minLevel);
+      if (levelDelta !== 0) return levelDelta;
+      return a.requiredChars.length - b.requiredChars.length;
+    });
+
+  const selected: GuideWord[] = [];
+  const usedWords = new Set<string>();
+
+  for (const glyph of glyphs) {
+    const uniquePick = decodableCandidates.find(
+      (word) =>
+        !usedWords.has(word.kannada) &&
+        (word.requiredChars.includes(glyph) || word.kannada.includes(glyph))
+    );
+    const fallbackPick = decodableCandidates.find(
+      (word) => word.requiredChars.includes(glyph) || word.kannada.includes(glyph)
+    );
+    const chosen = uniquePick ?? fallbackPick;
+    if (!chosen) continue;
+    usedWords.add(chosen.kannada);
+    selected.push({ ...chosen, focusGlyph: glyph });
+  }
+
+  for (const word of decodableCandidates) {
+    if (selected.length >= limit) break;
+    if (usedWords.has(word.kannada)) continue;
+    const focusGlyph = glyphs.find(
+      (glyph) => word.requiredChars.includes(glyph) || word.kannada.includes(glyph)
+    );
+    if (!focusGlyph) continue;
+    selected.push({ ...word, focusGlyph });
+    usedWords.add(word.kannada);
+  }
+
+  if (selected.length > 0) return selected;
+
+  return DICTIONARY
+    .filter((word) => !hasRestrictedGlyphsForLevel(word.kannada, currentLevel))
+    .slice(0, limit)
+    .map((word) => ({
+      ...word,
+      focusGlyph: glyphs.find((glyph) => word.kannada.includes(glyph)) ?? glyphs[0] ?? "",
+    }))
+    .filter((word) => word.focusGlyph.length > 0);
+}

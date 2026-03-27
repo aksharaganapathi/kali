@@ -3,9 +3,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LEVELS } from "@/lib/curriculum";
-import { DICTIONARY } from "@/lib/dictionary";
 import { clearState } from "@/lib/storage";
-import { AppState, AppAction } from "@/types";
+import { AppAction, AppState } from "@/types";
 import GlassCard from "./ui/GlassCard";
 import ProgressRing from "./ui/ProgressRing";
 
@@ -31,10 +30,6 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
   const totalChars = LEVELS.flatMap((l) => l.characters).length;
   const masteredCount = state.masteredCharacters.length;
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const categoryOptions = [
-    "All",
-    ...Array.from(new Set(DICTIONARY.map((word) => word.category))).sort(),
-  ];
 
   const handleReset = () => {
     clearState();
@@ -44,7 +39,6 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-8 max-w-4xl mx-auto">
-      {/* Reset Confirmation Modal */}
       <AnimatePresence>
         {showResetConfirm && (
           <motion.div
@@ -82,23 +76,23 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
         )}
       </AnimatePresence>
 
-      {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between mb-12"
       >
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
-            <span className="font-kannada text-saffron text-[40px] text-glow-saffron drop-shadow-[0_0_15px_rgba(241,178,74,0.4)] leading-none -mt-2">ಕಲಿ</span>
+          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3 leading-none">
+            <span className="font-kannada text-saffron text-[34px] leading-none text-glow-saffron drop-shadow-[0_0_15px_rgba(241,178,74,0.4)] inline-flex items-center justify-center h-10 px-2 rounded-lg bg-saffron/10 border border-saffron/25">
+              ಕಲಿ
+            </span>
             Kali
           </h1>
           <p className="text-sm text-sand-dim font-medium tracking-wide">Scaffolded script learning</p>
+          <p className="text-xs text-sand-dim/80">Pick a level to continue where you left off</p>
         </div>
 
-        {/* Stats + Reset */}
         <div className="flex items-center gap-4">
-          {/* Reset button */}
           <button
             onClick={() => setShowResetConfirm(true)}
             className="p-2 rounded-lg text-sand-dim hover:text-red-400 hover:bg-white/5 transition-colors"
@@ -138,26 +132,6 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
       </motion.header>
 
       <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6 flex items-center justify-between gap-3"
-      >
-        <p className="text-xs text-sand-dim uppercase tracking-widest">Vocabulary Focus</p>
-        <select
-          value={state.activeCategory}
-          onChange={(e) => dispatch({ type: "SET_CATEGORY_FILTER", category: e.target.value as AppState["activeCategory"] })}
-          className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-sand outline-none focus:border-saffron/40"
-        >
-          {categoryOptions.map((category) => (
-            <option key={category} value={category} className="bg-[#131118] text-sand">
-              {category}
-            </option>
-          ))}
-        </select>
-      </motion.div>
-
-      {/* Level Grid */}
-      <motion.div
         variants={container}
         initial="hidden"
         animate="show"
@@ -171,6 +145,13 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
           ).length;
           const progress = charCount > 0 ? masteredInLevel / charCount : 0;
           const isComplete = progress >= 1;
+          const actionLabel = unlocked
+            ? isComplete
+              ? "Review"
+              : masteredInLevel > 0
+              ? "Continue"
+              : "Start"
+            : "Locked";
 
           return (
             <motion.div key={level.id} variants={item}>
@@ -188,7 +169,6 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
                   dispatch({ type: "SELECT_LEVEL", level: level.id })
                 }
               >
-                {/* Level badge */}
                 <div className="flex items-center justify-between mb-3">
                   <span
                     className={`text-xs font-medium uppercase tracking-widest ${isComplete ? "text-correct" : "text-sand-dim"
@@ -206,7 +186,6 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
                   </div>
                 </div>
 
-                {/* Title */}
                 <h2 className="text-base font-semibold mb-0.5">{level.name}</h2>
                 <p className="font-kannada text-saffron text-sm mb-2">
                   {level.kannadaName}
@@ -215,7 +194,6 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
                   {level.description}
                 </p>
 
-                {/* Character preview */}
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {level.characters.slice(0, 8).map((c) => (
                     <span
@@ -235,7 +213,19 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
                   )}
                 </div>
 
-                {/* Lock overlay */}
+                <div className="mt-4 flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+                  <p className="text-[11px] uppercase tracking-wider text-sand-dim">
+                    {masteredInLevel}/{charCount} mastered
+                  </p>
+                  <p
+                    className={`text-[11px] uppercase tracking-wider ${
+                      unlocked ? "text-saffron" : "text-sand-dim/60"
+                    }`}
+                  >
+                    {actionLabel}
+                  </p>
+                </div>
+
                 {!unlocked && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-onyx/80 backdrop-blur-[2px] rounded-2xl transition-all">
                     <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-2">
@@ -264,7 +254,6 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
         })}
       </motion.div>
 
-      {/* Footer */}
       <motion.footer
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

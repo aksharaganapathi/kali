@@ -10,8 +10,6 @@
   --color-sand-dim: #9E9888;
   --color-correct: #4ADE80;
   --color-incorrect: #F87171;
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-kannada: 'Tiro Kannada', 'Noto Sans Kannada', serif;
 }
 
 body {
@@ -29,7 +27,6 @@ body {
   overflow-y: scroll;
 }
 
-/* Custom Premium Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

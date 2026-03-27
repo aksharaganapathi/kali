@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useReducer, useEffect } from "react";
 import { AppState, AppAction, LevelId } from "@/types";
@@ -8,6 +8,7 @@ const LEVEL_ORDER: LevelId[] = [1, 2, "3a", "3b", "3c", 4, 5, 6];
 const CONFUSABLE_MAP: Record<string, string[]> = {
   "ನ": ["ಹ"],
 };
+const CONFUSABLE_PAIR_SEPARATOR = "~";
 
 const FLUENCY_WINDOW_MS = 2000;
 const BASE_MASTERY_GAIN = 8;
@@ -26,7 +27,6 @@ const initialState: AppState = {
   glyphMastery: {},
   glyphStreaks: {},
   confusableQueue: {},
-  activeCategory: "All",
   feedbackState: "idle",
   hydrated: false,
 };
@@ -49,6 +49,11 @@ function tickConfusableQueue(queue: Record<string, number>): Record<string, numb
     }
   }
   return next;
+}
+
+function isKannadaGlyphLike(value: string | undefined): boolean {
+  if (!value) return false;
+  return /[\u0C80-\u0CFF]/.test(value);
 }
 
 function reducer(state: AppState, action: AppAction): AppState {
@@ -130,10 +135,25 @@ function reducer(state: AppState, action: AppAction): AppState {
           }
 
           const forcedConfusables = CONFUSABLE_MAP[targetGlyph] ?? [];
-          if (forcedConfusables.length > 0) {
+          const selectedAnswer = action.userAnswer?.trim();
+          const dynamicConfusable =
+            selectedAnswer &&
+            selectedAnswer !== currentExercise?.correctAnswer &&
+            isKannadaGlyphLike(selectedAnswer)
+              ? selectedAnswer
+              : null;
+
+          if (forcedConfusables.length > 0 || dynamicConfusable) {
             confusableQueue = { ...confusableQueue };
             for (const glyph of forcedConfusables) {
               confusableQueue[glyph] = 5;
+            }
+
+            if (dynamicConfusable) {
+              const pairKey = `${targetGlyph}${CONFUSABLE_PAIR_SEPARATOR}${dynamicConfusable}`;
+              confusableQueue[targetGlyph] = 5;
+              confusableQueue[dynamicConfusable] = 5;
+              confusableQueue[pairKey] = 5;
             }
           }
         }
@@ -190,12 +210,6 @@ function reducer(state: AppState, action: AppAction): AppState {
       };
     }
 
-    case "SET_CATEGORY_FILTER":
-      return {
-        ...state,
-        activeCategory: action.category,
-      };
-
     case "RETRY_LEVEL":
       return {
         ...state,
@@ -220,7 +234,6 @@ function reducer(state: AppState, action: AppAction): AppState {
 export function useKaliReducer() {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  // Hydrate from localStorage on mount
   useEffect(() => {
     const persisted = loadState();
     if (persisted) {
@@ -233,7 +246,6 @@ export function useKaliReducer() {
           glyphMastery: persisted.glyphMastery ?? {},
           glyphStreaks: persisted.glyphStreaks ?? {},
           confusableQueue: persisted.confusableQueue ?? {},
-          activeCategory: persisted.activeCategory ?? "All",
           ...(persisted.screen && { screen: persisted.screen }),
           ...(persisted.exercisePhase && { exercisePhase: persisted.exercisePhase }),
           ...(persisted.exerciseIndex !== undefined && { exerciseIndex: persisted.exerciseIndex }),
@@ -246,7 +258,6 @@ export function useKaliReducer() {
     }
   }, []);
 
-  // Persist to localStorage on relevant state changes
   useEffect(() => {
     if (!state.hydrated) return;
     saveState({
@@ -256,7 +267,6 @@ export function useKaliReducer() {
       glyphMastery: state.glyphMastery,
       glyphStreaks: state.glyphStreaks,
       confusableQueue: state.confusableQueue,
-      activeCategory: state.activeCategory,
       screen: state.screen,
       exercisePhase: state.exercisePhase,
       exerciseIndex: state.exerciseIndex,

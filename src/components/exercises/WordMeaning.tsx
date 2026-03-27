@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Exercise } from "@/types";
 import GlassCard from "../ui/GlassCard";
@@ -19,24 +19,40 @@ export default function WordMeaning({
   feedbackState,
 }: WordMeaningProps) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [hintLevel, setHintLevel] = useState(0);
+
+  const hints = useMemo(() => {
+    const firstHint =
+      exercise.hintText ??
+      (exercise.aliases?.[0]
+        ? `Pronunciation: ${exercise.aliases[0]}`
+        : "Say the word out loud once before choosing.");
+    const secondHint =
+      exercise.teachingNote ??
+      "Eliminate one unlikely meaning first, then compare the final two options.";
+    return [firstHint, secondHint];
+  }, [exercise.aliases, exercise.hintText, exercise.teachingNote]);
 
   const handleSelect = (option: string) => {
     if (feedbackState !== "idle") return;
     setSelected(option);
     const correct = option === exercise.correctAnswer;
-    onAnswer(correct);
+    onAnswer(correct, option);
   };
 
   const handleContinue = () => {
     setSelected(null);
+    setHintLevel(0);
     onNext();
+  };
+
+  const handleHint = () => {
+    setHintLevel((prev) => Math.min(prev + 1, hints.length));
   };
 
   return (
     <div className="w-full h-[400px] flex flex-col items-center justify-between">
-      {/* Top Section */}
       <div className="flex-1 flex flex-col items-center justify-end pb-8">
-        {/* Kannada word prompt */}
         <motion.div
           key={exercise.id}
           initial={{ opacity: 0, scale: 0.9 }}
@@ -59,7 +75,6 @@ export default function WordMeaning({
         <p className="text-xs text-sand-dim">What does this word mean?</p>
       </div>
 
-      {/* Middle Section: Options */}
       <div className="grid grid-cols-1 gap-3 w-full max-w-sm">
         {exercise.options?.map((option) => {
           const isSelected = selected === option;
@@ -89,7 +104,32 @@ export default function WordMeaning({
         })}
       </div>
 
-      {/* Bottom Section: Continue Action Area */}
+      <div className="h-20 w-full flex items-center justify-center mt-2">
+        {feedbackState === "idle" && (
+          <div className="w-full max-w-sm text-center">
+            <button
+              onClick={handleHint}
+              disabled={hintLevel >= hints.length}
+              className="text-xs px-3 py-1.5 rounded-full border border-white/20 text-sand hover:border-saffron/50 hover:text-saffron transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {hintLevel === 0 ? "Need a hint?" : hintLevel === 1 ? "Show another hint" : "No more hints"}
+            </button>
+            <AnimatePresence>
+              {hintLevel > 0 && (
+                <motion.p
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-xs text-sand-dim mt-2"
+                >
+                  {hints[hintLevel - 1]}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+
       <div className="h-20 w-full flex items-center justify-center mt-4">
         <AnimatePresence>
           {feedbackState !== "idle" && (

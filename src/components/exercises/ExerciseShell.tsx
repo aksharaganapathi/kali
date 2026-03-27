@@ -12,8 +12,10 @@ interface ExerciseShellProps {
 const PHASE_LABELS: Record<string, { label: string; icon: string }> = {
   visual: { label: "Identify", icon: "👁" },
   audio: { label: "Listen", icon: "🔊" },
+  "minimal-pair": { label: "Contrast", icon: "⚖" },
   scramble: { label: "Build", icon: "🧩" },
   phonetic: { label: "Decode", icon: "⌨" },
+  "guided-decode": { label: "Guided", icon: "🧭" },
   "word-meaning": { label: "Translate", icon: "📖" },
 };
 
@@ -31,7 +33,6 @@ export default function ExerciseShell({
 
   return (
     <div className="min-h-screen px-4 py-6 sm:px-8 max-w-2xl mx-auto flex flex-col">
-      {/* Top bar */}
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={onBack}
@@ -53,7 +54,6 @@ export default function ExerciseShell({
           Exit
         </button>
 
-        {/* Phase badge */}
         <motion.div
           key={exercisePhase}
           initial={{ opacity: 0, y: -10 }}
@@ -66,7 +66,6 @@ export default function ExerciseShell({
           </span>
         </motion.div>
 
-        {/* Score */}
         <div className="text-right">
           <span className="text-xs text-sand-dim">
             {score.correct}/{score.total}
@@ -74,7 +73,6 @@ export default function ExerciseShell({
         </div>
       </div>
 
-      {/* Progress bar */}
       <div className="h-1 rounded-full bg-white/5 mb-8 overflow-hidden">
         <motion.div
           className="h-full rounded-full bg-saffron"
@@ -86,7 +84,6 @@ export default function ExerciseShell({
         />
       </div>
 
-      {/* Progress dots */}
       <div className="flex justify-center gap-1.5 mb-8">
         {exercises.map((_, i) => (
           <div
@@ -102,7 +99,6 @@ export default function ExerciseShell({
         ))}
       </div>
 
-      {/* Exercise content */}
       <div className="flex-1 flex flex-col items-center justify-center">
         {children}
       </div>

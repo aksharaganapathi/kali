@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, Reorder, AnimatePresence } from "framer-motion";
 import { Exercise } from "@/types";
 import GlassCard from "../ui/GlassCard";
@@ -22,25 +22,31 @@ export default function SyllableScramble({
     exercise.scrambledParts ?? []
   );
   const [submitted, setSubmitted] = useState(false);
+  const [hintLevel, setHintLevel] = useState(0);
+
+  const hints = useMemo(() => {
+    const first = exercise.hintText ?? "Start with the first sound chunk you hear when reading the meaning aloud.";
+    const second = exercise.teachingNote ?? "Try placing the base consonant chunk first, then attach modifiers.";
+    return [first, second];
+  }, [exercise.hintText, exercise.teachingNote]);
 
   const handleSubmit = () => {
     if (submitted || feedbackState !== "idle") return;
     setSubmitted(true);
     const assembled = items.join("");
     const correct = assembled === exercise.correctAnswer;
-    onAnswer(correct);
+    onAnswer(correct, assembled);
   };
 
   const handleContinue = () => {
     setSubmitted(false);
+    setHintLevel(0);
     onNext();
   };
 
   return (
     <div className="w-full h-[400px] flex flex-col items-center justify-between">
-      {/* Top Section */}
       <div className="flex-1 flex flex-col items-center justify-end w-full pb-6">
-        {/* Prompt */}
         <motion.div
           key={exercise.id}
           initial={{ opacity: 0, y: -10 }}
@@ -59,7 +65,6 @@ export default function SyllableScramble({
           Drag to rearrange the syllables
         </p>
 
-        {/* Reorder tiles */}
         <Reorder.Group
           axis="x"
           values={items}
@@ -90,9 +95,7 @@ export default function SyllableScramble({
         </Reorder.Group>
       </div>
 
-      {/* Middle/Bottom feedback section */}
       <div className="flex flex-col items-center justify-start h-24">
-        {/* Assembly preview */}
         <div className="text-center">
           <p className="text-xs text-sand-dim mb-2">Your word:</p>
           <span
@@ -107,7 +110,6 @@ export default function SyllableScramble({
           </span>
         </div>
 
-        {/* Correct answer (shown after incorrect) */}
         <AnimatePresence>
           {feedbackState === "incorrect" && (
             <motion.div
@@ -125,7 +127,32 @@ export default function SyllableScramble({
         </AnimatePresence>
       </div>
 
-      {/* Action button area */}
+      <div className="h-16 w-full flex items-center justify-center mt-1">
+        {feedbackState === "idle" && (
+          <div className="text-center">
+            <button
+              onClick={() => setHintLevel((prev) => Math.min(prev + 1, hints.length))}
+              disabled={hintLevel >= hints.length}
+              className="text-xs px-3 py-1.5 rounded-full border border-white/20 text-sand hover:border-saffron/50 hover:text-saffron transition-colors disabled:opacity-40"
+            >
+              {hintLevel === 0 ? "Need a hint?" : hintLevel === 1 ? "Show another hint" : "No more hints"}
+            </button>
+            <AnimatePresence>
+              {hintLevel > 0 && (
+                <motion.p
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-xs text-sand-dim mt-2"
+                >
+                  {hints[hintLevel - 1]}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+
       <div className="h-20 w-full flex items-center justify-center mt-2">
         {feedbackState === "idle" ? (
           <motion.button

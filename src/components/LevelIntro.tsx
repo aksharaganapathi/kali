@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { LEVELS } from "@/lib/curriculum";
 import { generateExerciseSet } from "@/lib/engine";
+import { getAnchorWordsForCharacters } from "@/lib/dictionary";
 import { AppState, AppAction } from "@/types";
 import GlassCard from "./ui/GlassCard";
 import Button from "./ui/Button";
@@ -24,20 +25,24 @@ const letterVariant = {
 export default function LevelIntro({ state, dispatch }: LevelIntroProps) {
   const level = LEVELS.find((l) => l.id === state.currentLevel);
   if (!level) return null;
+  const anchorWords = getAnchorWordsForCharacters(
+    level.characters.map((char) => char.glyph),
+    state.currentLevel,
+    state.masteredCharacters,
+    Math.max(level.characters.length, 8)
+  );
 
   const handleStart = () => {
     const exercises = generateExerciseSet(
       level.id,
       state.masteredCharacters,
-      state.confusableQueue,
-      state.activeCategory
+      state.confusableQueue
     );
     dispatch({ type: "START_EXERCISE", exercises });
   };
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-8 max-w-3xl mx-auto flex flex-col">
-      {/* Back button */}
       <motion.button
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -50,7 +55,6 @@ export default function LevelIntro({ state, dispatch }: LevelIntroProps) {
         Back
       </motion.button>
 
-      {/* Level header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -68,7 +72,6 @@ export default function LevelIntro({ state, dispatch }: LevelIntroProps) {
         </p>
       </motion.div>
 
-      {/* Character grid */}
       <GlassCard className="p-6 mb-8 flex-1">
         <p className="text-xs text-sand-dim uppercase tracking-wider mb-4">
           Characters to learn
@@ -107,7 +110,36 @@ export default function LevelIntro({ state, dispatch }: LevelIntroProps) {
         </div>
       </GlassCard>
 
-      {/* Start button */}
+      <GlassCard className="p-5 mb-8">
+        <p className="text-xs text-sand-dim uppercase tracking-wider mb-3">
+          Guide words for this lesson
+        </p>
+        <p className="text-xs text-sand-dim mb-4">
+          Each lesson character is mapped to a decodable real-world word built from learned plus current lesson symbols.
+        </p>
+        <div className="grid gap-2">
+          {anchorWords.map((word) => (
+            <div
+              key={word.kannada}
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 flex items-center justify-between gap-3"
+            >
+              <div>
+                <p className="font-kannada text-xl text-sand">{word.kannada}</p>
+                <p className="text-xs text-sand-dim">{word.romanization}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-sand">{word.meaning}</p>
+                {word.focusGlyph && (
+                  <p className="text-[10px] uppercase tracking-wider text-saffron/90">
+                    Focus {word.focusGlyph}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </GlassCard>
+
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}

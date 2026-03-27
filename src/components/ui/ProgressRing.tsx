@@ -1,7 +1,7 @@
 "use client";
 
 interface ProgressRingProps {
-  progress: number; // 0–1
+  progress: number;
   size?: number;
   strokeWidth?: number;
   className?: string;
@@ -24,7 +24,6 @@ export default function ProgressRing({
       className={className}
       viewBox={`0 0 ${size} ${size}`}
     >
-      {/* Track */}
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -33,7 +32,6 @@ export default function ProgressRing({
         stroke="rgba(255,255,255,0.08)"
         strokeWidth={strokeWidth}
       />
-      {/* Progress */}
       <circle
         cx={size / 2}
         cy={size / 2}

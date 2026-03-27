@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Exercise } from "@/types";
 import { speak, isSpeechAvailable } from "@/lib/speech";
@@ -22,8 +22,15 @@ export default function AudioMatch({
   const [selected, setSelected] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [speechFailed, setSpeechFailed] = useState(false);
+  const [hintLevel, setHintLevel] = useState(0);
   const speechAvailable = isSpeechAvailable();
   const autoPlayed = useRef(false);
+
+  const hints = useMemo(() => {
+    const first = exercise.hintText ?? "Replay the sound and focus on the first consonant burst.";
+    const second = exercise.teachingNote ?? "Eliminate one option, then compare the remaining two shapes.";
+    return [first, second];
+  }, [exercise.hintText, exercise.teachingNote]);
 
   const handlePlay = useCallback(async () => {
     if (playing) return;
@@ -37,35 +44,32 @@ export default function AudioMatch({
     setPlaying(false);
   }, [exercise.prompt, playing]);
 
-  // Auto-play audio when the exercise first mounts
   useEffect(() => {
     if (!autoPlayed.current && speechAvailable) {
       autoPlayed.current = true;
-      // Small delay to let the UI render first
       const timer = setTimeout(() => {
         handlePlay();
       }, 400);
       return () => clearTimeout(timer);
     }
-  }, [exercise.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [exercise.id, handlePlay, speechAvailable]);
 
   const handleSelect = (option: string) => {
     if (feedbackState !== "idle") return;
     setSelected(option);
     const correct = option === exercise.correctAnswer;
-    onAnswer(correct);
+    onAnswer(correct, option);
   };
 
   const handleContinue = () => {
     setSelected(null);
+    setHintLevel(0);
     onNext();
   };
 
   return (
     <div className="w-full h-[400px] flex flex-col items-center justify-between">
-      {/* Top Section */}
       <div className="flex-1 flex flex-col items-center justify-end pb-8">
-        {/* Play button */}
         <motion.button
           onClick={handlePlay}
           whileTap={{ scale: 0.95 }}
@@ -98,7 +102,6 @@ export default function AudioMatch({
             : "Audio unavailable — use the hint below"}
         </p>
 
-        {/* Fallback: show romanization if speech isn't available or failed */}
         {(!speechAvailable || speechFailed) && (
           <p className="text-sm text-saffron font-medium mb-4">
             Sound: &ldquo;{exercise.prompt}&rdquo;
@@ -108,7 +111,6 @@ export default function AudioMatch({
         <p className="text-xs text-sand-dim">Select the matching character</p>
       </div>
 
-      {/* Middle Section */}
       <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
         {exercise.options?.map((option) => {
           const isSelected = selected === option;
@@ -138,7 +140,32 @@ export default function AudioMatch({
         })}
       </div>
 
-      {/* Bottom Section: Continue Action Area */}
+      <div className="h-16 w-full flex items-center justify-center mt-2">
+        {feedbackState === "idle" && (
+          <div className="w-full max-w-sm text-center">
+            <button
+              onClick={() => setHintLevel((prev) => Math.min(prev + 1, hints.length))}
+              disabled={hintLevel >= hints.length}
+              className="text-xs px-3 py-1.5 rounded-full border border-white/20 text-sand hover:border-saffron/50 hover:text-saffron transition-colors disabled:opacity-40"
+            >
+              {hintLevel === 0 ? "Need a hint?" : hintLevel === 1 ? "Show another hint" : "No more hints"}
+            </button>
+            <AnimatePresence>
+              {hintLevel > 0 && (
+                <motion.p
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-xs text-sand-dim mt-2"
+                >
+                  {hints[hintLevel - 1]}
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+
       <div className="h-20 w-full flex items-center justify-center mt-4">
         <AnimatePresence>
           {feedbackState !== "idle" && (

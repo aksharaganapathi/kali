@@ -13,6 +13,8 @@ import AudioMatch from "./exercises/AudioMatch";
 import SyllableScramble from "./exercises/SyllableScramble";
 import PhoneticType from "./exercises/PhoneticType";
 import WordMeaning from "./exercises/WordMeaning";
+import GuidedDecode from "./exercises/GuidedDecode";
+import MinimalPair from "./exercises/MinimalPair";
 
 const pageTransition = {
   initial: { opacity: 0, x: 30 },
@@ -24,12 +26,10 @@ const pageTransition = {
 export default function KaliApp() {
   const { state, dispatch } = useKaliReducer();
 
-  // Warm speech synthesis voices on mount
   useEffect(() => {
     preloadVoices();
   }, []);
 
-  // Show nothing until hydrated from localStorage
   if (!state.hydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -66,10 +66,14 @@ export default function KaliApp() {
         return <VisualFlashcard key={currentExercise.id} {...props} />;
       case "audio":
         return <AudioMatch key={currentExercise.id} {...props} />;
+      case "minimal-pair":
+        return <MinimalPair key={currentExercise.id} {...props} />;
       case "scramble":
         return <SyllableScramble key={currentExercise.id} {...props} />;
       case "phonetic":
         return <PhoneticType key={currentExercise.id} {...props} />;
+      case "guided-decode":
+        return <GuidedDecode key={currentExercise.id} {...props} />;
       case "word-meaning":
         return <WordMeaning key={currentExercise.id} {...props} />;
       default:

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Exercise } from "@/types";
 import { checkAnswer } from "@/lib/engine";
@@ -19,6 +19,13 @@ export default function PhoneticType({
   feedbackState,
 }: PhoneticTypeProps) {
   const [input, setInput] = useState("");
+  const [hintLevel, setHintLevel] = useState(0);
+
+  const hints = useMemo(() => {
+    const first = exercise.hintText ?? "Try splitting the sound into smaller syllables.";
+    const second = exercise.teachingNote ?? `Expected pattern is close to: ${exercise.correctAnswer}`;
+    return [first, second];
+  }, [exercise.correctAnswer, exercise.hintText, exercise.teachingNote]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +38,7 @@ export default function PhoneticType({
 
   const handleContinue = () => {
     setInput("");
+    setHintLevel(0);
     onNext();
   };
 
@@ -42,9 +50,7 @@ export default function PhoneticType({
 
   return (
     <div className="w-full h-[400px] flex flex-col items-center justify-between">
-      {/* Top Section */}
       <div className="flex-1 flex flex-col items-center justify-center w-full">
-        {/* Kannada word prompt */}
         <motion.div
           key={exercise.id}
           initial={{ opacity: 0, scale: 0.95 }}
@@ -69,7 +75,6 @@ export default function PhoneticType({
         </p>
       </div>
 
-      {/* Input form */}
       <form onSubmit={handleSubmit} className="w-full max-w-xs flex flex-col items-center">
         <div className="relative w-full">
           <input
@@ -95,7 +100,6 @@ export default function PhoneticType({
           />
         </div>
 
-        {/* Correct answer shown on wrong */}
         <div className="h-12 w-full flex items-center justify-center mt-2">
           <AnimatePresence>
             {feedbackState === "incorrect" && (
@@ -114,7 +118,33 @@ export default function PhoneticType({
           </AnimatePresence>
         </div>
 
-        {/* Action button area */}
+        <div className="h-12 w-full flex items-center justify-center">
+          {feedbackState === "idle" && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setHintLevel((prev) => Math.min(prev + 1, hints.length))}
+                disabled={hintLevel >= hints.length}
+                className="text-xs px-3 py-1.5 rounded-full border border-white/20 text-sand hover:border-saffron/50 hover:text-saffron transition-colors disabled:opacity-40"
+              >
+                {hintLevel === 0 ? "Need a hint?" : hintLevel === 1 ? "Show another hint" : "No more hints"}
+              </button>
+              <AnimatePresence>
+                {hintLevel > 0 && (
+                  <motion.p
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="text-xs text-sand-dim mt-2"
+                  >
+                    {hints[hintLevel - 1]}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
+
         <div className="h-16 w-full flex items-center justify-center mt-2">
           {feedbackState === "idle" ? (
             <motion.button

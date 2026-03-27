@@ -1,4 +1,4 @@
-import { Screen, ExercisePhase, Exercise, Score, LevelId, CategoryFilter } from "@/types";
+﻿import { Exercise, ExercisePhase, LevelId, Score, Screen } from "@/types";
 
 const STORAGE_KEY = "kali_state";
 
@@ -9,7 +9,6 @@ interface PersistedState {
   glyphMastery: Record<string, number>;
   glyphStreaks: Record<string, number>;
   confusableQueue: Record<string, number>;
-  activeCategory: CategoryFilter;
   screen?: Screen;
   exercisePhase?: ExercisePhase;
   exerciseIndex?: number;
@@ -42,7 +41,6 @@ export function saveState(state: PersistedState): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
-    // quota exceeded — silently ignore
   }
 }
 
