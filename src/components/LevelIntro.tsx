@@ -42,7 +42,8 @@ export default function LevelIntro({ state, dispatch }: LevelIntroProps) {
     const exercises = generateExerciseSet(
       level.id,
       state.masteredCharacters,
-      state.confusableQueue
+      state.confusableQueue,
+      state.glyphMastery
     );
     dispatch({ type: "START_EXERCISE", exercises });
   };

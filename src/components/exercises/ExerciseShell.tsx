@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { AppState } from "@/types";
 
 interface ExerciseShellProps {
@@ -9,15 +10,15 @@ interface ExerciseShellProps {
   children: React.ReactNode;
 }
 
-const PHASE_LABELS: Record<string, { label: string; icon: string }> = {
-  learn: { label: "Learn", icon: "🌱" },
-  visual: { label: "Identify", icon: "👁" },
-  audio: { label: "Listen", icon: "🔊" },
-  "minimal-pair": { label: "Contrast", icon: "⚖" },
-  scramble: { label: "Build", icon: "🧩" },
-  phonetic: { label: "Decode", icon: "⌨" },
-  "guided-decode": { label: "Guided", icon: "🧭" },
-  "word-meaning": { label: "Translate", icon: "📖" },
+const PHASE_LABELS: Record<string, { label: string; icon: string; toast: string }> = {
+  learn:         { label: "Learn",    icon: "🌱", toast: "Meet your new character" },
+  visual:        { label: "Identify", icon: "👁",  toast: "Can you identify it?" },
+  audio:         { label: "Listen",   icon: "🔊", toast: "Train your ear" },
+  "minimal-pair":{ label: "Contrast", icon: "⚖",  toast: "Spot the difference" },
+  scramble:      { label: "Build",    icon: "🧩", toast: "Assemble the word" },
+  phonetic:      { label: "Decode",   icon: "⌨",  toast: "Now type what you know" },
+  "guided-decode":{ label: "Guided", icon: "🧭", toast: "Step-by-step decode" },
+  "word-meaning":{ label: "Translate",icon: "📖", toast: "What does it mean?" },
 };
 
 export default function ExerciseShell({
@@ -25,39 +26,46 @@ export default function ExerciseShell({
   onBack,
   children,
 }: ExerciseShellProps) {
-  const { exerciseIndex, exercises, exercisePhase, score } = state;
+  const { exerciseIndex, exercises, exercisePhase, score, glyphStreaks } = state;
   const total = exercises.length;
-  const phaseInfo = PHASE_LABELS[exercisePhase] ?? {
-    label: exercisePhase,
-    icon: "",
-  };
+  const phaseInfo = PHASE_LABELS[exercisePhase] ?? { label: exercisePhase, icon: "", toast: "" };
+
+  // ── Phase-transition toast ────────────────────────────────
+  const prevPhaseRef = useRef<string | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
+
+  useEffect(() => {
+    if (prevPhaseRef.current !== null && prevPhaseRef.current !== exercisePhase) {
+      setToastVisible(true);
+      const t = setTimeout(() => setToastVisible(false), 1600);
+      return () => clearTimeout(t);
+    }
+    prevPhaseRef.current = exercisePhase;
+  }, [exercisePhase]);
+
+  // ── Per-character streak indicator (phonetic phase only) ─
+  const currentExercise = exercises[exerciseIndex];
+  const targetGlyph = currentExercise?.targetGlyph;
+  const streak = targetGlyph ? (glyphStreaks[targetGlyph] ?? 0) : 0;
+  const showStreak = exercisePhase === "phonetic" && !!targetGlyph;
 
   return (
     <div className="min-h-screen px-4 py-6 sm:px-8 max-w-2xl mx-auto flex flex-col">
-      <div className="flex items-center justify-between mb-6">
+      {/* ── Header row ── */}
+      <div className="flex items-center justify-between mb-5">
         <button
           onClick={onBack}
           className="text-sand-dim text-sm flex items-center gap-1 hover:text-sand transition-colors"
         >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.5}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 19.5 8.25 12l7.5-7.5"
-            />
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
           </svg>
           Exit
         </button>
 
         <motion.div
           key={exercisePhase}
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10"
         >
@@ -67,39 +75,63 @@ export default function ExerciseShell({
           </span>
         </motion.div>
 
-        <div className="text-right">
+        <div className="flex items-center gap-2">
+          {/* Per-character streak dots (phonetic only) */}
+          <AnimatePresence>
+            {showStreak && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex gap-1 items-center"
+                title={`Phonetic streak: ${streak}/3`}
+              >
+                {[0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className={`w-2 h-2 rounded-full transition-colors duration-300 ${
+                      i < streak ? "bg-saffron" : "bg-white/15"
+                    }`}
+                  />
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
           <span className="text-xs text-sand-dim">
             {score.correct}/{score.total}
           </span>
         </div>
       </div>
 
-      <div className="h-1 rounded-full bg-white/5 mb-8 overflow-hidden">
+      {/* ── Progress bar ── */}
+      <div className="h-1 rounded-full bg-white/5 mb-7 overflow-hidden">
         <motion.div
           className="h-full rounded-full bg-saffron"
           initial={{ width: 0 }}
-          animate={{
-            width: `${total > 0 ? ((exerciseIndex + 1) / total) * 100 : 0}%`,
-          }}
+          animate={{ width: `${total > 0 ? ((exerciseIndex + 1) / total) * 100 : 0}%` }}
           transition={{ duration: 0.4, ease: "easeOut" }}
         />
       </div>
 
-      <div className="flex justify-center gap-1.5 mb-8">
-        {exercises.map((_, i) => (
-          <div
-            key={i}
-            className={`w-1.5 h-1.5 rounded-full transition-colors ${
-              i < exerciseIndex
-                ? "bg-saffron"
-                : i === exerciseIndex
-                ? "bg-saffron/60"
-                : "bg-white/10"
-            }`}
-          />
-        ))}
-      </div>
+      {/* ── Phase transition toast ── */}
+      <AnimatePresence>
+        {toastVisible && (
+          <motion.div
+            key={exercisePhase + "-toast"}
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25 }}
+            className="fixed top-16 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-full bg-onyx-lighter border border-white/15 shadow-lg"
+          >
+            <span className="text-xs text-sand font-medium">
+              {phaseInfo.icon} {phaseInfo.toast}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
+      {/* ── Exercise content ── */}
       <div className="flex-1 flex flex-col items-center justify-center">
         {children}
       </div>

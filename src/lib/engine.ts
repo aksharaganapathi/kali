@@ -63,7 +63,15 @@ function generateDistractors(
   return pick(others, Math.min(count, others.length));
 }
 
-function getReviewCharacters(currentLevelId: LevelId, masteredChars: string[]): Character[] {
+/**
+ * Returns review characters weighted by mastery weakness.
+ * Characters with mastery < 60 appear twice (Leitner-style prioritisation).
+ */
+function getReviewCharacters(
+  currentLevelId: LevelId,
+  masteredChars: string[],
+  glyphMastery: Record<string, number> = {}
+): Character[] {
   const masteredSet = new Set(masteredChars);
   const reviewPool: Character[] = [];
   const currentIndex = levelIndex(currentLevelId);
@@ -73,6 +81,10 @@ function getReviewCharacters(currentLevelId: LevelId, masteredChars: string[]): 
     for (const char of level.characters) {
       if (masteredSet.has(char.glyph)) {
         reviewPool.push(char);
+        // Weak characters (mastery < 60) get an extra slot
+        if ((glyphMastery[char.glyph] ?? 0) < 60) {
+          reviewPool.push(char);
+        }
       }
     }
   }
@@ -315,18 +327,20 @@ export function splitKannadaWord(word: string): string[] {
   return parts;
 }
 
+/** Maximum exercises per session — keeps sessions digestible and prevents fatigue. */
+const SESSION_SIZE = 25;
+
 export function generateExerciseSet(
   levelId: LevelId,
   masteredCharacters: string[],
-  confusableQueue: Record<string, number> = {}
+  confusableQueue: Record<string, number> = {},
+  glyphMastery: Record<string, number> = {}
 ): Exercise[] {
   const level = LEVELS.find((l) => l.id === levelId);
   if (!level) return [];
 
   const chars = level.characters;
   const allPool = ALL_CHARACTERS;
-  const exercises: Exercise[] = [];
-  const learnExercises: Exercise[] = chars.map((char) => createLearnExercise(char));
 
   const currentMastered = [
     ...new Set([...masteredCharacters, ...chars.map((c) => c.glyph)]),
@@ -347,16 +361,23 @@ export function generateExerciseSet(
   const forcedDistractors = allPool.filter((char) => forcedConfusableGlyphs.includes(char.glyph));
 
   const distractorPool = chars.length >= 4 ? chars : allPool;
-  for (const char of chars) {
-    for (let i = 0; i < 3; i++) {
-      exercises.push(createVisualExercise(char, distractorPool, forcedDistractors));
-    }
-    for (let i = 0; i < 4; i++) {
-      exercises.push(createCharPhoneticExercise(char));
-    }
-    exercises.push(createAudioExercise(char, distractorPool, forcedDistractors));
+
+  // ─── 1. STRICT PER-CHARACTER SEQUENCE (new chars only) ────────────────────
+  // Each new character follows: learn → visual × 2 → audio × 1 → phonetic × 2
+  // Characters are shuffled once at the top, but exercise types within each
+  // character are always in this fixed order (exposure → recognition → production).
+  const newCharExercises: Exercise[] = [];
+  const shuffledChars = shuffle(chars);
+  for (const char of shuffledChars) {
+    newCharExercises.push(createLearnExercise(char));
+    newCharExercises.push(createVisualExercise(char, distractorPool, forcedDistractors));
+    newCharExercises.push(createVisualExercise(char, distractorPool, forcedDistractors));
+    newCharExercises.push(createAudioExercise(char, distractorPool, forcedDistractors));
+    newCharExercises.push(createCharPhoneticExercise(char));
+    newCharExercises.push(createCharPhoneticExercise(char));
   }
 
+  // ─── 2. MINIMAL PAIRS (from confusable queue) ─────────────────────────────
   const minimalPairExercises: Exercise[] = [];
   for (const [targetGlyph, contrastGlyph] of forcedPairs) {
     const target = allPool.find((c) => c.glyph === targetGlyph);
@@ -365,27 +386,23 @@ export function generateExerciseSet(
     minimalPairExercises.push(createMinimalPairExercise(target, contrast));
     if (minimalPairExercises.length >= 3) break;
   }
-  exercises.push(...minimalPairExercises);
 
-  const reviewChars = getReviewCharacters(levelId, masteredCharacters);
-
-  for (const char of reviewChars) {
-    for (let i = 0; i < 1; i++) {
-      const visEx = createVisualExercise(char, allPool, forcedDistractors);
-      visEx.isReview = true;
-      exercises.push(visEx);
-
-      const audEx = createAudioExercise(char, allPool, forcedDistractors);
-      audEx.isReview = true;
-      exercises.push(audEx);
-
-      const phoEx = createCharPhoneticExercise(char);
-      phoEx.isReview = true;
-      exercises.push(phoEx);
-    }
+  // ─── 3. WEIGHTED REVIEW (previous levels, mastery-prioritised) ────────────
+  const reviewChars = getReviewCharacters(levelId, masteredCharacters, glyphMastery);
+  const reviewExercises: Exercise[] = [];
+  for (const char of shuffle(reviewChars)) {
+    const visEx = createVisualExercise(char, allPool, forcedDistractors);
+    visEx.isReview = true;
+    const audEx = createAudioExercise(char, allPool, forcedDistractors);
+    audEx.isReview = true;
+    const phoEx = createCharPhoneticExercise(char);
+    phoEx.isReview = true;
+    reviewExercises.push(visEx, audEx, phoEx);
   }
 
+  // ─── 4. WORD EXERCISES ────────────────────────────────────────────────────
   const availableWords = getDynamicWords(currentMastered, levelId);
+  const wordExercises: Exercise[] = [];
 
   for (const word of availableWords) {
     const isReviewWord =
@@ -398,35 +415,39 @@ export function generateExerciseSet(
       wordPhoneticA.isReview = true;
       wordPhoneticB.isReview = true;
     }
-    exercises.push(wordPhoneticA, wordPhoneticB);
+    wordExercises.push(wordPhoneticA, wordPhoneticB);
 
     if (splitKannadaWord(word.kannada).length >= 2 && Math.random() < 0.35) {
       const guidedEx = createGuidedDecodeExercise(word);
       if (isReviewWord) guidedEx.isReview = true;
-      exercises.push(guidedEx);
+      wordExercises.push(guidedEx);
     }
 
     if (Math.random() < 0.25) {
       const wExMeaning = createWordMeaningExercise(word, availableWords);
       if (isReviewWord) wExMeaning.isReview = true;
-      exercises.push(wExMeaning);
+      wordExercises.push(wExMeaning);
     }
 
     if (splitKannadaWord(word.kannada).length >= 2 && Math.random() < 0.3) {
       const scrEx = createScrambleExercise(word);
       if (isReviewWord) scrEx.isReview = true;
-      exercises.push(scrEx);
+      wordExercises.push(scrEx);
     }
   }
 
-  const guidedFirst = exercises.filter(
-    (exercise) => exercise.phase === "guided-decode" || exercise.phase === "minimal-pair"
-  );
-  const remaining = exercises.filter(
-    (exercise) => exercise.phase !== "guided-decode" && exercise.phase !== "minimal-pair"
-  );
+  // ─── 5. ASSEMBLE & CAP ────────────────────────────────────────────────────
+  // Order: new character exercises (strict sequence) → minimal pairs → shuffled word exercises → shuffled review
+  const ordered = [
+    ...newCharExercises,
+    ...shuffle(minimalPairExercises),
+    ...shuffle(wordExercises),
+    ...shuffle(reviewExercises),
+  ];
 
-  return [...learnExercises, ...shuffle(guidedFirst), ...shuffle(remaining)];
+  // Cap to SESSION_SIZE so sessions are digestible.
+  // State is persisted, so the user can start again and practice what's left.
+  return ordered.slice(0, SESSION_SIZE);
 }
 
 export function checkAnswer(exercise: Exercise, userAnswer: string): boolean {

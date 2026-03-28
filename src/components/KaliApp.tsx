@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useKaliReducer } from "@/hooks/useKaliReducer";
 import { preloadVoices } from "@/lib/speech";
@@ -16,6 +16,9 @@ import WordMeaning from "./exercises/WordMeaning";
 import GuidedDecode from "./exercises/GuidedDecode";
 import MinimalPair from "./exercises/MinimalPair";
 import CharacterLearn from "./exercises/CharacterLearn";
+import Onboarding from "./Onboarding";
+
+const ONBOARDING_KEY = "kali_onboarding_done";
 
 const pageTransition = {
   initial: { opacity: 0, x: 30 },
@@ -26,10 +29,27 @@ const pageTransition = {
 
 export default function KaliApp() {
   const { state, dispatch } = useKaliReducer();
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     preloadVoices();
   }, []);
+
+  // Show onboarding only once, for first-time users, after hydration
+  useEffect(() => {
+    if (!state.hydrated) return;
+    const done = localStorage.getItem(ONBOARDING_KEY);
+    if (!done && state.masteredCharacters.length === 0) {
+      setShowOnboarding(true);
+    }
+  }, [state.hydrated, state.masteredCharacters.length]);
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem(ONBOARDING_KEY, "1");
+    setShowOnboarding(false);
+    // Auto-navigate to Level 1 intro
+    dispatch({ type: "SELECT_LEVEL", level: 1 });
+  };
 
   if (!state.hydrated) {
     return (
@@ -63,29 +83,27 @@ export default function KaliApp() {
     };
 
     switch (currentExercise.phase) {
-      case "learn":
-        return <CharacterLearn key={currentExercise.id} {...props} />;
-      case "visual":
-        return <VisualFlashcard key={currentExercise.id} {...props} />;
-      case "audio":
-        return <AudioMatch key={currentExercise.id} {...props} />;
-      case "minimal-pair":
-        return <MinimalPair key={currentExercise.id} {...props} />;
-      case "scramble":
-        return <SyllableScramble key={currentExercise.id} {...props} />;
-      case "phonetic":
-        return <PhoneticType key={currentExercise.id} {...props} />;
-      case "guided-decode":
-        return <GuidedDecode key={currentExercise.id} {...props} />;
-      case "word-meaning":
-        return <WordMeaning key={currentExercise.id} {...props} />;
-      default:
-        return null;
+      case "learn":         return <CharacterLearn key={currentExercise.id} {...props} />;
+      case "visual":        return <VisualFlashcard key={currentExercise.id} {...props} />;
+      case "audio":         return <AudioMatch key={currentExercise.id} {...props} />;
+      case "minimal-pair":  return <MinimalPair key={currentExercise.id} {...props} />;
+      case "scramble":      return <SyllableScramble key={currentExercise.id} {...props} />;
+      case "phonetic":      return <PhoneticType key={currentExercise.id} {...props} />;
+      case "guided-decode": return <GuidedDecode key={currentExercise.id} {...props} />;
+      case "word-meaning":  return <WordMeaning key={currentExercise.id} {...props} />;
+      default:              return null;
     }
   };
 
   return (
     <div className="relative w-full h-full min-h-screen overflow-x-hidden">
+      {/* First-launch onboarding modal */}
+      <AnimatePresence>
+        {showOnboarding && (
+          <Onboarding onComplete={handleOnboardingComplete} />
+        )}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
         {state.screen === "dashboard" && (
           <motion.div key="dashboard" {...pageTransition}>

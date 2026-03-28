@@ -29,6 +29,7 @@ const item = {
 export default function Dashboard({ state, dispatch }: DashboardProps) {
   const totalChars = LEVELS.flatMap((l) => l.characters).length;
   const masteredCount = state.masteredCharacters.length;
+  const isFirstTimeUser = masteredCount === 0;
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const handleReset = () => {
@@ -38,7 +39,7 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
   };
 
   return (
-    <div className="min-h-screen px-4 py-8 sm:px-8 max-w-4xl mx-auto">
+    <div className="min-h-screen px-4 py-10 sm:px-8 max-w-6xl mx-auto">
       <AnimatePresence>
         {showResetConfirm && (
           <motion.div
@@ -82,14 +83,16 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
         className="flex items-center justify-between mb-12"
       >
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3 leading-none">
-            <span className="font-kannada text-saffron text-[34px] leading-none text-glow-saffron drop-shadow-[0_0_15px_rgba(241,178,74,0.4)] inline-flex items-center justify-center h-10 px-2 rounded-lg bg-saffron/10 border border-saffron/25">
+          <div className="flex items-center gap-3">
+            <span className="font-kannada text-saffron text-3xl leading-none text-glow-saffron drop-shadow-[0_0_15px_rgba(241,178,74,0.4)] inline-flex items-center justify-center px-3 pt-4.5 pb-1 rounded-lg bg-saffron/10 border border-saffron/25 select-none">
               ಕಲಿ
             </span>
-            Kali
-          </h1>
+            <h1 className="text-3xl font-bold tracking-tight text-white leading-none">Kali</h1>
+          </div>
           <p className="text-sm text-sand-dim font-medium tracking-wide">Scaffolded script learning</p>
-          <p className="text-xs text-sand-dim/80">Pick a level to continue where you left off</p>
+          <p className="text-xs text-sand-dim/80">
+            {isFirstTimeUser ? "New here? Start with Level 1 → Vowels" : "Pick a level to continue where you left off"}
+          </p>
         </div>
 
         <div className="flex items-center gap-4">
@@ -135,7 +138,7 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
       >
         {LEVELS.map((level) => {
           const unlocked = state.unlockedLevels.includes(level.id);
@@ -153,12 +156,16 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
               : "Start"
             : "Locked";
 
+          const isStartHere = isFirstTimeUser && level.id === 1;
+
           return (
             <motion.div key={level.id} variants={item}>
               <GlassCard
                 hover={unlocked}
                 className={`p-5 relative overflow-hidden transition-all duration-500 ${
-                  unlocked
+                  isStartHere
+                    ? "border-saffron/40 shadow-[0_0_20px_rgba(241,178,74,0.12)] hover:border-saffron/60"
+                    : unlocked
                     ? "hover:shadow-[0_0_30px_rgba(241,178,74,0.1)] hover:border-saffron/30"
                     : "opacity-40 pointer-events-none"
                 }`}
@@ -170,12 +177,18 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
                 }
               >
                 <div className="flex items-center justify-between mb-3">
-                  <span
-                    className={`text-xs font-medium uppercase tracking-widest ${isComplete ? "text-correct" : "text-sand-dim"
-                      }`}
-                  >
-                    Level {level.id}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-xs font-medium uppercase tracking-widest ${isComplete ? "text-correct" : "text-sand-dim"}`}
+                    >
+                      Level {level.id}
+                    </span>
+                    {isStartHere && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-saffron/20 text-saffron font-semibold uppercase tracking-wider">
+                        Start here
+                      </span>
+                    )}
+                  </div>
                   <div className="relative flex items-center justify-center">
                     <ProgressRing progress={progress} size={36} strokeWidth={2.5} />
                     {isComplete && (

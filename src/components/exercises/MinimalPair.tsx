@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Exercise } from "@/types";
 import { speak, isSpeechAvailable } from "@/lib/speech";
 import GlassCard from "../ui/GlassCard";
+import ExerciseLayout from "./ExerciseLayout";
 
 interface MinimalPairProps {
   exercise: Exercise;
@@ -12,6 +13,8 @@ interface MinimalPairProps {
   onNext: () => void;
   feedbackState: "idle" | "correct" | "incorrect";
 }
+
+const OPTION_LABELS = ["A", "B"];
 
 export default function MinimalPair({
   exercise,
@@ -44,9 +47,7 @@ export default function MinimalPair({
   useEffect(() => {
     if (!autoPlayed.current && speechAvailable) {
       autoPlayed.current = true;
-      const timer = setTimeout(() => {
-        handlePlay();
-      }, 300);
+      const timer = setTimeout(() => { handlePlay(); }, 300);
       return () => clearTimeout(timer);
     }
   }, [exercise.id, handlePlay, speechAvailable]);
@@ -64,12 +65,15 @@ export default function MinimalPair({
   };
 
   return (
-    <div className="w-full h-[430px] flex flex-col items-center justify-between">
-      <div className="flex-1 flex flex-col items-center justify-end pb-6 w-full">
-        <p className="text-xs uppercase tracking-wider text-sand-dim mb-2">Minimal pair contrast</p>
+    <ExerciseLayout>
+      {/* Audio trigger */}
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-xs uppercase tracking-wider text-sand-dim">Minimal pair contrast</p>
         <button
           onClick={handlePlay}
-          className="w-20 h-20 rounded-full border border-white/15 bg-white/5 flex items-center justify-center mb-3"
+          className={`w-20 h-20 rounded-full border flex items-center justify-center transition-colors ${
+            playing ? "bg-saffron/20 border-saffron/30" : "bg-white/5 border-white/15 hover:bg-white/10"
+          }`}
         >
           <motion.span
             animate={playing ? { scale: [1, 1.15, 1] } : {}}
@@ -82,8 +86,9 @@ export default function MinimalPair({
         <p className="text-xs text-sand-dim">Pick the character that matches the sound</p>
       </div>
 
+      {/* Answer cards */}
       <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-        {exercise.options?.map((option) => {
+        {exercise.options?.map((option, idx) => {
           const isSelected = selected === option;
           const isCorrect = feedbackState !== "idle" && option === exercise.correctAnswer;
           const isWrong = feedbackState === "incorrect" && isSelected && !isCorrect;
@@ -92,53 +97,60 @@ export default function MinimalPair({
               key={option}
               hover={feedbackState === "idle"}
               className={`
-                p-5 text-center cursor-pointer select-none transition-all duration-300
+                py-6 px-4 text-center cursor-pointer select-none transition-all duration-300 relative
                 ${isCorrect ? "!border-correct/40 !bg-correct/10" : ""}
                 ${isWrong ? "!border-incorrect/40 !bg-incorrect/10" : ""}
               `}
               onClick={() => handleSelect(option)}
               whileTap={feedbackState === "idle" ? { scale: 0.95 } : {}}
             >
-              <span className="font-kannada text-4xl text-white">{option}</span>
+              <span className="absolute top-1.5 left-2 text-[10px] text-sand-dim/50 font-medium select-none">
+                {OPTION_LABELS[idx]}
+              </span>
+              <span className="font-kannada text-5xl text-white">{option}</span>
             </GlassCard>
           );
         })}
       </div>
 
-      <div className="h-24 w-full flex items-center justify-center mt-2">
-        {feedbackState === "idle" ? (
-          <div className="text-center">
-            <button
-              onClick={() => setHintLevel((prev) => Math.min(prev + 1, hints.length))}
-              disabled={hintLevel >= hints.length}
-              className="text-xs px-3 py-1.5 rounded-full border border-white/20 text-sand hover:border-saffron/50 hover:text-saffron transition-colors disabled:opacity-40"
+      {/* Hint / continue */}
+      <div className="w-full max-w-sm text-center min-h-[40px]">
+        <AnimatePresence mode="wait">
+          {feedbackState === "idle" ? (
+            <motion.div key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <button
+                onClick={() => setHintLevel((prev) => Math.min(prev + 1, hints.length))}
+                disabled={hintLevel >= hints.length}
+                className="text-xs px-3 py-1.5 rounded-full border border-white/20 text-sand hover:border-saffron/50 hover:text-saffron transition-colors disabled:opacity-40"
+              >
+                {hintLevel === 0 ? "Need a hint?" : hintLevel === 1 ? "Show another hint" : "No more hints"}
+              </button>
+              <AnimatePresence>
+                {hintLevel > 0 && (
+                  <motion.p
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="text-xs text-sand-dim mt-2"
+                  >
+                    {hints[hintLevel - 1]}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          ) : (
+            <motion.button
+              key="continue"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              onClick={handleContinue}
+              className="px-8 py-3 rounded-xl bg-saffron text-onyx font-bold text-sm tracking-wide"
             >
-              {hintLevel === 0 ? "Need a hint?" : hintLevel === 1 ? "Show another hint" : "No more hints"}
-            </button>
-            <AnimatePresence>
-              {hintLevel > 0 && (
-                <motion.p
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="text-xs text-sand-dim mt-2"
-                >
-                  {hints[hintLevel - 1]}
-                </motion.p>
-              )}
-            </AnimatePresence>
-          </div>
-        ) : (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            onClick={handleContinue}
-            className="px-8 py-3 rounded-xl bg-saffron text-onyx font-bold text-sm tracking-wide"
-          >
-            Continue
-          </motion.button>
-        )}
+              Continue
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </ExerciseLayout>
   );
 }
