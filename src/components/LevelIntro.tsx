@@ -25,6 +25,12 @@ const letterVariant = {
 export default function LevelIntro({ state, dispatch }: LevelIntroProps) {
   const level = LEVELS.find((l) => l.id === state.currentLevel);
   if (!level) return null;
+
+  const hasInProgress =
+    state.exercises.length > 0 &&
+    state.exerciseIndex < state.exercises.length &&
+    state.score.total > 0;
+
   const anchorWords = getAnchorWordsForCharacters(
     level.characters.map((char) => char.glyph),
     state.currentLevel,
@@ -39,6 +45,10 @@ export default function LevelIntro({ state, dispatch }: LevelIntroProps) {
       state.confusableQueue
     );
     dispatch({ type: "START_EXERCISE", exercises });
+  };
+
+  const handleResume = () => {
+    dispatch({ type: "RESUME_EXERCISE" });
   };
 
   return (
@@ -144,10 +154,15 @@ export default function LevelIntro({ state, dispatch }: LevelIntroProps) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="text-center"
+        className="text-center flex flex-col items-center gap-3"
       >
+        {hasInProgress && (
+          <Button size="lg" onClick={handleResume}>
+            Resume Exercises
+          </Button>
+        )}
         <Button size="lg" onClick={handleStart}>
-          Begin Exercises
+          {hasInProgress ? "Start Fresh" : "Begin Exercises"}
         </Button>
       </motion.div>
     </div>

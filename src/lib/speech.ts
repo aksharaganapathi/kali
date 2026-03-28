@@ -1,51 +1,33 @@
-﻿import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
-
 export function isSpeechAvailable(): boolean {
-  return typeof window !== "undefined" && !!process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY;
+  // Sarvam is always available (key is server-side); we only need a browser context
+  return typeof window !== "undefined";
 }
 
-let _client: ElevenLabsClient | null = null;
+async function speakWithSarvam(text: string): Promise<void> {
+  const res = await fetch("/api/tts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
 
-function getClient(): ElevenLabsClient {
-  if (!_client) {
-    _client = new ElevenLabsClient({
-      apiKey: process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY || "",
-    });
-  }
-  return _client;
-}
-
-async function speakWithElevenLabs(text: string): Promise<void> {
-  const apiKey = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY;
-  const voiceId = process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID || "";
-
-  if (!apiKey) {
-    console.warn("ElevenLabs API Key missing in environment variables.");
-    throw new Error("Missing API Key");
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Sarvam TTS error: ${err}`);
   }
 
-  const client = getClient();
-
-const stream = await client.textToSpeech.convert(voiceId, {
-  text,
-  modelId: "eleven_v3", // Ensure this matches the version you selected on the site
-  languageCode: "kn",
-  voiceSettings: {
-    stability: 0.7,        // Increased to reduce "randomness"
-    similarityBoost: 0.8,  // Slightly higher for custom voices
-    style: 0.1,            // Lowering this can help with clarity in non-English languages
-    useSpeakerBoost: true, // CRITICAL: This mimics the web 'Speaker Boost' setting
-  },
-});
-
-  const reader = stream.getReader();
-  const chunks: Uint8Array[] = [];
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    if (value) chunks.push(value);
+  const data = await res.json() as { audios: string[] };
+  const base64Audio = data.audios?.[0];
+  if (!base64Audio) {
+    throw new Error("No audio returned from Sarvam TTS");
   }
-  const blob = new Blob(chunks as BlobPart[], { type: "audio/mpeg" });
+
+  // Decode base64 → Blob → Object URL → play
+  const binary = atob(base64Audio);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  const blob = new Blob([bytes], { type: "audio/wav" });
   const url = URL.createObjectURL(blob);
   const audio = new Audio(url);
 
@@ -64,7 +46,7 @@ const stream = await client.textToSpeech.convert(voiceId, {
     audio.onerror = () => {
       clearTimeout(timeout);
       URL.revokeObjectURL(url);
-      reject(new Error("Audio playback blocked"));
+      reject(new Error("Audio playback failed"));
     };
 
     audio.play().catch((err) => {
@@ -76,8 +58,7 @@ const stream = await client.textToSpeech.convert(voiceId, {
 }
 
 export async function speak(text: string): Promise<void> {
-  return speakWithElevenLabs(text);
+  return speakWithSarvam(text);
 }
 
-export function preloadVoices(): void {
-}
+export function preloadVoices(): void {}

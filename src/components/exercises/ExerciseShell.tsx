@@ -10,6 +10,7 @@ interface ExerciseShellProps {
 }
 
 const PHASE_LABELS: Record<string, { label: string; icon: string }> = {
+  learn: { label: "Learn", icon: "🌱" },
   visual: { label: "Identify", icon: "👁" },
   audio: { label: "Listen", icon: "🔊" },
   "minimal-pair": { label: "Contrast", icon: "⚖" },

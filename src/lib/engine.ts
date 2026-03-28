@@ -127,6 +127,20 @@ function createVisualExercise(
   };
 }
 
+function createLearnExercise(char: Character): Exercise {
+  return {
+    id: uid(),
+    createdAtMs: Date.now(),
+    phase: "learn",
+    prompt: char.context ?? char.glyph,
+    correctAnswer: char.romanization,
+    aliases: char.aliases,
+    targetGlyph: char.glyph,
+    hintText: `Listen and repeat: ${char.romanization}`,
+    teachingNote: `This is ${char.context ?? char.glyph}, pronounced ${char.romanization}.`,
+  };
+}
+
 function createAudioExercise(
   char: Character,
   pool: Character[],
@@ -312,6 +326,7 @@ export function generateExerciseSet(
   const chars = level.characters;
   const allPool = ALL_CHARACTERS;
   const exercises: Exercise[] = [];
+  const learnExercises: Exercise[] = chars.map((char) => createLearnExercise(char));
 
   const currentMastered = [
     ...new Set([...masteredCharacters, ...chars.map((c) => c.glyph)]),
@@ -411,7 +426,7 @@ export function generateExerciseSet(
     (exercise) => exercise.phase !== "guided-decode" && exercise.phase !== "minimal-pair"
   );
 
-  return [...shuffle(guidedFirst), ...shuffle(remaining)];
+  return [...learnExercises, ...shuffle(guidedFirst), ...shuffle(remaining)];
 }
 
 export function checkAnswer(exercise: Exercise, userAnswer: string): boolean {

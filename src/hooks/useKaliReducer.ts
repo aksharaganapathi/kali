@@ -62,12 +62,40 @@ function reducer(state: AppState, action: AppAction): AppState {
       return { ...state, ...action.state, hydrated: true };
 
     case "SELECT_LEVEL":
+      {
+        const hasResumableSession =
+          action.level === state.currentLevel &&
+          state.exercises.length > 0 &&
+          state.exerciseIndex < state.exercises.length;
+
+        if (hasResumableSession) {
+          return {
+            ...state,
+            screen: "level-intro",
+            currentLevel: action.level,
+            feedbackState: "idle",
+          };
+        }
+
+        return {
+          ...state,
+          screen: "level-intro",
+          currentLevel: action.level,
+          score: { correct: 0, total: 0 },
+          exerciseIndex: 0,
+          exercises: [],
+          feedbackState: "idle",
+        };
+      }
+
+    case "RESUME_EXERCISE":
+      if (state.exercises.length === 0 || state.exerciseIndex >= state.exercises.length) {
+        return state;
+      }
       return {
         ...state,
-        screen: "level-intro",
-        currentLevel: action.level,
-        score: { correct: 0, total: 0 },
-        exerciseIndex: 0,
+        screen: "exercise",
+        exercisePhase: state.exercises[state.exerciseIndex]?.phase ?? "visual",
         feedbackState: "idle",
       };
 

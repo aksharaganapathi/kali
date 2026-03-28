@@ -26,7 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="kn">
       <body
         className={`${inter.variable} ${notoSansKannada.variable} antialiased w-full h-full min-h-screen overflow-x-hidden`}
       >

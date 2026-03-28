@@ -15,6 +15,7 @@ import PhoneticType from "./exercises/PhoneticType";
 import WordMeaning from "./exercises/WordMeaning";
 import GuidedDecode from "./exercises/GuidedDecode";
 import MinimalPair from "./exercises/MinimalPair";
+import CharacterLearn from "./exercises/CharacterLearn";
 
 const pageTransition = {
   initial: { opacity: 0, x: 30 },
@@ -62,6 +63,8 @@ export default function KaliApp() {
     };
 
     switch (currentExercise.phase) {
+      case "learn":
+        return <CharacterLearn key={currentExercise.id} {...props} />;
       case "visual":
         return <VisualFlashcard key={currentExercise.id} {...props} />;
       case "audio":

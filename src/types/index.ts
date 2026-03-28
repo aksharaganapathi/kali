@@ -1,4 +1,5 @@
 ﻿export type ExercisePhase =
+  | "learn"
   | "visual"
   | "audio"
   | "scramble"
@@ -105,6 +106,7 @@ export type AppAction =
   | { type: "HYDRATE"; state: Partial<AppState> }
   | { type: "SELECT_LEVEL"; level: LevelId }
   | { type: "START_EXERCISE"; exercises: Exercise[] }
+  | { type: "RESUME_EXERCISE" }
   | {
     type: "ANSWER";
     correct: boolean;
