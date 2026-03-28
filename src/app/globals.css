@@ -12,71 +12,180 @@
   --color-incorrect: #F87171;
 }
 
+/* ─── DARK (default) ─────────────────────────────────────── */
+:root {
+  --bg-base:          #0F1115;
+  --bg-card:          rgba(255,255,255,0.05);
+  --bg-card-hover:    rgba(255,255,255,0.08);
+  --border-card:      rgba(255,255,255,0.08);
+  --border-hover:     rgba(255,255,255,0.15);
+  --text-primary:     #FFFFFF;
+  --text-dim:         #D4CDBC;
+  --text-dimmer:      #9E9888;
+  --shadow-card:      0 8px 32px 0 rgba(0,0,0,0.3);
+  --shadow-hover:     0 12px 40px 0 rgba(0,0,0,0.4);
+  --inset-card:       inset 0 0 0 1px rgba(255,255,255,0.02);
+  --inset-hover:      inset 0 0 0 1px rgba(255,255,255,0.05);
+  --scrollbar-track:  #0F1115;
+  --scrollbar-thumb:  #252830;
+  --bg-gradient:
+    radial-gradient(at 0% 0%,   rgba(241,178,74,0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(88,74,241,0.04)  0px, transparent 50%),
+    radial-gradient(at 50% 100%,rgba(241,178,74,0.03) 0px, transparent 50%);
+}
+
+/* ─── LIGHT ──────────────────────────────────────────────── */
+html.light {
+  --bg-base:          #F0EBE0;
+  --bg-card:          rgba(255,255,255,0.88);
+  --bg-card-hover:    rgba(255,255,255,0.98);
+  --border-card:      rgba(120,100,60,0.14);
+  --border-hover:     rgba(120,100,60,0.28);
+  --text-primary:     #1A1205;
+  --text-dim:         #4A4030;
+  --text-dimmer:      #7A6E5E;
+  --shadow-card:      0 2px 12px 0 rgba(80,60,20,0.10), 0 1px 3px 0 rgba(80,60,20,0.07);
+  --shadow-hover:     0 6px 24px 0 rgba(80,60,20,0.15), 0 2px 6px 0 rgba(80,60,20,0.10);
+  --inset-card:       inset 0 1px 0 rgba(255,255,255,0.9);
+  --inset-hover:      inset 0 1px 0 rgba(255,255,255,1);
+  --scrollbar-track:  #E5DDD0;
+  --scrollbar-thumb:  #C0B49E;
+  --bg-gradient:
+    radial-gradient(at 0% 0%,   rgba(241,178,74,0.15) 0px, transparent 55%),
+    radial-gradient(at 100% 0%, rgba(180,160,241,0.08) 0px, transparent 55%),
+    radial-gradient(at 50% 100%,rgba(241,178,74,0.10) 0px, transparent 55%);
+  --color-sand:     #4A4030;
+  --color-sand-dim: #7A6E5E;
+}
+
+/* ─── LIGHT MODE: white-opacity bg/border overrides ─────────
+   Tailwind's bg-white/N and border-white/N classes are nearly
+   invisible on a light background. Map them to warm-dark tints. */
+html.light [class*="bg-white\/"] {
+  background-color: rgba(255,255,255,0.7) !important;
+}
+/* Specific overrides for faint values that need more contrast */
+html.light .bg-white\/4,
+html.light .bg-white\/5 {
+  background-color: rgba(180,160,120,0.08) !important;
+}
+html.light .bg-white\/10 {
+  background-color: rgba(180,160,120,0.12) !important;
+}
+html.light [class*="border-white\/"] {
+  border-color: rgba(120,100,60,0.20) !important;
+}
+html.light .border-white\/5 {
+  border-color: rgba(120,100,60,0.18) !important;
+}
+html.light .border-white\/8,
+html.light .border-white\/10 {
+  border-color: rgba(120,100,60,0.22) !important;
+}
+html.light .border-white\/15 {
+  border-color: rgba(120,100,60,0.26) !important;
+}
+html.light .border-white\/20 {
+  border-color: rgba(120,100,60,0.28) !important;
+}
+
+/* ─── LIGHT MODE: saffron-opacity bg overrides ───────────────
+   bg-saffron/8 on white looks like faint yellow — use a proper
+   warm tint instead. */
+html.light .bg-saffron\/8,
+html.light .bg-saffron\/10 {
+  background-color: rgba(241,178,74,0.12) !important;
+}
+html.light .border-saffron\/20 {
+  border-color: rgba(180,130,30,0.35) !important;
+}
+html.light .border-saffron\/25 {
+  border-color: rgba(180,130,30,0.40) !important;
+}
+
+/* ─── LIGHT MODE: input fields ───────────────────────────── */
+html.light input {
+  color: var(--text-primary);
+  background-color: rgba(255,255,255,0.7);
+}
+html.light input::placeholder {
+  color: var(--text-dimmer);
+  opacity: 0.7;
+}
+
+/* ─── LIGHT MODE: misc overrides ─────────────────────────── */
+html.light .text-white { color: var(--text-primary) !important; }
+html.light .text-sand  { color: var(--text-dim); }
+html.light .text-sand-dim { color: var(--text-dimmer); }
+
+/* ─── BODY ───────────────────────────────────────────────── */
 body {
-  background-color: var(--color-onyx);
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(241, 178, 74, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(88, 74, 241, 0.04) 0px, transparent 50%),
-    radial-gradient(at 50% 100%, rgba(241, 178, 74, 0.03) 0px, transparent 50%);
+  background-color: var(--bg-base);
+  background-image: var(--bg-gradient);
   background-attachment: fixed;
-  color: #FFFFFF;
+  color: var(--text-primary);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   overflow-y: scroll;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--color-onyx);
-}
-
+/* ─── SCROLLBAR ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-onyx-lighter);
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
+::-webkit-scrollbar-thumb:hover { background: var(--color-saffron-dark); }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-saffron-dark);
-}
-
+/* ─── GLASS UTILITIES ─────────────────────────────────────── */
 @utility glass {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+  background: var(--bg-card);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 
-    0 8px 32px 0 rgba(0, 0, 0, 0.3),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-card);
+  box-shadow: var(--shadow-card), var(--inset-card);
 }
 
 @utility glass-hover {
   &:hover {
-    background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: 
-      0 12px 40px 0 rgba(0, 0, 0, 0.4),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    background: var(--bg-card-hover);
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow-hover), var(--inset-hover);
   }
 }
 
+/* ─── TYPOGRAPHY UTILITIES ───────────────────────────────── */
 @utility font-kannada {
   font-family: var(--font-kannada);
 }
 
 @utility text-glow-saffron {
-  text-shadow: 0 0 30px rgba(241, 178, 74, 0.3);
+  text-shadow: 0 0 30px rgba(241,178,74,0.3);
 }
 
 @utility text-glow-correct {
-  text-shadow: 0 0 20px rgba(74, 222, 128, 0.4);
+  text-shadow: 0 0 20px rgba(74,222,128,0.4);
 }
 
 @utility text-glow-incorrect {
-  text-shadow: 0 0 20px rgba(248, 113, 113, 0.4);
+  text-shadow: 0 0 20px rgba(248,113,113,0.4);
+}
+
+/* ─── LIGHT MODE TEXT OVERRIDES ───────────────────────────── */
+/* In light mode, classes like text-white and text-sand need to map to dark text */
+html.light .text-white { color: var(--text-primary) !important; }
+html.light .text-sand  { color: var(--text-dim); }
+html.light .text-sand-dim { color: var(--text-dimmer); }
+
+/* Input fields */
+html.light input {
+  color: var(--text-primary);
+}
+html.light input::placeholder {
+  color: var(--text-dimmer);
+  opacity: 0.6;
 }
