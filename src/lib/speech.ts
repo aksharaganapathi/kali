@@ -84,11 +84,22 @@ export function isSpeechAvailable(): boolean {
   return typeof window !== "undefined";
 }
 
+let audioCtx: AudioContext | null = null;
+function getAudioContext() {
+  if (!audioCtx && typeof window !== "undefined") {
+    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+    if (Ctx) {
+      audioCtx = new Ctx();
+    }
+  }
+  return audioCtx;
+}
+
 async function speakWithSarvam(text: string): Promise<void> {
-  // Safari Hack 1: Create Audio element synchronously before any 'await'
-  const audio = new Audio();
-  // Call play() immediately to bind it to the current user gesture
-  audio.play().catch(() => {});
+  const ctx = getAudioContext();
+  if (ctx && ctx.state === "suspended") {
+    await ctx.resume().catch(() => {});
+  }
 
   const { normalized, original, addedPunctuation } = normalizePrompt(text);
   if (normalized !== original) {
@@ -118,7 +129,6 @@ async function speakWithSarvam(text: string): Promise<void> {
     throw new Error("Invalid base64 audio from Sarvam TTS");
   }
 
-  // Decode base64 → Blob → Object URL → play
   let binary: string;
   try {
     binary = atob(base64Audio);
@@ -135,42 +145,45 @@ async function speakWithSarvam(text: string): Promise<void> {
     console.warn("[TTS] audio payload too small", { length: bytes.length });
   }
 
-  const blob = new Blob([bytes], { type: "audio/wav" });
-  const url = URL.createObjectURL(blob);
-  
-  // Safari Hack 1 (cont): Update the src on our pre-created element
-  audio.src = url;
+  const arrayBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
 
   return new Promise<void>((resolve, reject) => {
-    let timeout: ReturnType<typeof setTimeout> | undefined;
-    const startTimeout = () => {
-      timeout = setTimeout(() => {
-        audio.pause();
-        URL.revokeObjectURL(url);
-        reject(new Error("Audio playback timed out"));
-      }, 15000);
-    };
+    if (!ctx) {
+      // Fallback for incredibly old browsers without Web Audio
+      const blob = new Blob([bytes], { type: "audio/wav" });
+      const url = URL.createObjectURL(blob);
+      const fallbackAudio = new Audio(url);
+      fallbackAudio.onended = () => resolve();
+      fallbackAudio.onerror = () => reject(new Error("Audio playback failed"));
+      fallbackAudio.play().catch(reject);
+      return;
+    }
 
-    audio.onplaying = () => {
-      if (!timeout) startTimeout();
-    };
+    ctx.decodeAudioData(
+      arrayBuffer,
+      (buffer) => {
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        
+        let timeout: ReturnType<typeof setTimeout>;
+        source.onended = () => {
+          clearTimeout(timeout);
+          resolve();
+        };
 
-    audio.onended = () => {
-      if (timeout) clearTimeout(timeout);
-      URL.revokeObjectURL(url);
-      resolve();
-    };
-    audio.onerror = () => {
-      if (timeout) clearTimeout(timeout);
-      URL.revokeObjectURL(url);
-      reject(new Error("Audio playback failed"));
-    };
+        source.start(0);
 
-    audio.play().catch((err) => {
-      if (timeout) clearTimeout(timeout);
-      URL.revokeObjectURL(url);
-      reject(err);
-    });
+        timeout = setTimeout(() => {
+          try { source.stop(); } catch {}
+          reject(new Error("Audio playback timed out"));
+        }, 15000);
+      },
+      (err) => {
+        console.error("[TTS] decodeAudioData error", err);
+        reject(new Error("Failed to decode audio data"));
+      }
+    );
   });
 }
 
@@ -186,10 +199,19 @@ let audioUnlocked = false;
 if (typeof window !== "undefined") {
   const unlock = () => {
     if (audioUnlocked) return;
-    audioUnlocked = true;
-    // Tiny silent MP3 base64 to trick Safari into globally unlocking the Web Audio engine
-    const silentAudio = new Audio("data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq");
-    silentAudio.play().catch(() => {});
+    const ctx = getAudioContext();
+    if (ctx) {
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
+      // Create a short silent buffer to formally unlock Web Audio on iOS
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+      audioUnlocked = true;
+    }
     
     // Cleanup listeners
     window.removeEventListener("touchstart", unlock, true);
