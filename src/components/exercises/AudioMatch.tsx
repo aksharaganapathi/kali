@@ -81,6 +81,7 @@ export default function AudioMatch({
       {/* Speaker button */}
       <div className="flex flex-col items-center gap-2">
         <motion.button
+          aria-label="Play audio"
           onClick={handlePlay}
           disabled={loading}
           whileTap={{ scale: 0.95 }}
@@ -156,7 +157,7 @@ export default function AudioMatch({
       </div>
 
       {/* Hint / continue */}
-      <div className="w-full max-w-sm text-center min-h-[40px]">
+      <div className="w-full max-w-sm text-center min-h-[40px]" aria-live="polite">
         <AnimatePresence mode="wait">
           {feedbackState === "idle" ? (
             <motion.div key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>

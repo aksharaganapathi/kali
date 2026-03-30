@@ -84,23 +84,7 @@ export function isSpeechAvailable(): boolean {
   return typeof window !== "undefined";
 }
 
-let audioCtx: AudioContext | null = null;
-function getAudioContext() {
-  if (!audioCtx && typeof window !== "undefined") {
-    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
-    if (Ctx) {
-      audioCtx = new Ctx();
-    }
-  }
-  return audioCtx;
-}
-
 async function speakWithSarvam(text: string): Promise<void> {
-  const ctx = getAudioContext();
-  if (ctx && ctx.state === "suspended") {
-    await ctx.resume().catch(() => {});
-  }
-
   const { normalized, original, addedPunctuation } = normalizePrompt(text);
   if (normalized !== original) {
     console.debug("[TTS] normalize", {
@@ -124,6 +108,12 @@ async function speakWithSarvam(text: string): Promise<void> {
     throw new Error("No audio returned from Sarvam TTS");
   }
 
+  if (!/^[A-Za-z0-9+/=_-]+$/.test(base64Audio)) {
+    console.warn("[TTS] invalid base64 payload", { length: base64Audio.length });
+    throw new Error("Invalid base64 audio from Sarvam TTS");
+  }
+
+  // Decode base64 → Blob → Object URL → play
   let binary: string;
   try {
     binary = atob(base64Audio);
@@ -136,39 +126,44 @@ async function speakWithSarvam(text: string): Promise<void> {
     bytes[i] = binary.charCodeAt(i);
   }
 
-  const arrayBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  if (bytes.length < 44) {
+    console.warn("[TTS] audio payload too small", { length: bytes.length });
+  }
+
+  const blob = new Blob([bytes], { type: "audio/wav" });
+  const url = URL.createObjectURL(blob);
+  const audio = new Audio(url);
 
   return new Promise<void>((resolve, reject) => {
-    if (!ctx) {
-      reject(new Error("Web Audio API not supported"));
-      return;
-    }
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    const startTimeout = () => {
+      timeout = setTimeout(() => {
+        audio.pause();
+        URL.revokeObjectURL(url);
+        reject(new Error("Audio playback timed out"));
+      }, 15000);
+    };
 
-    ctx.decodeAudioData(
-      arrayBuffer,
-      (buffer) => {
-        const source = ctx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(ctx.destination);
-        
-        let timeout: ReturnType<typeof setTimeout>;
-        source.onended = () => {
-          clearTimeout(timeout);
-          resolve();
-        };
+    audio.onplaying = () => {
+      if (!timeout) startTimeout();
+    };
 
-        source.start(0);
+    audio.onended = () => {
+      if (timeout) clearTimeout(timeout);
+      URL.revokeObjectURL(url);
+      resolve();
+    };
+    audio.onerror = () => {
+      if (timeout) clearTimeout(timeout);
+      URL.revokeObjectURL(url);
+      reject(new Error("Audio playback failed"));
+    };
 
-        timeout = setTimeout(() => {
-          try { source.stop(); } catch {}
-          reject(new Error("Audio playback timed out"));
-        }, 15000);
-      },
-      (err) => {
-        console.error("[TTS] decodeAudioData error", err);
-        reject(new Error("Failed to decode audio data"));
-      }
-    );
+    audio.play().catch((err) => {
+      if (timeout) clearTimeout(timeout);
+      URL.revokeObjectURL(url);
+      reject(err);
+    });
   });
 }
 
@@ -177,33 +172,3 @@ export async function speak(text: string): Promise<void> {
 }
 
 export function preloadVoices(): void {}
-
-// --- Safari / iOS Global Audio Unlocker ---
-let audioUnlocked = false;
-
-if (typeof window !== "undefined") {
-  const unlock = () => {
-    if (audioUnlocked) return;
-    const ctx = getAudioContext();
-    if (ctx) {
-      if (ctx.state === "suspended") {
-        ctx.resume().catch(() => {});
-      }
-      // Create a short silent buffer to formally unlock Web Audio on iOS
-      const buffer = ctx.createBuffer(1, 1, 22050);
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(ctx.destination);
-      source.start(0);
-      audioUnlocked = true;
-    }
-    
-    // Cleanup listeners
-    window.removeEventListener("touchstart", unlock, true);
-    window.removeEventListener("click", unlock, true);
-  };
-  
-  // Use capture phase to ensure it catches clicks even if React stops propagation
-  window.addEventListener("touchstart", unlock, { once: true, capture: true });
-  window.addEventListener("click", unlock, { once: true, capture: true });
-}

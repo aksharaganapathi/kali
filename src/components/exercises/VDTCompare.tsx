@@ -98,6 +98,7 @@ export default function VDTCompare({ exercise, onNext }: VDTCompareProps) {
           </p>
           {speechAvailable && (
             <button
+              aria-label="Play parent audio"
               onClick={handlePlayParent}
               disabled={playingParent}
               className={`text-xs px-3 py-1 rounded-full border transition-colors ${
@@ -141,6 +142,7 @@ export default function VDTCompare({ exercise, onNext }: VDTCompareProps) {
           </p>
           {speechAvailable && (
             <button
+              aria-label="Play child audio"
               onClick={handlePlayChild}
               disabled={playingChild}
               className={`text-xs px-3 py-1 rounded-full border transition-colors ${

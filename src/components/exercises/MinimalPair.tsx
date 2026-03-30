@@ -70,6 +70,7 @@ export default function MinimalPair({
       <div className="flex flex-col items-center gap-2">
         <p className="text-xs uppercase tracking-wider text-sand-dim">Minimal pair contrast</p>
         <button
+          aria-label="Play audio"
           onClick={handlePlay}
           className={`w-20 h-20 rounded-full border flex items-center justify-center transition-colors ${
             playing ? "bg-saffron/20 border-saffron/30" : "bg-white/5 border-white/15 hover:bg-white/10"
@@ -114,7 +115,7 @@ export default function MinimalPair({
       </div>
 
       {/* Hint / continue */}
-      <div className="w-full max-w-sm text-center min-h-[40px]">
+      <div className="w-full max-w-sm text-center min-h-[40px]" aria-live="polite">
         <AnimatePresence mode="wait">
           {feedbackState === "idle" ? (
             <motion.div key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>

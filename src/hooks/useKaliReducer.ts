@@ -1,7 +1,7 @@
 "use client";
 
 import { useReducer, useEffect } from "react";
-import { AppState, AppAction, LevelId } from "@/types";
+import { AppState, AppAction, ExercisePhase, LevelId } from "@/types";
 import { loadState, saveState } from "@/lib/storage";
 import { LEVELS } from "@/lib/curriculum";
 import { generateExerciseSet } from "@/lib/engine";
@@ -40,7 +40,7 @@ const INCORRECT_MASTERY_PENALTY = 6;
 const initialState: AppState = {
   screen: "dashboard",
   currentLevel: 1,
-  exercisePhase: "visual",
+  exercisePhase: ExercisePhase.Visual,
   exerciseIndex: 0,
   exercises: [],
   score: { correct: 0, total: 0 },
@@ -119,12 +119,12 @@ function reducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         screen: "exercise",
-        exercisePhase: state.exercises[state.exerciseIndex]?.phase ?? "visual",
+        exercisePhase: state.exercises[state.exerciseIndex]?.phase ?? ExercisePhase.Visual,
         feedbackState: "idle",
       };
 
     case "START_EXERCISE": {
-      const firstPhase = action.exercises[0]?.phase ?? "visual";
+      const firstPhase = action.exercises[0]?.phase ?? ExercisePhase.Visual;
       return {
         ...state,
         screen: "exercise",
@@ -142,7 +142,7 @@ function reducer(state: AppState, action: AppAction): AppState {
       const targetGlyph = currentExercise?.targetGlyph;
       const isSpeedEligible =
         currentExercise?.timedMode &&
-        (currentExercise.phase === "visual" || currentExercise.phase === "phonetic") &&
+        (currentExercise.phase === ExercisePhase.Visual || currentExercise.phase === ExercisePhase.Phonetic) &&
         action.elapsedMs !== undefined &&
         action.elapsedMs <= FLUENCY_WINDOW_MS;
 
@@ -153,9 +153,9 @@ function reducer(state: AppState, action: AppAction): AppState {
       let wordMastery = state.wordMastery;
       let glyphResponseTimes = state.glyphResponseTimes;
 
-      const targetWord = currentExercise?.phase === "scramble"
+      const targetWord = currentExercise?.phase === ExercisePhase.Scramble
         ? currentExercise.correctAnswer
-        : (currentExercise?.phase === "word-meaning" || currentExercise?.phase === "guided-decode" || (currentExercise?.phase === "phonetic" && currentExercise.prompt.length > 2))
+        : (currentExercise?.phase === ExercisePhase.WordMeaning || currentExercise?.phase === ExercisePhase.GuidedDecode || (currentExercise?.phase === ExercisePhase.Phonetic && currentExercise.prompt.length > 2))
           ? currentExercise.prompt
           : null;
 
@@ -187,7 +187,7 @@ function reducer(state: AppState, action: AppAction): AppState {
             [targetGlyph]: clampScore(previousMastery + gain),
           };
 
-          if (currentExercise?.phase === "phonetic") {
+          if (currentExercise?.phase === ExercisePhase.Phonetic) {
             const nextStreak = previousStreak + 1;
             glyphStreaks = {
               ...glyphStreaks,
@@ -204,7 +204,7 @@ function reducer(state: AppState, action: AppAction): AppState {
             [targetGlyph]: clampScore(previousMastery - INCORRECT_MASTERY_PENALTY),
           };
 
-          if (currentExercise?.phase === "phonetic") {
+          if (currentExercise?.phase === ExercisePhase.Phonetic) {
             glyphStreaks = {
               ...glyphStreaks,
               [targetGlyph]: 0,

@@ -101,6 +101,7 @@ export default function CharacterLearn({ exercise, onNext }: CharacterLearnProps
       {/* Audio button */}
       {speechAvailable && (
         <button
+          aria-label="Play audio"
           onClick={handlePlay}
           disabled={isPlaying || isLoading}
           className={`

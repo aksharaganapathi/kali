@@ -138,6 +138,7 @@ export default function GhostBase({ exercise, onNext }: GhostBaseProps) {
             {/* Audio button */}
             {speechAvailable && (
               <button
+                aria-label="Play audio"
                 onClick={handlePlay}
                 disabled={isPlaying}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-medium transition-all ${

@@ -1,4 +1,4 @@
-import { Character, Exercise, LevelId, WordEntry } from "@/types";
+import { Character, Exercise, ExercisePhase, LevelId, WordEntry } from "@/types";
 import { LEVELS, ALL_CHARACTERS } from "./curriculum";
 import { DICTIONARY } from "./dictionary";
 
@@ -22,7 +22,7 @@ function uid(): string {
 
 const LEVEL_ORDER: LevelId[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-const TIMED_PHASES = new Set(["visual", "phonetic"]);
+const TIMED_PHASES = new Set([ExercisePhase.Visual, ExercisePhase.Phonetic]);
 const CONFUSABLE_PAIR_SEPARATOR = "~";
 
 function levelIndex(levelId: LevelId): number {
@@ -35,7 +35,7 @@ function isUnlockedLevel(minLevel: LevelId, currentLevelId: LevelId): boolean {
   return min >= 0 && current >= 0 && min <= current;
 }
 
-function maybeTimedMode(phase: "visual" | "phonetic"): boolean {
+function maybeTimedMode(phase: ExercisePhase.Visual | ExercisePhase.Phonetic): boolean {
   if (!TIMED_PHASES.has(phase)) return false;
   return Math.random() < 0.55;
 }
@@ -135,12 +135,12 @@ function createVisualExercise(
   return {
     id: uid(),
     createdAtMs: Date.now(),
-    phase: "visual",
+    phase: ExercisePhase.Visual,
     prompt: char.context ?? char.glyph,
     correctAnswer: char.romanization,
     options,
     aliases: char.aliases,
-    timedMode: maybeTimedMode("visual"),
+    timedMode: maybeTimedMode(ExercisePhase.Visual),
     targetGlyph: char.glyph,
     hintText: `Sound anchor: ${char.romanization}`,
     teachingNote: `Spot ${char.context ?? char.glyph} by its unique outer stroke before deciding.`,
@@ -152,7 +152,7 @@ function createLearnExercise(char: Character): Exercise {
   return {
     id: uid(),
     createdAtMs: Date.now(),
-    phase: "learn",
+    phase: ExercisePhase.Learn,
     prompt: char.context ?? char.glyph,
     correctAnswer: char.romanization,
     aliases: char.aliases,
@@ -181,7 +181,7 @@ function createAudioExercise(
   return {
     id: uid(),
     createdAtMs: Date.now(),
-    phase: "audio",
+    phase: ExercisePhase.Audio,
     prompt: char.audioLabel,
     correctAnswer: char.context ?? char.glyph,
     options,
@@ -196,7 +196,7 @@ function createMinimalPairExercise(target: Character, contrast: Character): Exer
   return {
     id: uid(),
     createdAtMs: Date.now(),
-    phase: "minimal-pair",
+    phase: ExercisePhase.MinimalPair,
     prompt: target.audioLabel,
     correctAnswer: targetPrompt,
     options: shuffle([targetPrompt, contrastPrompt]),
@@ -211,7 +211,7 @@ function createVDTCompareExercise(child: Character): Exercise {
   return {
     id: uid(),
     createdAtMs: Date.now(),
-    phase: "vdt-compare",
+    phase: ExercisePhase.VdtCompare,
     prompt: child.context ?? child.glyph,
     correctAnswer: child.romanization,
     aliases: child.aliases,
@@ -226,7 +226,7 @@ function createGhostBaseExercise(char: Character): Exercise {
   return {
     id: uid(),
     createdAtMs: Date.now(),
-    phase: "ghost-base",
+    phase: ExercisePhase.GhostBase,
     prompt: char.context ?? char.glyph,
     correctAnswer: char.romanization,
     aliases: char.aliases,
@@ -255,7 +255,7 @@ function createWordMeaningExercise(
   return {
     id: uid(),
     createdAtMs: Date.now(),
-    phase: "word-meaning",
+    phase: ExercisePhase.WordMeaning,
     prompt: word.kannada,
     correctAnswer: word.meaning,
     options,
@@ -273,7 +273,7 @@ function createScrambleExercise(
   return {
     id: uid(),
     createdAtMs: Date.now(),
-    phase: "scramble",
+    phase: ExercisePhase.Scramble,
     prompt: word.meaning,
     correctAnswer: word.kannada,
     scrambledParts: shuffle(parts),
@@ -289,11 +289,11 @@ function createPhoneticExercise(
   return {
     id: uid(),
     createdAtMs: Date.now(),
-    phase: "phonetic",
+    phase: ExercisePhase.Phonetic,
     prompt: word.kannada,
     correctAnswer: word.romanization,
     aliases: [word.romanization.toLowerCase()],
-    timedMode: maybeTimedMode("phonetic"),
+    timedMode: maybeTimedMode(ExercisePhase.Phonetic),
     hintText: `Try sounding each part slowly: ${word.romanization}.`,
   };
 }
@@ -302,11 +302,11 @@ function createCharPhoneticExercise(char: Character, masteryScore: number = 0): 
   return {
     id: uid(),
     createdAtMs: Date.now(),
-    phase: "phonetic",
+    phase: ExercisePhase.Phonetic,
     prompt: char.context ?? char.glyph,
     correctAnswer: char.romanization,
     aliases: char.aliases,
-    timedMode: maybeTimedMode("phonetic"),
+    timedMode: maybeTimedMode(ExercisePhase.Phonetic),
     targetGlyph: char.glyph,
     hintText: `Base sound: ${char.romanization}`,
     teachingNote: `Say ${char.romanization} and map it to ${char.context ?? char.glyph}.`,
@@ -320,7 +320,7 @@ function createGuidedDecodeExercise(word: WordEntry): Exercise {
   return {
     id: uid(),
     createdAtMs: Date.now(),
-    phase: "guided-decode",
+    phase: ExercisePhase.GuidedDecode,
     prompt: word.kannada,
     correctAnswer: word.romanization,
     aliases: [word.romanization.toLowerCase()],

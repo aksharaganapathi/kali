@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AppState } from "@/types";
+import { AppState, ExercisePhase } from "@/types";
 
 interface ExerciseShellProps {
   state: AppState;
@@ -10,15 +10,17 @@ interface ExerciseShellProps {
   children: React.ReactNode;
 }
 
-const PHASE_LABELS: Record<string, { label: string; icon: string; toast: string }> = {
-  learn:         { label: "Learn",    icon: "🌱", toast: "Meet your new character" },
-  visual:        { label: "Identify", icon: "👁",  toast: "Can you identify it?" },
-  audio:         { label: "Listen",   icon: "🔊", toast: "Train your ear" },
-  "minimal-pair":{ label: "Contrast", icon: "⚖",  toast: "Spot the difference" },
-  scramble:      { label: "Build",    icon: "🧩", toast: "Assemble the word" },
-  phonetic:      { label: "Decode",   icon: "⌨",  toast: "Now type what you know" },
-  "guided-decode":{ label: "Guided", icon: "🧭", toast: "Step-by-step decode" },
-  "word-meaning":{ label: "Translate",icon: "📖", toast: "What does it mean?" },
+const PHASE_LABELS: Record<ExercisePhase, { label: string; icon: string; toast: string }> = {
+  [ExercisePhase.Learn]:         { label: "Learn",    icon: "🌱", toast: "Meet your new character" },
+  [ExercisePhase.Visual]:        { label: "Identify", icon: "👁",  toast: "Can you identify it?" },
+  [ExercisePhase.Audio]:         { label: "Listen",   icon: "🔊", toast: "Train your ear" },
+  [ExercisePhase.MinimalPair]:   { label: "Contrast", icon: "⚖",  toast: "Spot the difference" },
+  [ExercisePhase.Scramble]:      { label: "Build",    icon: "🧩", toast: "Assemble the word" },
+  [ExercisePhase.Phonetic]:      { label: "Decode",   icon: "⌨",  toast: "Now type what you know" },
+  [ExercisePhase.GuidedDecode]:  { label: "Guided", icon: "🧭", toast: "Step-by-step decode" },
+  [ExercisePhase.WordMeaning]:   { label: "Translate",icon: "📖", toast: "What does it mean?" },
+  [ExercisePhase.VdtCompare]:    { label: "Compare",  icon: "🔍", toast: "Spot the difference" },
+  [ExercisePhase.GhostBase]:     { label: "Signs",    icon: "✨", toast: "See the base" },
 };
 
 export default function ExerciseShell({

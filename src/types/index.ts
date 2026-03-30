@@ -1,14 +1,15 @@
-export type ExercisePhase =
-  | "learn"
-  | "visual"
-  | "audio"
-  | "scramble"
-  | "phonetic"
-  | "word-meaning"
-  | "guided-decode"
-  | "minimal-pair"
-  | "vdt-compare"
-  | "ghost-base";
+export enum ExercisePhase {
+  Learn = "learn",
+  Visual = "visual",
+  Audio = "audio",
+  Scramble = "scramble",
+  Phonetic = "phonetic",
+  WordMeaning = "word-meaning",
+  GuidedDecode = "guided-decode",
+  MinimalPair = "minimal-pair",
+  VdtCompare = "vdt-compare",
+  GhostBase = "ghost-base"
+}
 
 export type LevelId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
