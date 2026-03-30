@@ -124,11 +124,6 @@ async function speakWithSarvam(text: string): Promise<void> {
     throw new Error("No audio returned from Sarvam TTS");
   }
 
-  if (!/^[A-Za-z0-9+/=_-]+$/.test(base64Audio)) {
-    console.warn("[TTS] invalid base64 payload", { length: base64Audio.length });
-    throw new Error("Invalid base64 audio from Sarvam TTS");
-  }
-
   let binary: string;
   try {
     binary = atob(base64Audio);
@@ -141,21 +136,11 @@ async function speakWithSarvam(text: string): Promise<void> {
     bytes[i] = binary.charCodeAt(i);
   }
 
-  if (bytes.length < 44) {
-    console.warn("[TTS] audio payload too small", { length: bytes.length });
-  }
-
   const arrayBuffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
 
   return new Promise<void>((resolve, reject) => {
     if (!ctx) {
-      // Fallback for incredibly old browsers without Web Audio
-      const blob = new Blob([bytes], { type: "audio/wav" });
-      const url = URL.createObjectURL(blob);
-      const fallbackAudio = new Audio(url);
-      fallbackAudio.onended = () => resolve();
-      fallbackAudio.onerror = () => reject(new Error("Audio playback failed"));
-      fallbackAudio.play().catch(reject);
+      reject(new Error("Web Audio API not supported"));
       return;
     }
 
