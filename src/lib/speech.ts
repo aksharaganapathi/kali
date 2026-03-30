@@ -85,6 +85,11 @@ export function isSpeechAvailable(): boolean {
 }
 
 async function speakWithSarvam(text: string): Promise<void> {
+  // Safari Hack 1: Create Audio element synchronously before any 'await'
+  const audio = new Audio();
+  // Call play() immediately to bind it to the current user gesture
+  audio.play().catch(() => {});
+
   const { normalized, original, addedPunctuation } = normalizePrompt(text);
   if (normalized !== original) {
     console.debug("[TTS] normalize", {
@@ -132,7 +137,9 @@ async function speakWithSarvam(text: string): Promise<void> {
 
   const blob = new Blob([bytes], { type: "audio/wav" });
   const url = URL.createObjectURL(blob);
-  const audio = new Audio(url);
+  
+  // Safari Hack 1 (cont): Update the src on our pre-created element
+  audio.src = url;
 
   return new Promise<void>((resolve, reject) => {
     let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -172,3 +179,24 @@ export async function speak(text: string): Promise<void> {
 }
 
 export function preloadVoices(): void {}
+
+// --- Safari / iOS Global Audio Unlocker ---
+let audioUnlocked = false;
+
+if (typeof window !== "undefined") {
+  const unlock = () => {
+    if (audioUnlocked) return;
+    audioUnlocked = true;
+    // Tiny silent MP3 base64 to trick Safari into globally unlocking the Web Audio engine
+    const silentAudio = new Audio("data:audio/mp3;base64,//NExAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq");
+    silentAudio.play().catch(() => {});
+    
+    // Cleanup listeners
+    window.removeEventListener("touchstart", unlock, true);
+    window.removeEventListener("click", unlock, true);
+  };
+  
+  // Use capture phase to ensure it catches clicks even if React stops propagation
+  window.addEventListener("touchstart", unlock, { once: true, capture: true });
+  window.addEventListener("click", unlock, { once: true, capture: true });
+}
