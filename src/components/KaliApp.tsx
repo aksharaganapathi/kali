@@ -16,6 +16,8 @@ import WordMeaning from "./exercises/WordMeaning";
 import GuidedDecode from "./exercises/GuidedDecode";
 import MinimalPair from "./exercises/MinimalPair";
 import CharacterLearn from "./exercises/CharacterLearn";
+import VDTCompare from "./exercises/VDTCompare";
+import GhostBase from "./exercises/GhostBase";
 import Onboarding from "./Onboarding";
 
 const ONBOARDING_KEY = "kali_onboarding_done";
@@ -84,6 +86,8 @@ export default function KaliApp() {
 
     switch (currentExercise.phase) {
       case "learn":         return <CharacterLearn key={currentExercise.id} {...props} />;
+      case "vdt-compare":   return <VDTCompare key={currentExercise.id} {...props} />;
+      case "ghost-base":    return <GhostBase key={currentExercise.id} {...props} />;
       case "visual":        return <VisualFlashcard key={currentExercise.id} {...props} />;
       case "audio":         return <AudioMatch key={currentExercise.id} {...props} />;
       case "minimal-pair":  return <MinimalPair key={currentExercise.id} {...props} />;

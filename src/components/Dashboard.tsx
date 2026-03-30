@@ -32,6 +32,8 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
   const masteredCount = state.masteredCharacters.length;
   const isFirstTimeUser = masteredCount === 0;
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const fluentCount = Object.values(state.glyphResponseTimes || {}).filter(times => times.some(t => t < 2000)).length;
+  const masteredWordsCount = Object.values(state.wordMastery || {}).filter(score => score >= 80).length;
   const { theme, toggle: toggleTheme } = useTheme();
 
   const handleReset = () => {
@@ -126,22 +128,32 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182M2.985 19.644l3.182-3.182" />
             </svg>
           </button>
-          <div className="text-right">
-            <p className="text-xs text-sand-dim uppercase tracking-wider">
-              Mastered
-            </p>
-            <p className="text-lg font-semibold text-saffron">
-              {masteredCount}
-              <span className="text-sand-dim text-sm font-normal">
-                /{totalChars}
-              </span>
-            </p>
+          <div className="flex items-center gap-6">
+            <div className="text-right">
+              <p className="text-xs text-sand-dim uppercase tracking-wider">Words</p>
+              <p className="text-lg font-semibold text-saffron">{masteredWordsCount}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-sand-dim uppercase tracking-wider" title="Avg response < 2s">Fluent</p>
+              <p className="text-lg font-semibold text-saffron">{fluentCount}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-sand-dim uppercase tracking-wider">
+                Mastered
+              </p>
+              <p className="text-lg font-semibold text-saffron flex items-baseline gap-1">
+                {masteredCount}
+                <span className="text-sand-dim text-sm font-normal">
+                  /{totalChars}
+                </span>
+              </p>
+            </div>
+            <ProgressRing
+              progress={totalChars > 0 ? masteredCount / totalChars : 0}
+              size={48}
+              strokeWidth={3}
+            />
           </div>
-          <ProgressRing
-            progress={totalChars > 0 ? masteredCount / totalChars : 0}
-            size={48}
-            strokeWidth={3}
-          />
         </div>
       </motion.header>
 

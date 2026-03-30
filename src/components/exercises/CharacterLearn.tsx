@@ -35,7 +35,7 @@ export default function CharacterLearn({ exercise, onNext }: CharacterLearnProps
       } finally {
         if (!cancelled) { setIsPlaying(false); setIsLoading(false); }
       }
-    }, 350);
+    }, 10);
     return () => { cancelled = true; clearTimeout(t); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exercise.id]);
@@ -76,13 +76,13 @@ export default function CharacterLearn({ exercise, onNext }: CharacterLearnProps
           <div className="absolute bottom-2 left-2 w-3 h-3 border-b border-l border-saffron/30 rounded-bl-sm" />
           <div className="absolute bottom-2 right-2 w-3 h-3 border-b border-r border-saffron/30 rounded-br-sm" />
 
-          {/* The glyph — translateY compensates for Noto Sans Kannada's tall ascender metrics */}
+          {/* The glyph */}
           <span
             className="font-kannada text-saffron text-glow-saffron select-none block"
             style={{
               fontSize: "5rem",
               lineHeight: 1,
-              transform: "translateY(1.25rem)",
+              transform: "translateY(0.6rem)",
             }}
           >
             {exercise.prompt}

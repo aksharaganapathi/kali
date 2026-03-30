@@ -1,4 +1,4 @@
-﻿export type ExercisePhase =
+export type ExercisePhase =
   | "learn"
   | "visual"
   | "audio"
@@ -6,9 +6,11 @@
   | "phonetic"
   | "word-meaning"
   | "guided-decode"
-  | "minimal-pair";
+  | "minimal-pair"
+  | "vdt-compare"
+  | "ghost-base";
 
-export type LevelId = 1 | 2 | "3a" | "3b" | "3c" | 4 | 5 | 6;
+export type LevelId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 export type WordCategory =
   | "Family"
@@ -41,6 +43,16 @@ export interface Character {
   type: "vowel" | "consonant" | "vowel-sign" | "conjunct" | "special";
   audioLabel: string;
   context?: string;
+  /** VDT: the "parent" character (e.g., ಕ for ಖ) */
+  parentGlyph?: string;
+  /** VDT: natural-language description of the stroke that differs */
+  vdtDelta?: string;
+  /** Glyphs this character is commonly confused with */
+  confusablesWith?: string[];
+  /** Frequency rank within its level (1 = most common) */
+  frequencyRank?: number;
+  /** Base consonants used for Ghost Base multi-base demo */
+  ghostBases?: string[];
 }
 
 export interface Level {
@@ -71,6 +83,8 @@ export interface Exercise {
   correctAnswer: string;
   options?: string[];
   scrambledParts?: string[];
+  /** Correct ordered parts for scramble validation */
+  correctParts?: string[];
   aliases?: string[];
   isReview?: boolean;
   timedMode?: boolean;
@@ -79,6 +93,8 @@ export interface Exercise {
   decodeSteps?: string[];
   hintText?: string;
   teachingNote?: string;
+  /** CSS font-family override for Font Jitter mode */
+  fontOverride?: string;
 }
 
 export interface Score {
@@ -100,6 +116,10 @@ export interface AppState {
   confusableQueue: Record<string, number>;
   feedbackState: "idle" | "correct" | "incorrect";
   hydrated: boolean;
+  /** Per-word mastery scores (kannada word → 0–100) */
+  wordMastery: Record<string, number>;
+  /** Last N response times per glyph for fluency tracking */
+  glyphResponseTimes: Record<string, number[]>;
 }
 
 export type AppAction =

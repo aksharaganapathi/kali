@@ -59,7 +59,7 @@ export default function PhoneticType({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className={`
-              font-kannada text-8xl leading-none drop-shadow-lg
+              ${exercise.fontOverride || "font-kannada"} text-8xl leading-none drop-shadow-lg inline-block translate-y-3
               ${feedbackState === "correct" ? "text-correct text-glow-correct" : ""}
               ${feedbackState === "incorrect" ? "text-incorrect text-glow-incorrect" : ""}
               ${feedbackState === "idle" ? "text-saffron text-glow-saffron" : ""}

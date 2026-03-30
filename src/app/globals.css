@@ -163,6 +163,14 @@ body {
   font-family: var(--font-kannada);
 }
 
+@utility font-tiro {
+  font-family: var(--font-tiro);
+}
+
+@utility font-baloo {
+  font-family: var(--font-baloo);
+}
+
 @utility text-glow-saffron {
   text-shadow: 0 0 30px rgba(241,178,74,0.3);
 }

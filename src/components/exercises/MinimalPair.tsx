@@ -47,7 +47,7 @@ export default function MinimalPair({
   useEffect(() => {
     if (!autoPlayed.current && speechAvailable) {
       autoPlayed.current = true;
-      const timer = setTimeout(() => { handlePlay(); }, 300);
+      const timer = setTimeout(() => { handlePlay(); }, 10);
       return () => clearTimeout(timer);
     }
   }, [exercise.id, handlePlay, speechAvailable]);

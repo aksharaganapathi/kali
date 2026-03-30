@@ -20,7 +20,7 @@ function uid(): string {
   return `ex_${++exerciseCounter}_${Date.now()}`;
 }
 
-const LEVEL_ORDER: LevelId[] = [1, 2, "3a", "3b", "3c", 4, 5, 6];
+const LEVEL_ORDER: LevelId[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 const TIMED_PHASES = new Set(["visual", "phonetic"]);
 const CONFUSABLE_PAIR_SEPARATOR = "~";
@@ -47,7 +47,7 @@ export function getDynamicWords(
   const set = new Set(masteredCharacters);
   return DICTIONARY.filter((w) => {
     if (!isUnlockedLevel(w.minLevel, currentLevelId)) return false;
-    if (levelIndex(currentLevelId) < levelIndex(5) && w.kannada.includes("\u0CCD")) return false;
+    if (levelIndex(currentLevelId) < levelIndex(10) && w.kannada.includes("\u0CCD")) return false;
     if (levelIndex(currentLevelId) < levelIndex(6) && (w.kannada.includes("\u0C82") || w.kannada.includes("\u0C83"))) return false;
 
     return w.requiredChars.every((c) => set.has(c));
@@ -92,10 +92,18 @@ function getReviewCharacters(
   return reviewPool;
 }
 
+function getFontOverride(masteryScore: number): string | undefined {
+  if (masteryScore > 80 && Math.random() < 0.3) {
+    return Math.random() < 0.5 ? "font-tiro" : "font-baloo";
+  }
+  return undefined;
+}
+
 function createVisualExercise(
   char: Character,
   pool: Character[],
-  forcedDistractors: Character[] = []
+  forcedDistractors: Character[] = [],
+  masteryScore: number = 0
 ): Exercise {
   const sameBaseVowelDistractors =
     char.type === "vowel-sign" && char.context
@@ -136,6 +144,7 @@ function createVisualExercise(
     targetGlyph: char.glyph,
     hintText: `Sound anchor: ${char.romanization}`,
     teachingNote: `Spot ${char.context ?? char.glyph} by its unique outer stroke before deciding.`,
+    fontOverride: getFontOverride(masteryScore),
   };
 }
 
@@ -195,6 +204,35 @@ function createMinimalPairExercise(target: Character, contrast: Character): Exer
     contrastGlyph: contrast.glyph,
     hintText: `Compare ${targetPrompt} with ${contrastPrompt} and focus on the first stroke shape.`,
     teachingNote: `${targetPrompt} sounds like ${target.romanization}; ${contrastPrompt} sounds like ${contrast.romanization}.`,
+  };
+}
+
+function createVDTCompareExercise(child: Character): Exercise {
+  return {
+    id: uid(),
+    createdAtMs: Date.now(),
+    phase: "vdt-compare",
+    prompt: child.context ?? child.glyph,
+    correctAnswer: child.romanization,
+    aliases: child.aliases,
+    targetGlyph: child.glyph,
+    contrastGlyph: child.parentGlyph,
+    hintText: `Compare ${child.parentGlyph ?? ""} and ${child.glyph}`,
+    teachingNote: child.vdtDelta ?? "Spot the visual difference.",
+  };
+}
+
+function createGhostBaseExercise(char: Character): Exercise {
+  return {
+    id: uid(),
+    createdAtMs: Date.now(),
+    phase: "ghost-base",
+    prompt: char.context ?? char.glyph,
+    correctAnswer: char.romanization,
+    aliases: char.aliases,
+    targetGlyph: char.glyph,
+    hintText: `This sign changes the base consonant sound to include ${char.romanization}.`,
+    teachingNote: `The ${char.romanization} sign attaches to any consonant.`,
   };
 }
 
@@ -260,7 +298,7 @@ function createPhoneticExercise(
   };
 }
 
-function createCharPhoneticExercise(char: Character): Exercise {
+function createCharPhoneticExercise(char: Character, masteryScore: number = 0): Exercise {
   return {
     id: uid(),
     createdAtMs: Date.now(),
@@ -272,6 +310,7 @@ function createCharPhoneticExercise(char: Character): Exercise {
     targetGlyph: char.glyph,
     hintText: `Base sound: ${char.romanization}`,
     teachingNote: `Say ${char.romanization} and map it to ${char.context ?? char.glyph}.`,
+    fontOverride: getFontOverride(masteryScore),
   };
 }
 
@@ -363,18 +402,70 @@ export function generateExerciseSet(
   const distractorPool = chars.length >= 4 ? chars : allPool;
 
   // ─── 1. STRICT PER-CHARACTER SEQUENCE (new chars only) ────────────────────
-  // Each new character follows: learn → visual × 2 → audio × 1 → phonetic × 2
-  // Characters are shuffled once at the top, but exercise types within each
-  // character are always in this fixed order (exposure → recognition → production).
-  const newCharExercises: Exercise[] = [];
+  // Flow varies by character type:
+  //   VDT (parentGlyph):   vdt-compare → minimal-pair → visual ×2 → phonetic ×2
+  //   Ghost Base (vowel-sign): ghost-base → visual ×2 → audio ×1 → phonetic ×2
+  //   Standard:            learn → visual ×2 → audio ×1 → phonetic ×2
+  const masteredSet = new Set(masteredCharacters);
+  const introExercises: Exercise[] = [];
+  const practiceExercises: Exercise[] = [];
   const shuffledChars = shuffle(chars);
   for (const char of shuffledChars) {
-    newCharExercises.push(createLearnExercise(char));
-    newCharExercises.push(createVisualExercise(char, distractorPool, forcedDistractors));
-    newCharExercises.push(createVisualExercise(char, distractorPool, forcedDistractors));
-    newCharExercises.push(createAudioExercise(char, distractorPool, forcedDistractors));
-    newCharExercises.push(createCharPhoneticExercise(char));
-    newCharExercises.push(createCharPhoneticExercise(char));
+    const isMastered = masteredSet.has(char.glyph);
+    const score = glyphMastery[char.glyph] ?? 0;
+    const parent = char.parentGlyph ? allPool.find((c) => c.glyph === char.parentGlyph) : undefined;
+    const distractorList = parent ? [parent, ...forcedDistractors] : forcedDistractors;
+
+    // Topological Gating: Cannot introduce a child if parent is unmastered
+    if (!isMastered && char.parentGlyph && !masteredSet.has(char.parentGlyph)) {
+      continue;
+    }
+
+    // Phase A: Structural Intro (Only for new or struggling characters)
+    const needsIntro = score < 15;
+    if (needsIntro) {
+      if (char.parentGlyph) {
+        introExercises.push(createVDTCompareExercise(char));
+        if (parent) introExercises.push(createMinimalPairExercise(char, parent));
+      } else if (char.type === "vowel-sign") {
+        introExercises.push(createGhostBaseExercise(char));
+      } else {
+        introExercises.push(createLearnExercise(char));
+      }
+
+      // Phase B: Compound context (if it was a VDT that is ALSO a vowel-sign)
+      if (char.parentGlyph && char.type === "vowel-sign") {
+        introExercises.push(createGhostBaseExercise(char));
+      }
+    }
+
+    // Phase C & D: Core Recognition and Decoding Flashcards
+    // Unmastered characters receive double the density
+    practiceExercises.push(createVisualExercise(char, distractorPool, distractorList, score));
+    if (!isMastered) {
+      practiceExercises.push(createVisualExercise(char, distractorPool, distractorList, score));
+    }
+
+    if (!char.parentGlyph || char.type === "vowel-sign") {
+      practiceExercises.push(createAudioExercise(char, distractorPool, distractorList));
+    }
+
+    practiceExercises.push(createCharPhoneticExercise(char, score));
+    if (!isMastered) {
+      practiceExercises.push(createCharPhoneticExercise(char, score));
+    }
+
+    // Proactive confusable pairs: if this new char has confusables already mastered
+    const confusables = char.confusablesWith ?? [];
+    for (const confGlyph of confusables) {
+      if (masteredSet.has(confGlyph)) {
+        const contrast = allPool.find((c) => c.glyph === confGlyph);
+        if (contrast) {
+          introExercises.push(createMinimalPairExercise(char, contrast));
+          break; // one proactive pair per char is enough
+        }
+      }
+    }
   }
 
   // ─── 2. MINIMAL PAIRS (from confusable queue) ─────────────────────────────
@@ -391,11 +482,12 @@ export function generateExerciseSet(
   const reviewChars = getReviewCharacters(levelId, masteredCharacters, glyphMastery);
   const reviewExercises: Exercise[] = [];
   for (const char of shuffle(reviewChars)) {
-    const visEx = createVisualExercise(char, allPool, forcedDistractors);
+    const score = glyphMastery[char.glyph] ?? 0;
+    const visEx = createVisualExercise(char, allPool, forcedDistractors, score);
     visEx.isReview = true;
     const audEx = createAudioExercise(char, allPool, forcedDistractors);
     audEx.isReview = true;
-    const phoEx = createCharPhoneticExercise(char);
+    const phoEx = createCharPhoneticExercise(char, score);
     phoEx.isReview = true;
     reviewExercises.push(visEx, audEx, phoEx);
   }
@@ -437,12 +529,43 @@ export function generateExerciseSet(
   }
 
   // ─── 5. ASSEMBLE & CAP ────────────────────────────────────────────────────
-  // Order: new character exercises (strict sequence) → minimal pairs → shuffled word exercises → shuffled review
+  
+  // Priority exercises that the user MUST see early in the session
+  const priorityPool = shuffle([
+    ...minimalPairExercises,
+    ...practiceExercises,
+    ...wordExercises,
+  ]);
+
+  // Secondary exercises used for padding and extra practice
+  const secondaryPool = shuffle(reviewExercises);
+
+  // Combine them, keeping priority items at the front
+  const combinedPool = [...priorityPool, ...secondaryPool];
+
+  // Spacing algorithm: gently space out exercises for the same targetGlyph
+  const spacedPool: Exercise[] = [];
+  while (combinedPool.length > 0) {
+    let indexToPick = 0;
+    if (spacedPool.length > 0) {
+      // Look back up to 2 items to prevent tight clumping
+      const recentTargets = spacedPool.slice(-2).map((ex) => ex.targetGlyph ?? ex.prompt);
+      
+      for (let i = 0; i < combinedPool.length; i++) {
+        const candidateTarget = combinedPool[i].targetGlyph ?? combinedPool[i].prompt;
+        if (!recentTargets.includes(candidateTarget)) {
+          indexToPick = i;
+          break;
+        }
+      }
+    }
+    spacedPool.push(combinedPool.splice(indexToPick, 1)[0]);
+  }
+
+  // Order: strict intros (new chars) → spaced practice/review
   const ordered = [
-    ...newCharExercises,
-    ...shuffle(minimalPairExercises),
-    ...shuffle(wordExercises),
-    ...shuffle(reviewExercises),
+    ...introExercises,
+    ...spacedPool,
   ];
 
   // Cap to SESSION_SIZE so sessions are digestible.

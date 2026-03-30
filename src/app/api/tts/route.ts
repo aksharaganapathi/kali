@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const MAX_TEXT_LENGTH = 500;
+const IS_PROD = process.env.NODE_ENV === "production";
+
+function debugLog(message: string, data?: Record<string, unknown>) {
+  if (!IS_PROD) {
+    console.debug(message, data ?? {});
+  }
+}
 
 // Only POST is supported
 export async function GET() {
@@ -41,20 +48,37 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const res = await fetch("https://api.sarvam.ai/text-to-speech", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "api-subscription-key": apiKey,
-    },
-    body: JSON.stringify({
-      text: text.trim(),
-      model: "bulbul:v2",
-      speaker: "anushka",
-      target_language_code: "kn-IN",
-      pace: 0.5,
-    }),
+  const requestPayload = {
+    text: text.trim(),
+    model: "bulbul:v3",
+    speaker: "shubh",
+    target_language_code: "kn-IN",
+    pace: 1.0,
+    speech_sample_rate: 24000,
+  };
+
+  debugLog("[TTS API] request", {
+    textLength: requestPayload.text.length,
+    textPreview: requestPayload.text.slice(0, 32),
+    model: requestPayload.model,
+    speaker: requestPayload.speaker,
+    targetLanguageCode: requestPayload.target_language_code,
   });
+
+  let res: Response;
+  try {
+    res = await fetch("https://api.sarvam.ai/text-to-speech", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-subscription-key": apiKey,
+      },
+      body: JSON.stringify(requestPayload),
+    });
+  } catch (error) {
+    console.error("[TTS API] network failure", error);
+    return NextResponse.json({ error: "TTS service unreachable" }, { status: 502 });
+  }
 
   if (!res.ok) {
     // Do NOT forward raw upstream error bodies — they may leak internal details
@@ -68,6 +92,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "TTS service error" }, { status: 502 });
   }
 
-  const data = await res.json() as { request_id: string; audios: string[] };
-  return NextResponse.json(data);
+  let data: unknown;
+  try {
+    data = await res.json();
+  } catch (error) {
+    console.error("[TTS API] invalid JSON response", error);
+    return NextResponse.json({ error: "Invalid TTS response" }, { status: 502 });
+  }
+
+  if (!data || typeof data !== "object") {
+    console.error("[TTS API] unexpected response type", { type: typeof data });
+    return NextResponse.json({ error: "Invalid TTS response" }, { status: 502 });
+  }
+
+  const audios = (data as { audios?: unknown }).audios;
+  if (!Array.isArray(audios) || audios.length === 0 || typeof audios[0] !== "string" || audios[0].trim().length === 0) {
+    console.error("[TTS API] invalid audio payload", {
+      audiosType: Array.isArray(audios) ? "array" : typeof audios,
+      audiosLength: Array.isArray(audios) ? audios.length : undefined,
+    });
+    return NextResponse.json({ error: "Invalid TTS audio data" }, { status: 502 });
+  }
+
+  return NextResponse.json(data as { request_id: string; audios: string[] });
 }

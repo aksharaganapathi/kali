@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_Kannada } from "next/font/google";
+import { Inter, Noto_Sans_Kannada, Tiro_Kannada, Baloo_Tamma_2 } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -12,6 +12,18 @@ const notoSansKannada = Noto_Sans_Kannada({
   subsets: ["kannada"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-kannada",
+});
+
+const tiroKannada = Tiro_Kannada({
+  weight: "400",
+  subsets: ["kannada"],
+  variable: "--font-tiro",
+});
+
+const balooTamma = Baloo_Tamma_2({
+  subsets: ["kannada"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-baloo",
 });
 
 export const metadata: Metadata = {
@@ -28,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="kn">
       <body
-        className={`${inter.variable} ${notoSansKannada.variable} antialiased w-full h-full min-h-screen overflow-x-hidden`}
+        className={`${inter.variable} ${notoSansKannada.variable} ${tiroKannada.variable} ${balooTamma.variable} antialiased w-full h-full min-h-screen overflow-x-hidden`}
       >
         {children}
       </body>

@@ -1,12 +1,34 @@
-﻿"use client";
+"use client";
 
 import { useReducer, useEffect } from "react";
 import { AppState, AppAction, LevelId } from "@/types";
 import { loadState, saveState } from "@/lib/storage";
+import { LEVELS } from "@/lib/curriculum";
+import { generateExerciseSet } from "@/lib/engine";
 
-const LEVEL_ORDER: LevelId[] = [1, 2, "3a", "3b", "3c", 4, 5, 6];
+const LEVEL_ORDER: LevelId[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const CONFUSABLE_MAP: Record<string, string[]> = {
-  "ನ": ["ಹ"],
+  // Consonant shape-pairs
+  "ದ": ["ಧ", "ಥ"],
+  "ಪ": ["ವ", "ಫ"],
+  "ಬ": ["ಭ", "ಒ"],
+  "ಕ": ["ಖ"],
+  "ಗ": ["ಘ", "ಸ"],
+  "ನ": ["ಹ", "ಳ"],
+  "ಜ": ["ಝ"],
+  "ಚ": ["ಛ"],
+  "ತ": ["ಥ"],
+  "ಟ": ["ಠ"],
+  "ಡ": ["ಢ"],
+  "ಶ": ["ಷ"],
+  "ಮ": ["ಯ"],
+  "ಸ": ["ಗ"],
+  "ಒ": ["ಬ"],
+  // Vowel sign short/long pairs
+  "ೆ": ["ೇ"],
+  "ೊ": ["ೋ"],
+  "ಿ": ["ೀ"],
+  "ು": ["ೂ"],
 };
 const CONFUSABLE_PAIR_SEPARATOR = "~";
 
@@ -29,6 +51,8 @@ const initialState: AppState = {
   confusableQueue: {},
   feedbackState: "idle",
   hydrated: false,
+  wordMastery: {},
+  glyphResponseTimes: {},
 };
 
 function getNextLevel(currentLevel: LevelId): LevelId | null {
@@ -126,6 +150,31 @@ function reducer(state: AppState, action: AppAction): AppState {
       let glyphStreaks = state.glyphStreaks;
       let masteredCharacters = state.masteredCharacters;
       let confusableQueue = state.confusableQueue;
+      let wordMastery = state.wordMastery;
+      let glyphResponseTimes = state.glyphResponseTimes;
+
+      const targetWord = currentExercise?.phase === "scramble"
+        ? currentExercise.correctAnswer
+        : (currentExercise?.phase === "word-meaning" || currentExercise?.phase === "guided-decode" || (currentExercise?.phase === "phonetic" && currentExercise.prompt.length > 2))
+          ? currentExercise.prompt
+          : null;
+
+      if (targetWord && isKannadaGlyphLike(targetWord)) {
+        const prevWordMastery = wordMastery[targetWord] ?? 0;
+        if (action.correct) {
+          wordMastery = { ...wordMastery, [targetWord]: clampScore(prevWordMastery + BASE_MASTERY_GAIN) };
+        } else {
+          wordMastery = { ...wordMastery, [targetWord]: clampScore(prevWordMastery - INCORRECT_MASTERY_PENALTY) };
+        }
+      }
+
+      if (targetGlyph && action.elapsedMs !== undefined && action.elapsedMs > 0) {
+        const currentTimes = glyphResponseTimes[targetGlyph] || [];
+        glyphResponseTimes = {
+          ...glyphResponseTimes,
+          [targetGlyph]: [...currentTimes, action.elapsedMs].slice(-5),
+        };
+      }
 
       if (targetGlyph) {
         const previousMastery = glyphMastery[targetGlyph] ?? 0;
@@ -194,6 +243,8 @@ function reducer(state: AppState, action: AppAction): AppState {
         glyphStreaks,
         masteredCharacters,
         confusableQueue,
+        wordMastery,
+        glyphResponseTimes,
         score: isReview
           ? state.score
           : {
@@ -206,6 +257,35 @@ function reducer(state: AppState, action: AppAction): AppState {
     case "NEXT_EXERCISE": {
       const nextIndex = state.exerciseIndex + 1;
       if (nextIndex >= state.exercises.length) {
+        const level = LEVELS.find((l) => l.id === state.currentLevel);
+        const levelChars = level ? level.characters.map((c) => c.glyph) : [];
+        const hasMasteredAll = levelChars.every((glyph) =>
+          state.masteredCharacters.includes(glyph)
+        );
+
+        if (!hasMasteredAll) {
+          // The user expects to seamlessly learn all characters in the level.
+          // Because of topological gating, children characters don't generate until parents are mastered.
+          // Let's generate the next semantic batch so the level naturally sweeps to completion!
+          const nextBatch = generateExerciseSet(
+            state.currentLevel,
+            state.masteredCharacters,
+            state.confusableQueue,
+            state.glyphMastery
+          );
+
+          if (nextBatch.length > 0) {
+            return {
+              ...state,
+              exercises: [...state.exercises, ...nextBatch],
+              exerciseIndex: nextIndex,
+              exercisePhase: nextBatch[0].phase,
+              confusableQueue: tickConfusableQueue(state.confusableQueue),
+              feedbackState: "idle",
+            };
+          }
+        }
+
         return { ...state, screen: "level-complete", feedbackState: "idle" };
       }
       const nextPhase = state.exercises[nextIndex].phase;
@@ -223,7 +303,14 @@ function reducer(state: AppState, action: AppAction): AppState {
         state.score.total > 0
           ? state.score.correct / state.score.total
           : 0;
-      const passed = accuracy >= 0.8;
+
+      const level = LEVELS.find((l) => l.id === state.currentLevel);
+      const levelChars = level ? level.characters.map((c) => c.glyph) : [];
+      const hasMasteredAll = levelChars.every((glyph) =>
+        state.masteredCharacters.includes(glyph)
+      );
+
+      const passed = accuracy >= 0.8 && hasMasteredAll;
       const nextLevel = getNextLevel(state.currentLevel);
       const newUnlocked =
         passed && nextLevel && !state.unlockedLevels.includes(nextLevel)
@@ -274,6 +361,8 @@ export function useKaliReducer() {
           glyphMastery: persisted.glyphMastery ?? {},
           glyphStreaks: persisted.glyphStreaks ?? {},
           confusableQueue: persisted.confusableQueue ?? {},
+          wordMastery: persisted.wordMastery ?? {},
+          glyphResponseTimes: persisted.glyphResponseTimes ?? {},
           ...(persisted.screen && { screen: persisted.screen }),
           ...(persisted.exercisePhase && { exercisePhase: persisted.exercisePhase }),
           ...(persisted.exerciseIndex !== undefined && { exerciseIndex: persisted.exerciseIndex }),
@@ -295,6 +384,8 @@ export function useKaliReducer() {
       glyphMastery: state.glyphMastery,
       glyphStreaks: state.glyphStreaks,
       confusableQueue: state.confusableQueue,
+      wordMastery: state.wordMastery,
+      glyphResponseTimes: state.glyphResponseTimes,
       screen: state.screen,
       exercisePhase: state.exercisePhase,
       exerciseIndex: state.exerciseIndex,

@@ -21,7 +21,12 @@ export default function LevelComplete({
       ? Math.round((state.score.correct / state.score.total) * 100)
       : 0;
 
-  const passed = accuracy >= 80;
+  const levelChars = level ? level.characters.map((c) => c.glyph) : [];
+  const hasMasteredAll = levelChars.every((glyph) =>
+    state.masteredCharacters.includes(glyph)
+  );
+
+  const passed = accuracy >= 80 && hasMasteredAll;
 
   const handleContinue = () => {
     dispatch({ type: "COMPLETE_LEVEL" });
@@ -130,7 +135,7 @@ export default function LevelComplete({
         </p>
         {!passed && (
           <p className="text-sm text-sand-dim mb-4">
-            Score 80% or higher to unlock the next level
+            Score 80% and master all characters to unlock the next level
           </p>
         )}
 
@@ -163,7 +168,7 @@ export default function LevelComplete({
             </div>
             <p className="text-xs text-sand-dim mt-2">Characters</p>
             <p className="text-lg font-semibold text-sand-dim">
-              {passed ? "Unlocked" : "To Master"}
+              {hasMasteredAll ? "Mastered" : "To Master"}
             </p>
           </div>
         </div>

@@ -58,7 +58,7 @@ export default function VisualFlashcard({
         >
           <span
             className={`
-              font-kannada text-8xl leading-none
+              ${exercise.fontOverride || "font-kannada"} text-8xl leading-none inline-block translate-y-3
               ${feedbackState === "correct" ? "text-correct text-glow-correct" : ""}
               ${feedbackState === "incorrect" ? "text-incorrect text-glow-incorrect" : ""}
               ${feedbackState === "idle" ? "text-saffron text-glow-saffron" : ""}
