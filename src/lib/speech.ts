@@ -84,24 +84,7 @@ export function isSpeechAvailable(): boolean {
   return typeof window !== "undefined";
 }
 
-let audioCtx: AudioContext | null = null;
-function getAudioContext(): AudioContext | null {
-  if (typeof window === "undefined") return null;
-  if (!audioCtx) {
-    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
-    if (Ctx) audioCtx = new Ctx();
-  }
-  return audioCtx;
-}
-
 async function speakWithSarvam(text: string): Promise<void> {
-  // 1. Synchronous Unlock: If this function is called from an onClick handler,
-  // calling resume() immediately will unlock iOS Safari audio context permanently.
-  const ctx = getAudioContext();
-  if (ctx && ctx.state === "suspended") {
-    ctx.resume().catch(() => {});
-  }
-
   const { normalized, original, addedPunctuation } = normalizePrompt(text);
   if (normalized !== original) {
     console.debug("[TTS] normalize", {
@@ -130,7 +113,7 @@ async function speakWithSarvam(text: string): Promise<void> {
     throw new Error("Invalid base64 audio from Sarvam TTS");
   }
 
-  // Decode base64 → ArrayBuffer
+  // Decode base64 → Blob → Object URL → play
   let binary: string;
   try {
     binary = atob(base64Audio);
@@ -138,49 +121,49 @@ async function speakWithSarvam(text: string): Promise<void> {
     console.error("[TTS] base64 decode failed", error);
     throw new Error("Failed to decode audio");
   }
-  
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {
     bytes[i] = binary.charCodeAt(i);
   }
 
-  if (!ctx) throw new Error("AudioContext not supported on this browser");
-
-  let audioBuffer: AudioBuffer;
-  try {
-    // Older Safari needs the Promise wrapper for decodeAudioData
-    audioBuffer = await new Promise((resolve, reject) => {
-      ctx.decodeAudioData(
-        bytes.buffer.slice(0),
-        (buffer) => resolve(buffer),
-        (err) => reject(err)
-      );
-    });
-  } catch (error) {
-    console.error("[TTS] decodeAudioData failed", error);
-    throw new Error("Failed to decode audio format");
+  if (bytes.length < 44) {
+    console.warn("[TTS] audio payload too small", { length: bytes.length });
   }
 
-  const source = ctx.createBufferSource();
-  source.buffer = audioBuffer;
-  source.connect(ctx.destination);
+  const blob = new Blob([bytes], { type: "audio/wav" });
+  const url = URL.createObjectURL(blob);
+  const audio = new Audio(url);
 
   return new Promise<void>((resolve, reject) => {
     let timeout: ReturnType<typeof setTimeout> | undefined;
-    source.onended = () => {
+    const startTimeout = () => {
+      timeout = setTimeout(() => {
+        audio.pause();
+        URL.revokeObjectURL(url);
+        reject(new Error("Audio playback timed out"));
+      }, 15000);
+    };
+
+    audio.onplaying = () => {
+      if (!timeout) startTimeout();
+    };
+
+    audio.onended = () => {
       if (timeout) clearTimeout(timeout);
+      URL.revokeObjectURL(url);
       resolve();
     };
-    
-    // Fallback if onended doesn't fire
-    timeout = setTimeout(() => resolve(), (audioBuffer.duration * 1000) + 1000);
-    
-    try {
-      source.start(0);
-    } catch (error) {
+    audio.onerror = () => {
       if (timeout) clearTimeout(timeout);
-      reject(error);
-    }
+      URL.revokeObjectURL(url);
+      reject(new Error("Audio playback failed"));
+    };
+
+    audio.play().catch((err) => {
+      if (timeout) clearTimeout(timeout);
+      URL.revokeObjectURL(url);
+      reject(err);
+    });
   });
 }
 
@@ -188,10 +171,4 @@ export async function speak(text: string): Promise<void> {
   return speakWithSarvam(text);
 }
 
-export function preloadVoices(): void {
-  // Just touch the audio context to unlock it proactively on first interaction
-  const ctx = getAudioContext();
-  if (ctx && ctx.state === "suspended") {
-    ctx.resume().catch(() => {});
-  }
-}
+export function preloadVoices(): void {}
