@@ -2,12 +2,35 @@ import { ALL_CHARACTERS } from "./curriculum";
 
 const KANNADA_RE = /[\u0C80-\u0CFF]/;
 const SENTENCE_END_RE = /[.!?\u0964]$/;
+const BASE64_AUDIO_RE = /^[A-Za-z0-9+/=_-]+$/;
 
 const ROMANIZATION_BY_LABEL = new Map<string, string>();
 for (const char of ALL_CHARACTERS) {
   if (char.glyph) ROMANIZATION_BY_LABEL.set(char.glyph, char.romanization);
   if (char.context) ROMANIZATION_BY_LABEL.set(char.context, char.romanization);
   if (char.audioLabel) ROMANIZATION_BY_LABEL.set(char.audioLabel, char.romanization);
+}
+
+let consecutiveSpeechFailures = 0;
+
+function detectAudioMimeType(bytes: Uint8Array): "audio/wav" | "audio/mpeg" | null {
+  const hasWavHeader =
+    bytes.length >= 12 &&
+    bytes[0] === 0x52 && // R
+    bytes[1] === 0x49 && // I
+    bytes[2] === 0x46 && // F
+    bytes[3] === 0x46 && // F
+    bytes[8] === 0x57 && // W
+    bytes[9] === 0x41 && // A
+    bytes[10] === 0x56 && // V
+    bytes[11] === 0x45; // E
+  if (hasWavHeader) return "audio/wav";
+
+  const hasId3Header = bytes.length >= 3 && bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33;
+  const hasMp3FrameSync = bytes.length >= 2 && bytes[0] === 0xff && (bytes[1] & 0xe0) === 0xe0;
+  if (hasId3Header || hasMp3FrameSync) return "audio/mpeg";
+
+  return null;
 }
 
 
@@ -18,7 +41,7 @@ function normalizePrompt(text: string): {
 } {
   const original = text;
   const trimmed = text.trim();
-  let core = trimmed;
+  const core = trimmed;
 
   let normalized = core;
   let addedPunctuation = false;
@@ -108,15 +131,20 @@ async function speakWithSarvam(text: string): Promise<void> {
     throw new Error("No audio returned from Sarvam TTS");
   }
 
-  if (!/^[A-Za-z0-9+/=_-]+$/.test(base64Audio)) {
+  if (!BASE64_AUDIO_RE.test(base64Audio)) {
     console.warn("[TTS] invalid base64 payload", { length: base64Audio.length });
     throw new Error("Invalid base64 audio from Sarvam TTS");
   }
 
+  const normalizedBase64 = base64Audio
+    .replace(/-/g, "+")
+    .replace(/_/g, "/")
+    .padEnd(Math.ceil(base64Audio.length / 4) * 4, "=");
+
   // Decode base64 → Blob → Object URL → play
   let binary: string;
   try {
-    binary = atob(base64Audio);
+    binary = atob(normalizedBase64);
   } catch (error) {
     console.error("[TTS] base64 decode failed", error);
     throw new Error("Failed to decode audio");
@@ -126,13 +154,29 @@ async function speakWithSarvam(text: string): Promise<void> {
     bytes[i] = binary.charCodeAt(i);
   }
 
-  if (bytes.length < 44) {
+  if (bytes.length < 32) {
     console.warn("[TTS] audio payload too small", { length: bytes.length });
+    throw new Error("Invalid audio payload from TTS service");
   }
 
-  const blob = new Blob([bytes], { type: "audio/wav" });
+  const mimeType = detectAudioMimeType(bytes);
+  if (!mimeType) {
+    console.warn("[TTS] unrecognized audio header", {
+      firstBytes: Array.from(bytes.slice(0, 12)),
+      length: bytes.length,
+    });
+    throw new Error("Unsupported audio format from TTS service");
+  }
+
+  if (mimeType === "audio/wav" && bytes.length < 44) {
+    throw new Error("Corrupted WAV payload from TTS service");
+  }
+
+  const blob = new Blob([bytes], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const audio = new Audio(url);
+  const estimatedDurationMs = Math.ceil((bytes.length / (24000 * 2)) * 1000);
+  const playbackTimeoutMs = Math.max(15000, Math.min(30000, estimatedDurationMs + 5000));
 
   return new Promise<void>((resolve, reject) => {
     let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -141,7 +185,7 @@ async function speakWithSarvam(text: string): Promise<void> {
         audio.pause();
         URL.revokeObjectURL(url);
         reject(new Error("Audio playback timed out"));
-      }, 15000);
+      }, playbackTimeoutMs);
     };
 
     audio.onplaying = () => {
@@ -168,7 +212,19 @@ async function speakWithSarvam(text: string): Promise<void> {
 }
 
 export async function speak(text: string): Promise<void> {
-  return speakWithSarvam(text);
+  try {
+    await speakWithSarvam(text);
+    consecutiveSpeechFailures = 0;
+  } catch (error) {
+    consecutiveSpeechFailures += 1;
+    const detail = error instanceof Error ? error.message : "Unknown speech error";
+
+    if (consecutiveSpeechFailures >= 2) {
+      throw new Error(`Audio is temporarily unavailable (${detail}). Continue with text hints and retry shortly.`);
+    }
+
+    throw new Error(detail);
+  }
 }
 
 export function preloadVoices(): void {}

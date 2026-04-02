@@ -1,4 +1,4 @@
-import { Character, Exercise, ExercisePhase, LevelId, WordEntry } from "@/types";
+import { Character, Exercise, ExercisePhase, LevelId } from "@/types";
 import { LEVELS, ALL_CHARACTERS } from "./curriculum";
 import { DICTIONARY } from "./dictionary";
 
@@ -12,7 +12,21 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 function pick<T>(arr: T[], n: number): T[] {
-  return shuffle(arr).slice(0, n);
+  const count = Math.max(0, Math.min(n, arr.length));
+  if (count === 0) return [];
+  if (count === arr.length) return shuffle(arr);
+
+  const pickedIndices = new Set<number>();
+  while (pickedIndices.size < count) {
+    pickedIndices.add(Math.floor(Math.random() * arr.length));
+  }
+
+  const picked: T[] = [];
+  for (const index of pickedIndices) {
+    picked.push(arr[index]);
+  }
+
+  return picked;
 }
 
 let exerciseCounter = 0;
@@ -288,36 +302,21 @@ function createCharPhoneticExercise(char: Character, masteryScore: number = 0): 
 
 
 
+const KANNADA_SEGMENTER =
+  typeof Intl !== "undefined" && "Segmenter" in Intl
+    ? new Intl.Segmenter("kn", { granularity: "grapheme" })
+    : null;
+const WORD_SEGMENT_CACHE = new Map<string, string[]>();
+
 export function splitKannadaWord(word: string): string[] {
-  if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
-    const segmenter = new Intl.Segmenter("kn", { granularity: "grapheme" });
-    return Array.from(segmenter.segment(word), (segment) => segment.segment);
-  }
+  const cached = WORD_SEGMENT_CACHE.get(word);
+  if (cached) return cached;
 
-  const parts: string[] = [];
-  let current = "";
+  const parts = KANNADA_SEGMENTER
+    ? Array.from(KANNADA_SEGMENTER.segment(word), (segment) => segment.segment)
+    : Array.from(word);
 
-  for (let i = 0; i < word.length; i++) {
-    const code = word.charCodeAt(i);
-    const isVowelSign = code >= 0x0cbe && code <= 0x0ccc;
-    const isVirama = code === 0x0ccd;
-    const isAnusvara = code === 0x0c82;
-    const isVisarga = code === 0x0c83;
-    const isModifier = isVowelSign || isVirama || isAnusvara || isVisarga;
-
-    if (isModifier) {
-      current += word[i];
-    } else {
-      if (current.length > 0 && current.endsWith("\u0CCD")) {
-        current += word[i];
-      } else {
-        if (current.length > 0) parts.push(current);
-        current = word[i];
-      }
-    }
-  }
-  if (current.length > 0) parts.push(current);
-
+  WORD_SEGMENT_CACHE.set(word, parts);
   return parts;
 }
 

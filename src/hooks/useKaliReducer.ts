@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer, useEffect } from "react";
+import { useReducer, useEffect, useRef } from "react";
 import { AppState, AppAction, ExercisePhase, LevelId } from "@/types";
 import { loadState, saveState } from "@/lib/storage";
 import { LEVELS } from "@/lib/curriculum";
@@ -78,6 +78,24 @@ function tickConfusableQueue(queue: Record<string, number>): Record<string, numb
 function isKannadaGlyphLike(value: string | undefined): boolean {
   if (!value) return false;
   return /[\u0C80-\u0CFF]/.test(value);
+}
+
+function toPersistedState(state: AppState) {
+  return {
+    masteredCharacters: state.masteredCharacters,
+    unlockedLevels: state.unlockedLevels,
+    currentLevel: state.currentLevel,
+    glyphMastery: state.glyphMastery,
+    glyphStreaks: state.glyphStreaks,
+    confusableQueue: state.confusableQueue,
+    wordMastery: state.wordMastery,
+    glyphResponseTimes: state.glyphResponseTimes,
+    screen: state.screen,
+    exercisePhase: state.exercisePhase,
+    exerciseIndex: state.exerciseIndex,
+    exercises: state.exercises,
+    score: state.score,
+  };
 }
 
 function reducer(state: AppState, action: AppAction): AppState {
@@ -348,6 +366,8 @@ function reducer(state: AppState, action: AppAction): AppState {
 
 export function useKaliReducer() {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedSnapshotRef = useRef<string | null>(null);
 
   useEffect(() => {
     const persisted = loadState();
@@ -377,21 +397,28 @@ export function useKaliReducer() {
 
   useEffect(() => {
     if (!state.hydrated) return;
-    saveState({
-      masteredCharacters: state.masteredCharacters,
-      unlockedLevels: state.unlockedLevels,
-      currentLevel: state.currentLevel,
-      glyphMastery: state.glyphMastery,
-      glyphStreaks: state.glyphStreaks,
-      confusableQueue: state.confusableQueue,
-      wordMastery: state.wordMastery,
-      glyphResponseTimes: state.glyphResponseTimes,
-      screen: state.screen,
-      exercisePhase: state.exercisePhase,
-      exerciseIndex: state.exerciseIndex,
-      exercises: state.exercises,
-      score: state.score,
-    });
+
+    const nextPersistedState = toPersistedState(state);
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      const snapshot = JSON.stringify(nextPersistedState);
+      if (snapshot === lastSavedSnapshotRef.current) return;
+
+      const saved = saveState(nextPersistedState);
+      if (saved) {
+        lastSavedSnapshotRef.current = snapshot;
+      }
+    }, 500);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [state]);
 
   return { state, dispatch };
