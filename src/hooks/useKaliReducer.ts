@@ -155,7 +155,7 @@ function reducer(state: AppState, action: AppAction): AppState {
 
       const targetWord = currentExercise?.phase === ExercisePhase.Scramble
         ? currentExercise.correctAnswer
-        : (currentExercise?.phase === ExercisePhase.WordMeaning || currentExercise?.phase === ExercisePhase.GuidedDecode || (currentExercise?.phase === ExercisePhase.Phonetic && currentExercise.prompt.length > 2))
+        : (currentExercise?.phase === ExercisePhase.Phonetic && currentExercise.prompt.length > 2)
           ? currentExercise.prompt
           : null;
 

@@ -4,8 +4,6 @@ export enum ExercisePhase {
   Audio = "audio",
   Scramble = "scramble",
   Phonetic = "phonetic",
-  WordMeaning = "word-meaning",
-  GuidedDecode = "guided-decode",
   MinimalPair = "minimal-pair",
   VdtCompare = "vdt-compare",
   GhostBase = "ghost-base"

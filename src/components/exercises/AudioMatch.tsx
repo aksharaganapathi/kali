@@ -137,7 +137,7 @@ export default function AudioMatch({
               key={option}
               hover={feedbackState === "idle"}
               className={`
-                py-6 px-4 text-center cursor-pointer select-none transition-all duration-300 relative
+                min-h-[100px] flex items-center justify-center px-4 text-center cursor-pointer select-none transition-all duration-300 relative
                 ${isCorrect ? "!border-correct/40 !bg-correct/10 shadow-[0_0_20px_rgba(74,222,128,0.2)]" : ""}
                 ${isWrong ? "!border-incorrect/40 !bg-incorrect/10 shadow-[0_0_20px_rgba(248,113,113,0.2)]" : ""}
                 ${feedbackState === "idle" ? "hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]" : ""}
@@ -150,7 +150,7 @@ export default function AudioMatch({
               <span className="absolute top-1.5 left-2 text-[10px] text-sand-dim/50 font-medium select-none">
                 {OPTION_LABELS[idx]}
               </span>
-              <span className="font-kannada text-4xl">{option}</span>
+              <span className="font-kannada text-4xl leading-none">{option}</span>
             </GlassCard>
           );
         })}

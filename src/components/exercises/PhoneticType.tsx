@@ -53,13 +53,13 @@ export default function PhoneticType({
     <ExerciseLayout>
       {/* Glyph prompt */}
       <div className="flex flex-col items-center gap-2">
-        <div className="px-8 py-5 rounded-2xl bg-white/4 border border-white/8">
+        <div className="flex items-center justify-center w-36 h-36 rounded-2xl bg-white/4 border border-white/8">
           <motion.span
             key={exercise.id}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className={`
-              ${exercise.fontOverride || "font-kannada"} text-8xl leading-none drop-shadow-lg inline-block translate-y-3
+              ${exercise.fontOverride || "font-kannada"} text-8xl leading-none drop-shadow-lg
               ${feedbackState === "correct" ? "text-correct text-glow-correct" : ""}
               ${feedbackState === "incorrect" ? "text-incorrect text-glow-incorrect" : ""}
               ${feedbackState === "idle" ? "text-saffron text-glow-saffron" : ""}

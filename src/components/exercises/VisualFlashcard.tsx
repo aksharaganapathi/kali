@@ -54,11 +54,11 @@ export default function VisualFlashcard({
           key={exercise.id}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="px-8 py-5 rounded-2xl bg-white/4 border border-white/8"
+          className="flex items-center justify-center w-40 h-40 rounded-2xl bg-white/4 border border-white/8"
         >
           <span
             className={`
-              ${exercise.fontOverride || "font-kannada"} text-8xl leading-none inline-block translate-y-3
+              ${exercise.fontOverride || "font-kannada"} text-8xl leading-none
               ${feedbackState === "correct" ? "text-correct text-glow-correct" : ""}
               ${feedbackState === "incorrect" ? "text-incorrect text-glow-incorrect" : ""}
               ${feedbackState === "idle" ? "text-saffron text-glow-saffron" : ""}
@@ -83,7 +83,7 @@ export default function VisualFlashcard({
               key={option}
               hover={feedbackState === "idle"}
               className={`
-                py-5 px-4 text-center cursor-pointer select-none transition-all duration-300 relative
+                min-h-[96px] px-4 flex items-center justify-center text-center cursor-pointer select-none transition-all duration-300 relative
                 ${isCorrect ? "!border-correct/40 !bg-correct/10 shadow-[0_0_20px_rgba(74,222,128,0.2)]" : ""}
                 ${isWrong ? "!border-incorrect/40 !bg-incorrect/10 shadow-[0_0_20px_rgba(248,113,113,0.2)]" : ""}
                 ${feedbackState === "idle" ? "hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]" : ""}
@@ -96,7 +96,7 @@ export default function VisualFlashcard({
               <span className="absolute top-1.5 left-2 text-[10px] text-sand-dim/50 font-medium select-none">
                 {OPTION_LABELS[idx]}
               </span>
-              <span className="text-xl font-semibold tracking-wide">{option}</span>
+              <span className="text-xl font-semibold tracking-wide leading-none">{option}</span>
             </GlassCard>
           );
         })}

@@ -8,6 +8,7 @@ import { AppAction, AppState } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
 import GlassCard from "./ui/GlassCard";
 import ProgressRing from "./ui/ProgressRing";
+import DictionaryModal from "./DictionaryModal";
 
 interface DashboardProps {
   state: AppState;
@@ -32,6 +33,7 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
   const masteredCount = state.masteredCharacters.length;
   const isFirstTimeUser = masteredCount === 0;
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showDictionary, setShowDictionary] = useState(false);
   const fluentCount = Object.values(state.glyphResponseTimes || {}).filter(times => times.some(t => t < 2000)).length;
   const masteredWordsCount = Object.values(state.wordMastery || {}).filter(score => score >= 80).length;
   const { theme, toggle: toggleTheme } = useTheme();
@@ -117,6 +119,15 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
               </svg>
             )}
+          </button>
+          <button
+            onClick={() => setShowDictionary(true)}
+            className="p-2 rounded-lg text-sand-dim hover:text-white hover:bg-white/5 transition-colors"
+            title="Dictionary"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+            </svg>
           </button>
           {/* Reset button */}
           <button
@@ -234,7 +245,7 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
                   {level.characters.slice(0, 8).map((c) => (
                     <span
                       key={c.glyph}
-                      className={`font-kannada text-sm px-1.5 py-0.5 rounded ${state.masteredCharacters.includes(c.glyph)
+                      className={`font-kannada text-sm flex items-center justify-center leading-none w-8 h-8 rounded ${state.masteredCharacters.includes(c.glyph)
                           ? "text-saffron bg-saffron/10"
                           : "text-sand-dim bg-white/5"
                         }`}
@@ -300,6 +311,12 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
           Kali — Scaffolded Kannada Script Deciphering
         </p>
       </motion.footer>
+
+      <AnimatePresence>
+        {showDictionary && (
+          <DictionaryModal state={state} onClose={() => setShowDictionary(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

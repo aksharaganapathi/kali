@@ -17,8 +17,6 @@ const PHASE_LABELS: Record<ExercisePhase, { label: string; icon: string; toast: 
   [ExercisePhase.MinimalPair]:   { label: "Contrast", icon: "⚖",  toast: "Spot the difference" },
   [ExercisePhase.Scramble]:      { label: "Build",    icon: "🧩", toast: "Assemble the word" },
   [ExercisePhase.Phonetic]:      { label: "Decode",   icon: "⌨",  toast: "Now type what you know" },
-  [ExercisePhase.GuidedDecode]:  { label: "Guided", icon: "🧭", toast: "Step-by-step decode" },
-  [ExercisePhase.WordMeaning]:   { label: "Translate",icon: "📖", toast: "What does it mean?" },
   [ExercisePhase.VdtCompare]:    { label: "Compare",  icon: "🔍", toast: "Spot the difference" },
   [ExercisePhase.GhostBase]:     { label: "Signs",    icon: "✨", toast: "See the base" },
 };

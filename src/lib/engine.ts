@@ -236,35 +236,7 @@ function createGhostBaseExercise(char: Character): Exercise {
   };
 }
 
-function createWordMeaningExercise(
-  word: WordEntry,
-  pool: WordEntry[]
-): Exercise {
-  const distractorMeanings = generateDistractors(
-    word.meaning,
-    pool.map((w) => w.meaning)
-  );
-  const options = shuffle([word.meaning, ...distractorMeanings]);
-  const anchorGlyph = word.keyCharacter ?? word.requiredChars[0];
-  const teachingNote =
-    word.scaffoldingNote ??
-    (anchorGlyph
-      ? `Anchor on ${anchorGlyph} while decoding this word.`
-      : "Decode by mapping one glyph sound at a time.");
 
-  return {
-    id: uid(),
-    createdAtMs: Date.now(),
-    phase: ExercisePhase.WordMeaning,
-    prompt: word.kannada,
-    correctAnswer: word.meaning,
-    options,
-    aliases: [word.romanization],
-    hintText: `Pronunciation: ${word.romanization}`,
-    teachingNote,
-    targetGlyph: anchorGlyph,
-  };
-}
 
 function createScrambleExercise(
   word: { kannada: string; romanization: string; meaning: string }
@@ -314,24 +286,7 @@ function createCharPhoneticExercise(char: Character, masteryScore: number = 0): 
   };
 }
 
-function createGuidedDecodeExercise(word: WordEntry): Exercise {
-  const steps = splitKannadaWord(word.kannada);
-  const focusGlyph = word.keyCharacter ?? word.requiredChars[0];
-  return {
-    id: uid(),
-    createdAtMs: Date.now(),
-    phase: ExercisePhase.GuidedDecode,
-    prompt: word.kannada,
-    correctAnswer: word.romanization,
-    aliases: [word.romanization.toLowerCase()],
-    decodeSteps: steps,
-    targetGlyph: focusGlyph,
-    hintText: `Read each part in order, then combine: ${word.romanization}.`,
-    teachingNote:
-      word.scaffoldingNote ??
-      `Start with ${steps[0] ?? word.kannada}, then blend into ${word.romanization}.`,
-  };
-}
+
 
 export function splitKannadaWord(word: string): string[] {
   if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
@@ -509,19 +464,7 @@ export function generateExerciseSet(
     }
     wordExercises.push(wordPhoneticA, wordPhoneticB);
 
-    if (splitKannadaWord(word.kannada).length >= 2 && Math.random() < 0.35) {
-      const guidedEx = createGuidedDecodeExercise(word);
-      if (isReviewWord) guidedEx.isReview = true;
-      wordExercises.push(guidedEx);
-    }
-
-    if (Math.random() < 0.25) {
-      const wExMeaning = createWordMeaningExercise(word, availableWords);
-      if (isReviewWord) wExMeaning.isReview = true;
-      wordExercises.push(wExMeaning);
-    }
-
-    if (splitKannadaWord(word.kannada).length >= 2 && Math.random() < 0.3) {
+    if (splitKannadaWord(word.kannada).length >= 2 && Math.random() < 0.4) {
       const scrEx = createScrambleExercise(word);
       if (isReviewWord) scrEx.isReview = true;
       wordExercises.push(scrEx);
@@ -530,18 +473,33 @@ export function generateExerciseSet(
 
   // ─── 5. ASSEMBLE & CAP ────────────────────────────────────────────────────
   
-  // Priority exercises that the user MUST see early in the session
   const priorityPool = shuffle([
     ...minimalPairExercises,
     ...practiceExercises,
     ...wordExercises,
   ]);
 
-  // Secondary exercises used for padding and extra practice
   const secondaryPool = shuffle(reviewExercises);
 
-  // Combine them, keeping priority items at the front
-  const combinedPool = [...priorityPool, ...secondaryPool];
+  // Guarantee ~25% of the post-intro session goes to review items
+  const maxSessionSize = SESSION_SIZE;
+  const introCount = introExercises.length;
+  const remainingSize = Math.max(0, maxSessionSize - introCount);
+  
+  const targetReviewCount = Math.min(Math.floor(remainingSize * 0.25), secondaryPool.length);
+  const selectedReviews = secondaryPool.slice(0, targetReviewCount);
+  
+  const remainingForPriority = remainingSize - selectedReviews.length;
+  const selectedPriority = priorityPool.slice(0, remainingForPriority);
+  
+  // If priorityPool didn't fill its quota, take from secondaryPool
+  if (selectedPriority.length < remainingForPriority) {
+     const extraSpace = remainingForPriority - selectedPriority.length;
+     const extraReviews = secondaryPool.slice(selectedReviews.length, selectedReviews.length + extraSpace);
+     selectedReviews.push(...extraReviews);
+  }
+
+  const combinedPool = shuffle([...selectedPriority, ...selectedReviews]);
 
   // Spacing algorithm: gently space out exercises for the same targetGlyph
   const spacedPool: Exercise[] = [];
@@ -568,9 +526,7 @@ export function generateExerciseSet(
     ...spacedPool,
   ];
 
-  // Cap to SESSION_SIZE so sessions are digestible.
-  // State is persisted, so the user can start again and practice what's left.
-  return ordered.slice(0, SESSION_SIZE);
+  return ordered;
 }
 
 export function checkAnswer(exercise: Exercise, userAnswer: string): boolean {

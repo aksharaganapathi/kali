@@ -82,7 +82,6 @@ export default function CharacterLearn({ exercise, onNext }: CharacterLearnProps
             style={{
               fontSize: "5rem",
               lineHeight: 1,
-              transform: "translateY(0.6rem)",
             }}
           >
             {exercise.prompt}

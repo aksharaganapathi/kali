@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { Exercise } from "@/types";
 import GlassCard from "../ui/GlassCard";
 import ExerciseLayout from "./ExerciseLayout";
@@ -19,7 +19,9 @@ export default function SyllableScramble({
   onNext,
   feedbackState,
 }: SyllableScrambleProps) {
-  const [items, setItems] = useState<string[]>(exercise.scrambledParts ?? []);
+  const [items, setItems] = useState<{ id: string; value: string }[]>(
+    exercise.scrambledParts?.map((p, i) => ({ id: `${i}-${p}`, value: p })) ?? []
+  );
   const [submitted, setSubmitted] = useState(false);
   const [hintLevel, setHintLevel] = useState(0);
 
@@ -32,7 +34,7 @@ export default function SyllableScramble({
   const handleSubmit = () => {
     if (submitted || feedbackState !== "idle") return;
     setSubmitted(true);
-    const assembled = items.join("");
+    const assembled = items.map(i => i.value).join("");
     onAnswer(assembled === exercise.correctAnswer, assembled);
   };
 
@@ -58,31 +60,34 @@ export default function SyllableScramble({
         <p className="text-xs text-sand-dim mt-1">Drag to rearrange the syllables</p>
       </div>
 
-      {/* Syllable tiles — using simple click-reorder for reliability */}
-      <div className="flex flex-wrap justify-center gap-3 w-full">
-        {items.map((part, idx) => (
-          <GlassCard
-            key={`${part}-${idx}`}
-            className={`
-              px-5 py-4 select-none cursor-grab active:cursor-grabbing transition-all duration-300
-              ${feedbackState === "correct" ? "!border-correct/40 !bg-correct/10 shadow-[0_0_20px_rgba(74,222,128,0.2)]" : ""}
-              ${feedbackState === "incorrect" ? "!border-incorrect/40 !bg-incorrect/10 shadow-[0_0_20px_rgba(248,113,113,0.2)]" : ""}
-            `}
-            onClick={() => {
-              if (feedbackState !== "idle") return;
-              // Cycle this tile to the end as a simple reorder
-              setItems((prev) => {
-                const next = [...prev];
-                next.splice(idx, 1);
-                next.push(part);
-                return next;
-              });
-            }}
+      {/* Syllable tiles — Drag and Drop */}
+      <Reorder.Group
+        axis="x"
+        values={items}
+        onReorder={(newOrder) => {
+          if (feedbackState === "idle") setItems(newOrder);
+        }}
+        className="flex flex-wrap justify-center gap-3 w-full"
+      >
+        {items.map((item) => (
+          <Reorder.Item
+            key={item.id}
+            value={item}
+            className="outline-none"
           >
-            <span className="font-kannada text-4xl text-white">{part}</span>
-          </GlassCard>
+            <GlassCard
+              hover={feedbackState === "idle"}
+              className={`
+                px-5 py-4 select-none cursor-grab active:cursor-grabbing transition-colors duration-300 flex items-center justify-center min-w-[70px] min-h-[70px]
+                ${feedbackState === "correct" ? "!border-correct/40 !bg-correct/10 shadow-[0_0_20px_rgba(74,222,128,0.2)]" : ""}
+                ${feedbackState === "incorrect" ? "!border-incorrect/40 !bg-incorrect/10 shadow-[0_0_20px_rgba(248,113,113,0.2)]" : ""}
+              `}
+            >
+              <span className="font-kannada text-4xl leading-none text-white">{item.value}</span>
+            </GlassCard>
+          </Reorder.Item>
         ))}
-      </div>
+      </Reorder.Group>
 
       {/* Live preview */}
       <div className="text-center">
@@ -95,7 +100,7 @@ export default function SyllableScramble({
             ${feedbackState === "idle" ? "text-sand" : ""}
           `}
         >
-          {items.join("")}
+          {items.map(i => i.value).join("")}
         </span>
         <AnimatePresence>
           {feedbackState === "incorrect" && (

@@ -12,8 +12,6 @@ import VisualFlashcard from "./exercises/VisualFlashcard";
 import AudioMatch from "./exercises/AudioMatch";
 import SyllableScramble from "./exercises/SyllableScramble";
 import PhoneticType from "./exercises/PhoneticType";
-import WordMeaning from "./exercises/WordMeaning";
-import GuidedDecode from "./exercises/GuidedDecode";
 import MinimalPair from "./exercises/MinimalPair";
 import CharacterLearn from "./exercises/CharacterLearn";
 import VDTCompare from "./exercises/VDTCompare";
@@ -93,8 +91,6 @@ export default function KaliApp() {
       case "minimal-pair":  return <MinimalPair key={currentExercise.id} {...props} />;
       case "scramble":      return <SyllableScramble key={currentExercise.id} {...props} />;
       case "phonetic":      return <PhoneticType key={currentExercise.id} {...props} />;
-      case "guided-decode": return <GuidedDecode key={currentExercise.id} {...props} />;
-      case "word-meaning":  return <WordMeaning key={currentExercise.id} {...props} />;
       default:              return null;
     }
   };
