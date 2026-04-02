@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppState, ExercisePhase } from "@/types";
 
@@ -30,18 +29,8 @@ export default function ExerciseShell({
   const total = exercises.length;
   const phaseInfo = PHASE_LABELS[exercisePhase] ?? { label: exercisePhase, icon: "", toast: "" };
 
-  // ── Phase-transition toast ────────────────────────────────
-  const prevPhaseRef = useRef<string | null>(null);
-  const [toastVisible, setToastVisible] = useState(false);
-
-  useEffect(() => {
-    if (prevPhaseRef.current !== null && prevPhaseRef.current !== exercisePhase) {
-      setToastVisible(true);
-      const t = setTimeout(() => setToastVisible(false), 1600);
-      return () => clearTimeout(t);
-    }
-    prevPhaseRef.current = exercisePhase;
-  }, [exercisePhase]);
+  // Animate phase toast when phase key changes (but not on first exercise).
+  const shouldShowPhaseToast = exerciseIndex > 0;
 
   // ── Per-character streak indicator (phonetic phase only) ─
   const currentExercise = exercises[exerciseIndex];
@@ -115,13 +104,13 @@ export default function ExerciseShell({
 
       {/* ── Phase transition toast ── */}
       <AnimatePresence>
-        {toastVisible && (
+        {shouldShowPhaseToast && (
           <motion.div
             key={exercisePhase + "-toast"}
             initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={{ opacity: [0, 1, 1, 0], y: [-12, 0, 0, -8] }}
             exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 1.6, times: [0, 0.15, 0.75, 1] }}
             className="fixed top-16 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-full bg-onyx-lighter border border-white/15 shadow-lg"
           >
             <span className="text-xs text-sand font-medium">

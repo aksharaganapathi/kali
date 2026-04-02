@@ -2,18 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 const MAX_TEXT_LENGTH = 500;
 const IS_PROD = process.env.NODE_ENV === "production";
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX_REQUESTS = 12;
 const UPSTREAM_TIMEOUT_MS = 10_000;
 const MAX_AUDIO_PARTS = 4;
 const MAX_AUDIO_TOTAL_CHARS = 2_000_000;
-
-type RateLimitBucket = {
-  count: number;
-  windowStartMs: number;
-};
-
-const ipRateBuckets = new Map<string, RateLimitBucket>();
 
 function debugLog(message: string, data?: Record<string, unknown>) {
   if (!IS_PROD) {
@@ -28,44 +19,6 @@ function jsonNoStore(body: unknown, init?: ResponseInit) {
     ...init,
     headers,
   });
-}
-
-function getClientIp(req: NextRequest): string {
-  const forwardedFor = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const realIp = req.headers.get("x-real-ip")?.trim();
-  return forwardedFor || realIp || "unknown";
-}
-
-function pruneRateLimitBuckets(nowMs: number): void {
-  for (const [ip, bucket] of ipRateBuckets.entries()) {
-    if (nowMs - bucket.windowStartMs > RATE_LIMIT_WINDOW_MS * 2) {
-      ipRateBuckets.delete(ip);
-    }
-  }
-}
-
-function checkRateLimit(clientIp: string, nowMs: number): { allowed: boolean; retryAfterSec?: number } {
-  if (ipRateBuckets.size > 5000) {
-    pruneRateLimitBuckets(nowMs);
-  }
-
-  const bucket = ipRateBuckets.get(clientIp);
-  if (!bucket || nowMs - bucket.windowStartMs >= RATE_LIMIT_WINDOW_MS) {
-    ipRateBuckets.set(clientIp, { count: 1, windowStartMs: nowMs });
-    return { allowed: true };
-  }
-
-  if (bucket.count >= RATE_LIMIT_MAX_REQUESTS) {
-    const retryAfterSec = Math.max(
-      1,
-      Math.ceil((bucket.windowStartMs + RATE_LIMIT_WINDOW_MS - nowMs) / 1000)
-    );
-    return { allowed: false, retryAfterSec };
-  }
-
-  bucket.count += 1;
-  ipRateBuckets.set(clientIp, bucket);
-  return { allowed: true };
 }
 
 // Only POST is supported
@@ -83,21 +36,6 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env.SARVAM_API_KEY;
   if (!apiKey) {
     return jsonNoStore({ error: "TTS service not configured" }, { status: 500 });
-  }
-
-  const nowMs = Date.now();
-  const clientIp = getClientIp(req);
-  const rateLimit = checkRateLimit(clientIp, nowMs);
-  if (!rateLimit.allowed) {
-    return jsonNoStore(
-      { error: "Too many TTS requests. Please try again shortly." },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": String(rateLimit.retryAfterSec ?? 1),
-        },
-      }
-    );
   }
 
   let body: unknown;

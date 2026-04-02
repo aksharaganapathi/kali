@@ -1,4 +1,4 @@
-import { ALL_CHARACTERS } from "./curriculum";
+﻿import { ALL_CHARACTERS } from "./curriculum";
 
 const KANNADA_RE = /[\u0C80-\u0CFF]/;
 const SENTENCE_END_RE = /[.!?\u0964]$/;

@@ -114,7 +114,7 @@ export default function DictionaryModal({ state, onClose }: DictionaryModalProps
           )}
 
           {displayWords.length === 0 && (
-            <div className="text-center py-20 text-sand-dim">No words found for "{searchTerm}"</div>
+            <div className="text-center py-20 text-sand-dim">No words found for {searchTerm}</div>
           )}
         </div>
       </motion.div>

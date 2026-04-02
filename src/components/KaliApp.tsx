@@ -29,24 +29,23 @@ const pageTransition = {
 
 export default function KaliApp() {
   const { state, dispatch } = useKaliReducer();
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [hasOnboardingDone, setHasOnboardingDone] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(ONBOARDING_KEY) === "1";
+  });
 
   useEffect(() => {
     preloadVoices();
   }, []);
 
-  // Show onboarding only once, for first-time users, after hydration
-  useEffect(() => {
-    if (!state.hydrated) return;
-    const done = localStorage.getItem(ONBOARDING_KEY);
-    if (!done && state.masteredCharacters.length === 0) {
-      setShowOnboarding(true);
-    }
-  }, [state.hydrated, state.masteredCharacters.length]);
+  const showOnboarding =
+    state.hydrated &&
+    !hasOnboardingDone &&
+    state.masteredCharacters.length === 0;
 
   const handleOnboardingComplete = () => {
     localStorage.setItem(ONBOARDING_KEY, "1");
-    setShowOnboarding(false);
+    setHasOnboardingDone(true);
     // Auto-navigate to Level 1 intro
     dispatch({ type: "SELECT_LEVEL", level: 1 });
   };
