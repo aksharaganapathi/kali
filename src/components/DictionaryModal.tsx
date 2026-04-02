@@ -77,7 +77,7 @@ export default function DictionaryModal({ state, onClose }: DictionaryModalProps
         <div className="flex-1 overflow-y-auto p-6 space-y-8 scroll-smooth">
           {unlocked.length > 0 && (
             <section>
-              <h3 className="text-sm font-semibold text-correct tracking-widest uppercase mb-4 sticky top-0 bg-[#1a1a2e]/90 backdrop-blur py-2 z-10">
+              <h3 className="text-sm font-semibold text-correct tracking-widest uppercase mb-4">
                 Unlocked Words ({unlocked.length})
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -96,7 +96,7 @@ export default function DictionaryModal({ state, onClose }: DictionaryModalProps
 
           {locked.length > 0 && (
             <section className="opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
-              <h3 className="text-sm font-semibold text-sand-dim tracking-widest uppercase mb-4 sticky top-0 bg-[#1a1a2e]/90 backdrop-blur py-2 z-10">
+              <h3 className="text-sm font-semibold text-sand-dim tracking-widest uppercase mb-4">
                 Locked Words ({locked.length})
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
