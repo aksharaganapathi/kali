@@ -5,6 +5,7 @@ import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { Exercise } from "@/types";
 import GlassCard from "../ui/GlassCard";
 import ExerciseLayout from "./ExerciseLayout";
+import CenteredGlyph from "../ui/CenteredGlyph";
 
 interface SyllableScrambleProps {
   exercise: Exercise;
@@ -83,7 +84,7 @@ export default function SyllableScramble({
                 ${feedbackState === "incorrect" ? "!border-incorrect/40 !bg-incorrect/10 shadow-[0_0_20px_rgba(248,113,113,0.2)]" : ""}
               `}
             >
-              <span className="font-kannada text-4xl leading-none text-white">{item.value}</span>
+              <CenteredGlyph glyph={item.value} className="font-kannada text-4xl leading-none text-white block" />
             </GlassCard>
           </Reorder.Item>
         ))}

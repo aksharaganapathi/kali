@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Exercise } from "@/types";
 import { isSpeechAvailable, speak } from "@/lib/speech";
+import CenteredGlyph from "../ui/CenteredGlyph";
 
 interface CharacterLearnProps {
   exercise: Exercise;
@@ -77,15 +78,14 @@ export default function CharacterLearn({ exercise, onNext }: CharacterLearnProps
           <div className="absolute bottom-2 right-2 w-3 h-3 border-b border-r border-saffron/30 rounded-br-sm" />
 
           {/* The glyph */}
-          <span
+          <CenteredGlyph
+            glyph={exercise.prompt}
             className="font-kannada text-saffron text-glow-saffron select-none block"
             style={{
               fontSize: "5rem",
               lineHeight: 1,
             }}
-          >
-            {exercise.prompt}
-          </span>
+          />
         </div>
 
         {/* Romanization */}

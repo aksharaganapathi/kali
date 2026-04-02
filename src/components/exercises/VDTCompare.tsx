@@ -6,6 +6,7 @@ import { Exercise } from "@/types";
 import { isSpeechAvailable, speak } from "@/lib/speech";
 import { CHAR_MAP } from "@/lib/curriculum";
 import ExerciseLayout from "./ExerciseLayout";
+import CenteredGlyph from "../ui/CenteredGlyph";
 
 interface VDTCompareProps {
   exercise: Exercise;
@@ -86,12 +87,11 @@ export default function VDTCompare({ exercise, onNext }: VDTCompareProps) {
             transition={{ duration: 0.4 }}
             className="relative flex items-center justify-center w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-white/4 border border-white/10"
           >
-            <span
+            <CenteredGlyph
+              glyph={parentGlyph}
               className="font-kannada text-white/25 select-none block"
-              style={{ fontSize: "4.5rem", lineHeight: 1, transform: "translateY(0.5rem)" }}
-            >
-              {parentGlyph}
-            </span>
+              style={{ fontSize: "4.5rem", lineHeight: 1 }}
+            />
           </motion.div>
           <p className="text-sm text-sand-dim/60 font-medium">
             {parentChar?.romanization ?? ""}
@@ -130,12 +130,11 @@ export default function VDTCompare({ exercise, onNext }: VDTCompareProps) {
             transition={{ duration: 0.4, delay: 0.15 }}
             className="relative flex items-center justify-center w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-saffron/8 border border-saffron/25 shadow-[0_0_30px_rgba(241,178,74,0.1)]"
           >
-            <span
+            <CenteredGlyph
+              glyph={childGlyph}
               className="font-kannada text-saffron text-glow-saffron select-none block"
-              style={{ fontSize: "4.5rem", lineHeight: 1, transform: "translateY(0.5rem)" }}
-            >
-              {childGlyph}
-            </span>
+              style={{ fontSize: "4.5rem", lineHeight: 1 }}
+            />
           </motion.div>
           <p className="text-sm text-saffron font-semibold">
             {childChar?.romanization ?? exercise.correctAnswer}

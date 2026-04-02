@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import CenteredGlyph from "./ui/CenteredGlyph";
 
 interface OnboardingProps {
   onComplete: () => void;
@@ -53,7 +54,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         {/* Icon */}
         <div className="w-20 h-20 rounded-2xl bg-saffron/10 border border-saffron/25 flex items-center justify-center mb-8">
           {current.isKannada ? (
-            <span className="font-kannada text-4xl text-saffron">{current.icon}</span>
+            <CenteredGlyph glyph={current.icon} className="font-kannada text-4xl text-saffron leading-none block" />
           ) : (
             <span className="text-3xl font-bold text-saffron">{current.icon}</span>
           )}

@@ -7,6 +7,7 @@ import { getAnchorWordsForCharacters } from "@/lib/dictionary";
 import { AppState, AppAction } from "@/types";
 import GlassCard from "./ui/GlassCard";
 import Button from "./ui/Button";
+import CenteredGlyph from "./ui/CenteredGlyph";
 
 interface LevelIntroProps {
   state: AppState;
@@ -104,9 +105,9 @@ export default function LevelIntro({ state, dispatch }: LevelIntroProps) {
                   transition-colors group cursor-default
                 `}
               >
-                <span className="font-kannada text-2xl sm:text-3xl mb-1">
-                  {char.context ?? char.glyph}
-                </span>
+                <div className="flex items-center justify-center h-10 mb-1">
+                  <CenteredGlyph glyph={char.context ?? char.glyph} className="font-kannada text-2xl sm:text-3xl leading-none block" />
+                </div>
                 <span className="text-[10px] text-sand-dim group-hover:text-saffron transition-colors">
                   {char.romanization}
                 </span>

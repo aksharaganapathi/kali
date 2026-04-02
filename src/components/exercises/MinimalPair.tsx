@@ -6,6 +6,7 @@ import { Exercise } from "@/types";
 import { speak, isSpeechAvailable } from "@/lib/speech";
 import GlassCard from "../ui/GlassCard";
 import ExerciseLayout from "./ExerciseLayout";
+import CenteredGlyph from "../ui/CenteredGlyph";
 
 interface MinimalPairProps {
   exercise: Exercise;
@@ -108,7 +109,7 @@ export default function MinimalPair({
               <span className="absolute top-1.5 left-2 text-[10px] text-sand-dim/50 font-medium select-none">
                 {OPTION_LABELS[idx]}
               </span>
-              <span className="font-kannada text-5xl text-white">{option}</span>
+              <CenteredGlyph glyph={option} className="font-kannada text-5xl text-white block" />
             </GlassCard>
           );
         })}

@@ -6,6 +6,7 @@ import { Exercise } from "@/types";
 import { isSpeechAvailable, speak } from "@/lib/speech";
 import { CHAR_MAP } from "@/lib/curriculum";
 import ExerciseLayout from "./ExerciseLayout";
+import CenteredGlyph from "../ui/CenteredGlyph";
 
 interface GhostBaseProps {
   exercise: Exercise;
@@ -104,19 +105,17 @@ export default function GhostBase({ exercise, onNext }: GhostBaseProps) {
             {/* Ghost overlay glyph */}
             <div className="relative flex items-center justify-center w-40 h-40 rounded-3xl bg-saffron/6 border border-saffron/20 shadow-[0_0_40px_rgba(241,178,74,0.06)]">
               {/* Ghost: bare consonant */}
-              <span
+              <CenteredGlyph
+                glyph={baseConsonant}
                 className="font-kannada text-white/15 select-none absolute"
-                style={{ fontSize: "5rem", lineHeight: 1, transform: "translateY(0.6rem)" }}
-              >
-                {baseConsonant}
-              </span>
+                style={{ fontSize: "5rem", lineHeight: 1 }}
+              />
               {/* Full composite on top */}
-              <span
+              <CenteredGlyph
+                glyph={contextGlyph}
                 className="font-kannada text-saffron text-glow-saffron select-none relative"
-                style={{ fontSize: "5rem", lineHeight: 1, transform: "translateY(0.6rem)" }}
-              >
-                {contextGlyph}
-              </span>
+                style={{ fontSize: "5rem", lineHeight: 1 }}
+              />
             </div>
 
             {/* Romanization */}
@@ -184,19 +183,17 @@ export default function GhostBase({ exercise, onNext }: GhostBaseProps) {
                   className="flex flex-col items-center"
                 >
                   {/* Ghost base */}
-                  <span
+                  <CenteredGlyph
+                    glyph={ghostBases[slideIndex]}
                     className="font-kannada text-white/15 select-none absolute"
-                    style={{ fontSize: "5rem", lineHeight: 1, transform: "translateY(0.6rem)" }}
-                  >
-                    {ghostBases[slideIndex]}
-                  </span>
+                    style={{ fontSize: "5rem", lineHeight: 1 }}
+                  />
                   {/* Composite */}
-                  <span
+                  <CenteredGlyph
+                    glyph={composites[slideIndex]}
                     className="font-kannada text-saffron text-glow-saffron select-none relative"
-                    style={{ fontSize: "5rem", lineHeight: 1, transform: "translateY(0.6rem)" }}
-                  >
-                    {composites[slideIndex]}
-                  </span>
+                    style={{ fontSize: "5rem", lineHeight: 1 }}
+                  />
                 </motion.div>
               </AnimatePresence>
             </div>

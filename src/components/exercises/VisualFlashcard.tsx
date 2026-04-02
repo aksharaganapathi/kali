@@ -6,6 +6,7 @@ import { Exercise } from "@/types";
 import { checkAnswer } from "@/lib/engine";
 import GlassCard from "../ui/GlassCard";
 import ExerciseLayout from "./ExerciseLayout";
+import CenteredGlyph from "../ui/CenteredGlyph";
 
 interface VisualFlashcardProps {
   exercise: Exercise;
@@ -56,17 +57,16 @@ export default function VisualFlashcard({
           animate={{ opacity: 1, scale: 1 }}
           className="flex items-center justify-center w-40 h-40 rounded-2xl bg-white/4 border border-white/8"
         >
-          <span
+          <CenteredGlyph
+            glyph={exercise.prompt}
             className={`
-              ${exercise.fontOverride || "font-kannada"} text-8xl leading-none
+              ${exercise.fontOverride || "font-kannada"} text-8xl leading-none block
               ${feedbackState === "correct" ? "text-correct text-glow-correct" : ""}
               ${feedbackState === "incorrect" ? "text-incorrect text-glow-incorrect" : ""}
               ${feedbackState === "idle" ? "text-saffron text-glow-saffron" : ""}
               transition-colors duration-300 drop-shadow-xl
             `}
-          >
-            {exercise.prompt}
-          </span>
+          />
         </motion.div>
         <p className="text-xs text-sand-dim">What sound does this make?</p>
       </div>

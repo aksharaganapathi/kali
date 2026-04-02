@@ -8,6 +8,7 @@ import { AppAction, AppState } from "@/types";
 import { useTheme } from "@/hooks/useTheme";
 import GlassCard from "./ui/GlassCard";
 import ProgressRing from "./ui/ProgressRing";
+import CenteredGlyph from "./ui/CenteredGlyph";
 import DictionaryModal from "./DictionaryModal";
 
 interface DashboardProps {
@@ -90,8 +91,11 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
       >
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-3">
-            <span className="font-kannada text-saffron text-3xl leading-none text-glow-saffron drop-shadow-[0_0_15px_rgba(241,178,74,0.4)] inline-flex items-center justify-center px-3 pt-4.5 pb-1 rounded-lg bg-saffron/10 border border-saffron/25 select-none">
-              ಕಲಿ
+            <span className="inline-flex h-12 items-center justify-center px-3 rounded-lg bg-saffron/10 border border-saffron/25 select-none">
+              <CenteredGlyph
+                glyph="ಕಲಿ"
+                className="font-kannada text-saffron text-3xl leading-none text-glow-saffron drop-shadow-[0_0_15px_rgba(241,178,74,0.4)] block"
+              />
             </span>
             <h1 className="text-3xl font-bold tracking-tight text-white leading-none">Kali</h1>
           </div>
@@ -245,12 +249,12 @@ export default function Dashboard({ state, dispatch }: DashboardProps) {
                   {level.characters.slice(0, 8).map((c) => (
                     <span
                       key={c.glyph}
-                      className={`font-kannada text-sm flex items-center justify-center leading-none w-8 h-8 rounded ${state.masteredCharacters.includes(c.glyph)
+                      className={`flex items-center justify-center w-8 h-8 rounded ${state.masteredCharacters.includes(c.glyph)
                           ? "text-saffron bg-saffron/10"
                           : "text-sand-dim bg-white/5"
                         }`}
                     >
-                      {c.context ?? c.glyph}
+                      <CenteredGlyph glyph={c.context ?? c.glyph} className="font-kannada text-sm leading-none block" />
                     </span>
                   ))}
                   {level.characters.length > 8 && (
