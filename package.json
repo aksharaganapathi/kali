@@ -2,6 +2,7 @@
   "name": "kali",
   "version": "0.1.0",
   "private": true,
+  "author": "Akshara Ganapathi",
   "license": "MIT",
   "scripts": {
     "dev": "next dev",
