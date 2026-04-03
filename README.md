@@ -14,7 +14,7 @@ The app guides you through four clear stages to ensure you're comfortable with e
 ## Key Features
 
 *   **Step-by-Step Learning**: We introduce new characters only when you've mastered the current ones, so you never feel overwhelmed.
-*   **Clear Audio**: Every character and word features high-quality audio from **Sarvam AI**, so you know exactly how it should sound.
+*   **Clear Audio**: Character audio is played from local MP3 assets generated from FreeTTS voices.
 *   **Pick Up Where You Left Off**: Your progress is saved automatically in your browser. Feel free to learn at your own pace.
 *   **Simple, Clean Design**: A focused interface that keeps your attention on the language.
 
@@ -24,7 +24,6 @@ The app guides you through four clear stages to ensure you're comfortable with e
 
 ### Prerequisites
 - Node.js (v18 or higher)
-- A Sarvam AI API key
 
 ### Installation
 
@@ -33,22 +32,24 @@ The app guides you through four clear stages to ensure you're comfortable with e
     npm install
     ```
 
-2.  **Add your API key**:
-    Create a `.env.local` file in the root folder and add:
-    ```env
-    SARVAM_AI_API_KEY=your_key_here
-    ```
 
-3.  **Run the app**:
+2.  **Run the app**:
     ```bash
     npm run dev
     ```
-
 ## Project Overview
 
 *   `src/lib/dictionary.ts`: The main curriculum and word list.
-*   `src/lib/speech.ts`: Handles the audio and voice integration.
+*   `src/lib/speech.ts`: Handles local MP3 lookup, lazy playback, and lightweight audio preloading.
 *   `src/components`: The interactive screens and buttons you see in the app.
 
 ---
 Built with Next.js, Framer Motion, and Tailwind CSS.
+
+## Credits
+
+Voice generation and API support provided by FreeTTS:
+
+*   `GET https://freetts.org/api/voices`
+*   `POST https://freetts.org/api/tts`
+*   `GET https://freetts.org/api/audio/{file_id}`

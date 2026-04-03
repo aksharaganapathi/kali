@@ -16,6 +16,8 @@ const LevelIdSchema = z.union([
   z.literal(8),
   z.literal(9),
   z.literal(10),
+  z.literal(11),
+  z.literal(12),
 ]);
 
 const ExercisePhaseSchema = z.enum([

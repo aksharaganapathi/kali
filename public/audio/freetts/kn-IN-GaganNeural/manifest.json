@@ -1,0 +1,596 @@
+[
+  {
+    "glyph": "ಅ",
+    "audioLabel": "ಅ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C85_ಅ.mp3"
+  },
+  {
+    "glyph": "ಆ",
+    "audioLabel": "ಆ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C86_ಆ.mp3"
+  },
+  {
+    "glyph": "ಇ",
+    "audioLabel": "ಇ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C87_ಇ.mp3"
+  },
+  {
+    "glyph": "ಈ",
+    "audioLabel": "ಈ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C88_ಈ.mp3"
+  },
+  {
+    "glyph": "ಉ",
+    "audioLabel": "ಉ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C89_ಉ.mp3"
+  },
+  {
+    "glyph": "ಊ",
+    "audioLabel": "ಊ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C8A_ಊ.mp3"
+  },
+  {
+    "glyph": "ಋ",
+    "audioLabel": "ಋ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C8B_ಋ.mp3"
+  },
+  {
+    "glyph": "ಎ",
+    "audioLabel": "ಎ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C8E_ಎ.mp3"
+  },
+  {
+    "glyph": "ಏ",
+    "audioLabel": "ಏ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C8F_ಏ.mp3"
+  },
+  {
+    "glyph": "ಐ",
+    "audioLabel": "ಐ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C90_ಐ.mp3"
+  },
+  {
+    "glyph": "ಒ",
+    "audioLabel": "ಒ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C92_ಒ.mp3"
+  },
+  {
+    "glyph": "ಓ",
+    "audioLabel": "ಓ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C93_ಓ.mp3"
+  },
+  {
+    "glyph": "ಔ",
+    "audioLabel": "ಔ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C94_ಔ.mp3"
+  },
+  {
+    "glyph": "ಅಂ",
+    "audioLabel": "ಅಂ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C85-0C82_ಅಂ.mp3"
+  },
+  {
+    "glyph": "ಅಃ",
+    "audioLabel": "ಅಃ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C85-0C83_ಅಃ.mp3"
+  },
+  {
+    "glyph": "ಕ",
+    "audioLabel": "ಕ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C95_ಕ.mp3"
+  },
+  {
+    "glyph": "ನ",
+    "audioLabel": "ನ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CA8_ನ.mp3"
+  },
+  {
+    "glyph": "ರ",
+    "audioLabel": "ರ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CB0_ರ.mp3"
+  },
+  {
+    "glyph": "ಲ",
+    "audioLabel": "ಲ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CB2_ಲ.mp3"
+  },
+  {
+    "glyph": "ತ",
+    "audioLabel": "ತ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CA4_ತ.mp3"
+  },
+  {
+    "glyph": "ದ",
+    "audioLabel": "ದ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CA6_ದ.mp3"
+  },
+  {
+    "glyph": "ಮ",
+    "audioLabel": "ಮ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAE_ಮ.mp3"
+  },
+  {
+    "glyph": "ಸ",
+    "audioLabel": "ಸ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CB8_ಸ.mp3"
+  },
+  {
+    "glyph": "ಹ",
+    "audioLabel": "ಹ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CB9_ಹ.mp3"
+  },
+  {
+    "glyph": "ಗ",
+    "audioLabel": "ಗ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C97_ಗ.mp3"
+  },
+  {
+    "glyph": "ಾ",
+    "audioLabel": "ಕಾ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CBE_ಾ.mp3"
+  },
+  {
+    "glyph": "ಿ",
+    "audioLabel": "ಕಿ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CBF_ಿ.mp3"
+  },
+  {
+    "glyph": "ೀ",
+    "audioLabel": "ಕೀ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CC0_ೀ.mp3"
+  },
+  {
+    "glyph": "ು",
+    "audioLabel": "ಕು",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CC1_ು.mp3"
+  },
+  {
+    "glyph": "ೂ",
+    "audioLabel": "ಕೂ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CC2_ೂ.mp3"
+  },
+  {
+    "glyph": "ೃ",
+    "audioLabel": "ಕೃ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CC3_ೃ.mp3"
+  },
+  {
+    "glyph": "ಪ",
+    "audioLabel": "ಪ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAA_ಪ.mp3"
+  },
+  {
+    "glyph": "ಬ",
+    "audioLabel": "ಬ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAC_ಬ.mp3"
+  },
+  {
+    "glyph": "ಜ",
+    "audioLabel": "ಜ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C9C_ಜ.mp3"
+  },
+  {
+    "glyph": "ಚ",
+    "audioLabel": "ಚ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C9A_ಚ.mp3"
+  },
+  {
+    "glyph": "ಯ",
+    "audioLabel": "ಯ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAF_ಯ.mp3"
+  },
+  {
+    "glyph": "ವ",
+    "audioLabel": "ವ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CB5_ವ.mp3"
+  },
+  {
+    "glyph": "ಙ",
+    "audioLabel": "ಙ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C99_ಙ.mp3"
+  },
+  {
+    "glyph": "ಞ",
+    "audioLabel": "ಞ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C9E_ಞ.mp3"
+  },
+  {
+    "glyph": "ೆ",
+    "audioLabel": "ಕೆ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CC6_ೆ.mp3"
+  },
+  {
+    "glyph": "ೇ",
+    "audioLabel": "ಕೇ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CC7_ೇ.mp3"
+  },
+  {
+    "glyph": "ೈ",
+    "audioLabel": "ಕೈ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CC8_ೈ.mp3"
+  },
+  {
+    "glyph": "ೊ",
+    "audioLabel": "ಕೊ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CCA_ೊ.mp3"
+  },
+  {
+    "glyph": "ೋ",
+    "audioLabel": "ಕೋ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CCB_ೋ.mp3"
+  },
+  {
+    "glyph": "ೌ",
+    "audioLabel": "ಕೌ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CCC_ೌ.mp3"
+  },
+  {
+    "glyph": "್",
+    "audioLabel": "ಕ್",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CCD_್.mp3"
+  },
+  {
+    "glyph": "ಖ",
+    "audioLabel": "ಖ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C96_ಖ.mp3"
+  },
+  {
+    "glyph": "ಘ",
+    "audioLabel": "ಘ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C98_ಘ.mp3"
+  },
+  {
+    "glyph": "ಛ",
+    "audioLabel": "ಛ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C9B_ಛ.mp3"
+  },
+  {
+    "glyph": "ಝ",
+    "audioLabel": "ಝ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C9D_ಝ.mp3"
+  },
+  {
+    "glyph": "ಥ",
+    "audioLabel": "ಥ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CA5_ಥ.mp3"
+  },
+  {
+    "glyph": "ಧ",
+    "audioLabel": "ಧ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CA7_ಧ.mp3"
+  },
+  {
+    "glyph": "ಫ",
+    "audioLabel": "ಫ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAB_ಫ.mp3"
+  },
+  {
+    "glyph": "ಭ",
+    "audioLabel": "ಭ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAD_ಭ.mp3"
+  },
+  {
+    "glyph": "ಟ",
+    "audioLabel": "ಟ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C9F_ಟ.mp3"
+  },
+  {
+    "glyph": "ಠ",
+    "audioLabel": "ಠ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CA0_ಠ.mp3"
+  },
+  {
+    "glyph": "ಡ",
+    "audioLabel": "ಡ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CA1_ಡ.mp3"
+  },
+  {
+    "glyph": "ಢ",
+    "audioLabel": "ಢ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CA2_ಢ.mp3"
+  },
+  {
+    "glyph": "ಣ",
+    "audioLabel": "ಣ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CA3_ಣ.mp3"
+  },
+  {
+    "glyph": "ಳ",
+    "audioLabel": "ಳ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CB3_ಳ.mp3"
+  },
+  {
+    "glyph": "ಶ",
+    "audioLabel": "ಶ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CB6_ಶ.mp3"
+  },
+  {
+    "glyph": "ಷ",
+    "audioLabel": "ಷ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CB7_ಷ.mp3"
+  },
+  {
+    "glyph": "ರು",
+    "audioLabel": "ರು",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CB0-0CC1_ರು.mp3"
+  },
+  {
+    "glyph": "ರೂ",
+    "audioLabel": "ರೂ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CB0-0CC2_ರೂ.mp3"
+  },
+  {
+    "glyph": "ರ್ಕ",
+    "audioLabel": "ರ್ಕ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CB0-0CCD-0C95_ರ್ಕ.mp3"
+  },
+  {
+    "glyph": "ಮೈ",
+    "audioLabel": "ಮೈ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAE-0CC8_ಮೈ.mp3"
+  },
+  {
+    "glyph": "ಮೊ",
+    "audioLabel": "ಮೊ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAE-0CCA_ಮೊ.mp3"
+  },
+  {
+    "glyph": "ಮೋ",
+    "audioLabel": "ಮೋ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAE-0CCB_ಮೋ.mp3"
+  },
+  {
+    "glyph": "ಯಾ",
+    "audioLabel": "ಯಾ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAF-0CBE_ಯಾ.mp3"
+  },
+  {
+    "glyph": "ಯೇ",
+    "audioLabel": "ಯೇ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAF-0CC7_ಯೇ.mp3"
+  },
+  {
+    "glyph": "ಯೋ",
+    "audioLabel": "ಯೋ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAF-0CCB_ಯೋ.mp3"
+  },
+  {
+    "glyph": "ಪು",
+    "audioLabel": "ಪು",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAA-0CC1_ಪು.mp3"
+  },
+  {
+    "glyph": "ಪೂ",
+    "audioLabel": "ಪೂ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAA-0CC2_ಪೂ.mp3"
+  },
+  {
+    "glyph": "ವು",
+    "audioLabel": "ವು",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CB5-0CC1_ವು.mp3"
+  },
+  {
+    "glyph": "ವೂ",
+    "audioLabel": "ವೂ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CB5-0CC2_ವೂ.mp3"
+  },
+  {
+    "glyph": "ಬು",
+    "audioLabel": "ಬು",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAC-0CC1_ಬು.mp3"
+  },
+  {
+    "glyph": "ಬೂ",
+    "audioLabel": "ಬೂ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CAC-0CC2_ಬೂ.mp3"
+  },
+  {
+    "glyph": "್ಮ",
+    "audioLabel": "ತ್ಮ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CCD-0CAE_್ಮ.mp3"
+  },
+  {
+    "glyph": "್ಯ",
+    "audioLabel": "ತ್ಯ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CCD-0CAF_್ಯ.mp3"
+  },
+  {
+    "glyph": "್ವ",
+    "audioLabel": "ತ್ವ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CCD-0CB5_್ವ.mp3"
+  },
+  {
+    "glyph": "್ತ",
+    "audioLabel": "ತ್ತ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CCD-0CA4_್ತ.mp3"
+  },
+  {
+    "glyph": "್ನ",
+    "audioLabel": "ನ್ನ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CCD-0CA8_್ನ.mp3"
+  },
+  {
+    "glyph": "್ಲ",
+    "audioLabel": "ಲ್ಲ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CCD-0CB2_್ಲ.mp3"
+  },
+  {
+    "glyph": "್ರ",
+    "audioLabel": "ತ್ರ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CCD-0CB0_್ರ.mp3"
+  },
+  {
+    "glyph": "್ಸ",
+    "audioLabel": "ಸ್ಸ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CCD-0CB8_್ಸ.mp3"
+  },
+  {
+    "glyph": "್ಚ",
+    "audioLabel": "ಚ್ಚ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CCD-0C9A_್ಚ.mp3"
+  },
+  {
+    "glyph": "್ಷ",
+    "audioLabel": "ಕ್ಷ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CCD-0CB7_್ಷ.mp3"
+  },
+  {
+    "glyph": "ಕ್ಷ",
+    "audioLabel": "ಕ್ಷ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C95-0CCD-0CB7_ಕ್ಷ.mp3"
+  },
+  {
+    "glyph": "ಜ್ಞ",
+    "audioLabel": "ಜ್ಞ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0C9C-0CCD-0C9E_ಜ್ಞ.mp3"
+  },
+  {
+    "glyph": "೦",
+    "audioLabel": "ಸೊನ್ನೆ",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CE6_೦.mp3"
+  },
+  {
+    "glyph": "೧",
+    "audioLabel": "ಒಂದು",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CE7_೧.mp3"
+  },
+  {
+    "glyph": "೨",
+    "audioLabel": "ಎರಡು",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CE8_೨.mp3"
+  },
+  {
+    "glyph": "೩",
+    "audioLabel": "ಮೂರು",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CE9_೩.mp3"
+  },
+  {
+    "glyph": "೪",
+    "audioLabel": "ನಾಲ್ಕು",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CEA_೪.mp3"
+  },
+  {
+    "glyph": "೫",
+    "audioLabel": "ಐದು",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CEB_೫.mp3"
+  },
+  {
+    "glyph": "೬",
+    "audioLabel": "ಆರು",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CEC_೬.mp3"
+  },
+  {
+    "glyph": "೭",
+    "audioLabel": "ಏಳು",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CED_೭.mp3"
+  },
+  {
+    "glyph": "೮",
+    "audioLabel": "ಎಂಟು",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CEE_೮.mp3"
+  },
+  {
+    "glyph": "೯",
+    "audioLabel": "ಒಂಬತ್ತು",
+    "voice": "kn-IN-GaganNeural",
+    "file": "0CEF_೯.mp3"
+  }
+]

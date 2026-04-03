@@ -6,7 +6,7 @@ import { loadState, saveState } from "@/lib/storage";
 import { LEVELS } from "@/lib/curriculum";
 import { generateExerciseSet } from "@/lib/engine";
 
-const LEVEL_ORDER: LevelId[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const LEVEL_ORDER: LevelId[] = LEVELS.map((level) => level.id) as LevelId[];
 const CONFUSABLE_MAP: Record<string, string[]> = {
   // Consonant shape-pairs
   "ದ": ["ಧ", "ಥ"],
@@ -61,6 +61,25 @@ function getNextLevel(currentLevel: LevelId): LevelId | null {
   return LEVEL_ORDER[index + 1];
 }
 
+function deriveUnlockedLevels(masteredCharacters: string[]): LevelId[] {
+  if (LEVELS.length === 0) return [1];
+
+  const masteredSet = new Set(masteredCharacters);
+  const unlocked: LevelId[] = [LEVELS[0].id];
+
+  for (let i = 0; i < LEVELS.length - 1; i++) {
+    const currentLevelChars = LEVELS[i].characters;
+    const hasMasteredAll = currentLevelChars.every((char) =>
+      masteredSet.has(char.glyph)
+    );
+
+    if (!hasMasteredAll) break;
+    unlocked.push(LEVELS[i + 1].id);
+  }
+
+  return unlocked;
+}
+
 function clampScore(score: number): number {
   return Math.max(0, Math.min(100, score));
 }
@@ -101,7 +120,19 @@ function toPersistedState(state: AppState) {
 function reducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case "HYDRATE":
-      return { ...state, ...action.state, hydrated: true };
+      {
+        const merged = { ...state, ...action.state, hydrated: true };
+        const unlockedLevels = deriveUnlockedLevels(merged.masteredCharacters);
+        const currentLevel = unlockedLevels.includes(merged.currentLevel)
+          ? merged.currentLevel
+          : unlockedLevels[unlockedLevels.length - 1];
+
+        return {
+          ...merged,
+          unlockedLevels,
+          currentLevel,
+        };
+      }
 
     case "SELECT_LEVEL":
       {

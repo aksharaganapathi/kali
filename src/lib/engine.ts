@@ -34,7 +34,7 @@ function uid(): string {
   return `ex_${++exerciseCounter}_${Date.now()}`;
 }
 
-const LEVEL_ORDER: LevelId[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const LEVEL_ORDER: LevelId[] = LEVELS.map((level) => level.id) as LevelId[];
 
 const TIMED_PHASES = new Set([ExercisePhase.Visual, ExercisePhase.Phonetic]);
 const CONFUSABLE_PAIR_SEPARATOR = "~";
@@ -61,7 +61,7 @@ export function getDynamicWords(
   const set = new Set(masteredCharacters);
   return DICTIONARY.filter((w) => {
     if (!isUnlockedLevel(w.minLevel, currentLevelId)) return false;
-    if (levelIndex(currentLevelId) < levelIndex(10) && w.kannada.includes("\u0CCD")) return false;
+    if (levelIndex(currentLevelId) < levelIndex(11) && w.kannada.includes("\u0CCD")) return false;
     if (levelIndex(currentLevelId) < levelIndex(6) && (w.kannada.includes("\u0C82") || w.kannada.includes("\u0C83"))) return false;
 
     return w.requiredChars.every((c) => set.has(c));

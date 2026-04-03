@@ -9,7 +9,7 @@ export enum ExercisePhase {
   GhostBase = "ghost-base"
 }
 
-export type LevelId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+export type LevelId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export type WordCategory =
   | "Family"
@@ -39,8 +39,18 @@ export interface Character {
   glyph: string;
   romanization: string;
   aliases: string[];
-  type: "vowel" | "consonant" | "vowel-sign" | "conjunct" | "special";
+  type:
+    | "vowel"
+    | "consonant"
+    | "vowel-sign"
+    | "conjunct"
+    | "special"
+    | "yogavaaha"
+    | "syllable"
+    | "vattu"
+    | "numeral";
   audioLabel: string;
+  description?: string;
   context?: string;
   /** VDT: the "parent" character (e.g., ಕ for ಖ) */
   parentGlyph?: string;
