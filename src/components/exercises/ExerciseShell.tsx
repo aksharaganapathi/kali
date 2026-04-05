@@ -41,22 +41,24 @@ export default function ExerciseShell({
   return (
     <div className="min-h-screen px-4 py-6 sm:px-8 max-w-2xl mx-auto flex flex-col">
       {/* ── Header row ── */}
-      <div className="flex items-center justify-between mb-5">
-        <button
-          onClick={onBack}
-          className="text-sand-dim text-sm flex items-center gap-1 hover:text-sand transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-          </svg>
-          Exit
-        </button>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center mb-5">
+        <div className="justify-self-start">
+          <button
+            onClick={onBack}
+            className="text-sand-dim text-sm flex items-center gap-1 hover:text-sand transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+            </svg>
+            Exit
+          </button>
+        </div>
 
         <motion.div
           key={exercisePhase}
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10"
+          className="justify-self-center flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10"
         >
           <span className="text-sm">{phaseInfo.icon}</span>
           <span className="text-xs font-medium text-sand uppercase tracking-wider">
@@ -64,7 +66,7 @@ export default function ExerciseShell({
           </span>
         </motion.div>
 
-        <div className="flex items-center gap-2">
+        <div className="justify-self-end flex items-center gap-2">
           {/* Per-character streak dots (phonetic only) */}
           <AnimatePresence>
             {showStreak && (
