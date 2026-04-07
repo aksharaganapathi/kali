@@ -189,6 +189,8 @@ function reducer(state: AppState, action: AppAction): AppState {
       const currentExercise = state.exercises[state.exerciseIndex];
       const isReview = currentExercise?.isReview;
       const targetGlyph = currentExercise?.targetGlyph;
+      const isCharacterActiveRecall =
+        currentExercise?.phase === ExercisePhase.Phonetic && !!targetGlyph;
       const isSpeedEligible =
         currentExercise?.timedMode &&
         (currentExercise.phase === ExercisePhase.Visual || currentExercise.phase === ExercisePhase.Phonetic) &&
@@ -247,19 +249,40 @@ function reducer(state: AppState, action: AppAction): AppState {
               masteredCharacters = [...masteredCharacters, targetGlyph];
             }
           }
-        } else {
+        } else if (isCharacterActiveRecall) {
           glyphMastery = {
             ...glyphMastery,
             [targetGlyph]: clampScore(previousMastery - INCORRECT_MASTERY_PENALTY),
           };
 
-          if (currentExercise?.phase === ExercisePhase.Phonetic) {
-            glyphStreaks = {
-              ...glyphStreaks,
-              [targetGlyph]: 0,
-            };
-          }
+          glyphStreaks = {
+            ...glyphStreaks,
+            [targetGlyph]: 0,
+          };
 
+          const forcedConfusables = CONFUSABLE_MAP[targetGlyph] ?? [];
+          const selectedAnswer = action.userAnswer?.trim();
+          const dynamicConfusable =
+            selectedAnswer &&
+            selectedAnswer !== currentExercise?.correctAnswer &&
+            isKannadaGlyphLike(selectedAnswer)
+              ? selectedAnswer
+              : null;
+
+          if (forcedConfusables.length > 0 || dynamicConfusable) {
+            confusableQueue = { ...confusableQueue };
+            for (const glyph of forcedConfusables) {
+              confusableQueue[glyph] = 5;
+            }
+
+            if (dynamicConfusable) {
+              const pairKey = `${targetGlyph}${CONFUSABLE_PAIR_SEPARATOR}${dynamicConfusable}`;
+              confusableQueue[targetGlyph] = 5;
+              confusableQueue[dynamicConfusable] = 5;
+              confusableQueue[pairKey] = 5;
+            }
+          }
+        } else if (!action.correct) {
           const forcedConfusables = CONFUSABLE_MAP[targetGlyph] ?? [];
           const selectedAnswer = action.userAnswer?.trim();
           const dynamicConfusable =

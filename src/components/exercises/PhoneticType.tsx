@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Exercise } from "@/types";
 import { checkAnswer } from "@/lib/engine";
 import ExerciseLayout from "./ExerciseLayout";
-import CenteredGlyph from "../ui/CenteredGlyph";
+import GlyphStage from "../ui/GlyphStage";
 
 interface PhoneticTypeProps {
   exercise: Exercise;
@@ -54,24 +54,25 @@ export default function PhoneticType({
     <ExerciseLayout>
       {/* Glyph prompt */}
       <div className="flex flex-col items-center gap-2">
-        <div className="flex items-center justify-center w-36 h-36 rounded-2xl bg-white/4 border border-white/8">
-          <motion.div
-            key={exercise.id}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-          >
-            <CenteredGlyph
-              glyph={exercise.prompt}
-              className={`
-                ${exercise.fontOverride || "font-kannada"} text-8xl leading-none drop-shadow-lg block
-                ${feedbackState === "correct" ? "text-correct text-glow-correct" : ""}
-                ${feedbackState === "incorrect" ? "text-incorrect text-glow-incorrect" : ""}
-                ${feedbackState === "idle" ? "text-saffron text-glow-saffron" : ""}
-                transition-colors duration-300
-              `}
-            />
-          </motion.div>
-        </div>
+        <motion.div
+          key={exercise.id}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <GlyphStage
+            glyph={exercise.prompt}
+            className="bg-white/4 border border-white/8"
+            style={{ width: "min(14rem, 92vw)", minHeight: "9rem" }}
+            glyphStyle={{ fontSize: Array.from(exercise.prompt.trim()).length >= 3 ? "3.5rem" : undefined }}
+            glyphClassName={`
+              ${exercise.fontOverride || "font-kannada"} text-8xl leading-none drop-shadow-lg block
+              ${feedbackState === "correct" ? "text-correct text-glow-correct" : ""}
+              ${feedbackState === "incorrect" ? "text-incorrect text-glow-incorrect" : ""}
+              ${feedbackState === "idle" ? "text-saffron text-glow-saffron" : ""}
+              transition-colors duration-300
+            `}
+          />
+        </motion.div>
         <p className="text-xs text-sand-dim">Type the phonetic romanization</p>
       </div>
 

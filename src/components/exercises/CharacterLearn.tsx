@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Exercise } from "@/types";
 import { isSpeechAvailable, speak } from "@/lib/speech";
-import CenteredGlyph from "../ui/CenteredGlyph";
+import GlyphStage from "../ui/GlyphStage";
 
 interface CharacterLearnProps {
   exercise: Exercise;
@@ -70,23 +70,17 @@ export default function CharacterLearn({ exercise, onNext }: CharacterLearnProps
 
       {/* Glyph stage — the main focal point */}
       <div className="flex flex-col items-center gap-4">
-        <div className="relative flex items-center justify-center w-40 h-40 rounded-3xl bg-saffron/8 border border-saffron/20 shadow-[0_0_40px_rgba(241,178,74,0.08)]">
+        <GlyphStage
+          glyph={exercise.prompt}
+          className="bg-saffron/8 border border-saffron/20 shadow-[0_0_40px_rgba(241,178,74,0.08)]"
+          glyphClassName="font-kannada text-saffron text-glow-saffron select-none block"
+        >
           {/* Decorative corner accents */}
           <div className="absolute top-2 left-2 w-3 h-3 border-t border-l border-saffron/30 rounded-tl-sm" />
           <div className="absolute top-2 right-2 w-3 h-3 border-t border-r border-saffron/30 rounded-tr-sm" />
           <div className="absolute bottom-2 left-2 w-3 h-3 border-b border-l border-saffron/30 rounded-bl-sm" />
           <div className="absolute bottom-2 right-2 w-3 h-3 border-b border-r border-saffron/30 rounded-br-sm" />
-
-          {/* The glyph */}
-          <CenteredGlyph
-            glyph={exercise.prompt}
-            className="font-kannada text-saffron text-glow-saffron select-none block"
-            style={{
-              fontSize: "5rem",
-              lineHeight: 1,
-            }}
-          />
-        </div>
+        </GlyphStage>
 
         {/* Romanization */}
         <div className="text-center">

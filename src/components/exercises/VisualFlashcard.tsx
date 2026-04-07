@@ -6,7 +6,7 @@ import { Exercise } from "@/types";
 import { checkAnswer } from "@/lib/engine";
 import GlassCard from "../ui/GlassCard";
 import ExerciseLayout from "./ExerciseLayout";
-import CenteredGlyph from "../ui/CenteredGlyph";
+import GlyphStage from "../ui/GlyphStage";
 
 interface VisualFlashcardProps {
   exercise: Exercise;
@@ -55,11 +55,11 @@ export default function VisualFlashcard({
           key={exercise.id}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="flex items-center justify-center w-40 h-40 rounded-2xl bg-white/4 border border-white/8"
         >
-          <CenteredGlyph
+          <GlyphStage
             glyph={exercise.prompt}
-            className={`
+            className="bg-white/4 border border-white/8"
+            glyphClassName={`
               ${exercise.fontOverride || "font-kannada"} text-8xl leading-none block
               ${feedbackState === "correct" ? "text-correct text-glow-correct" : ""}
               ${feedbackState === "incorrect" ? "text-incorrect text-glow-incorrect" : ""}
