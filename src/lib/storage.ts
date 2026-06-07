@@ -115,13 +115,10 @@ function clearPersistedState(): void {
 export function loadState(): PersistedState | null {
   if (typeof window === "undefined") return null;
   try {
-    // Clean reset if version mismatch
     const version = localStorage.getItem(VERSION_KEY);
     const parsedVersion = version ? parseInt(version, 10) : NaN;
     if (!version || Number.isNaN(parsedVersion) || parsedVersion < STORAGE_VERSION) {
-      clearPersistedState();
       localStorage.setItem(VERSION_KEY, String(STORAGE_VERSION));
-      return null;
     }
 
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -130,10 +127,33 @@ export function loadState(): PersistedState | null {
     const result = PersistedStateSchema.safeParse(parsed);
     if (result.success) return result.data;
 
-    clearPersistedState();
+    console.warn("[storage] State validation mismatch. Attempting to recover progress...", result.error.format());
+
+    // Non-destructive fallback: recover valid properties and apply defaults for missing ones
+    if (parsed && typeof parsed === "object") {
+      const p = parsed as any;
+      const recovered: PersistedState = {
+        masteredCharacters: Array.isArray(p.masteredCharacters) ? p.masteredCharacters : [],
+        unlockedLevels: Array.isArray(p.unlockedLevels) ? p.unlockedLevels : [1],
+        currentLevel: typeof p.currentLevel === "number" ? p.currentLevel : 1,
+        glyphMastery: p.glyphMastery && typeof p.glyphMastery === "object" ? p.glyphMastery : {},
+        glyphStreaks: p.glyphStreaks && typeof p.glyphStreaks === "object" ? p.glyphStreaks : {},
+        confusableQueue: p.confusableQueue && typeof p.confusableQueue === "object" ? p.confusableQueue : {},
+        wordMastery: p.wordMastery && typeof p.wordMastery === "object" ? p.wordMastery : {},
+        glyphResponseTimes: p.glyphResponseTimes && typeof p.glyphResponseTimes === "object" ? p.glyphResponseTimes : {},
+        nextReviewDates: p.nextReviewDates && typeof p.nextReviewDates === "object" ? p.nextReviewDates : {},
+        xp: typeof p.xp === "number" ? p.xp : 0,
+        streak: typeof p.streak === "number" ? p.streak : 0,
+        lastPracticeDate: typeof p.lastPracticeDate === "string" ? p.lastPracticeDate : "",
+        claimedQuests: p.claimedQuests && typeof p.claimedQuests === "object" ? p.claimedQuests : {},
+        soundEnabled: typeof p.soundEnabled === "boolean" ? p.soundEnabled : true,
+      };
+      return recovered;
+    }
+
     return null;
-  } catch {
-    clearPersistedState();
+  } catch (error) {
+    console.error("[storage] Failed to parse local state:", error);
     return null;
   }
 }
