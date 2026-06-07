@@ -15,7 +15,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "framer-motion": "^12.35.0",
-    "next": "16.1.7",
+    "next": "16.2.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "sarvamai": "^1.1.6",
