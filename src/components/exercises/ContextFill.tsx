@@ -6,9 +6,8 @@ import { Exercise } from "@/types";
 import { checkAnswer } from "@/lib/engine";
 import GlassCard from "../ui/GlassCard";
 import ExerciseLayout from "./ExerciseLayout";
-import GlyphStage from "../ui/GlyphStage";
 
-interface VisualFlashcardProps {
+interface ContextFillProps {
   exercise: Exercise;
   onAnswer: (correct: boolean, userAnswer?: string, elapsedMs?: number) => void;
   onNext: () => void;
@@ -17,18 +16,18 @@ interface VisualFlashcardProps {
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
 
-export default function VisualFlashcard({
+export default function ContextFill({
   exercise,
   onAnswer,
   onNext,
   feedbackState,
-}: VisualFlashcardProps) {
+}: ContextFillProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const [hintLevel, setHintLevel] = useState(0);
 
   const hints = useMemo(() => {
-    const first = exercise.hintText ?? "Say each option out loud and match the glyph shape.";
-    const second = exercise.teachingNote ?? "Look for a distinguishing loop or tail before selecting.";
+    const first = exercise.hintText ?? "Look at the English translation and match the missing word.";
+    const second = exercise.teachingNote ?? `Expected word sounds like: "${exercise.correctAnswer}" in English.`;
     return [first, second];
   }, [exercise.hintText, exercise.teachingNote]);
 
@@ -77,35 +76,52 @@ export default function VisualFlashcard({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [feedbackState, exercise.options]);
 
+  // Replace blankWord in sentence with a blank line
+  const displayedSentence = useMemo(() => {
+    if (!exercise.prompt) return "";
+    // If feedback state is correct, we can show the filled sentence!
+    if (feedbackState === "correct" || (feedbackState === "incorrect" && selected)) {
+      return exercise.prompt.replace("____", ` ${exercise.correctAnswer} `);
+    }
+    return exercise.prompt;
+  }, [exercise.prompt, exercise.correctAnswer, feedbackState, selected]);
+
   return (
     <ExerciseLayout>
-      {/* Glyph prompt */}
-      <div className="flex flex-col items-center gap-2">
+      {/* Sentence Prompt */}
+      <div className="flex flex-col items-center gap-4 text-center w-full px-4">
         <motion.div
           key={exercise.id}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="min-h-[100px] flex items-center justify-center"
         >
-          <GlyphStage
-            glyph={exercise.prompt}
-            className="bg-white/4 border border-white/8"
-            glyphClassName={`
-              font-kannada text-8xl leading-none block
-              ${feedbackState === "correct" ? "text-correct text-glow-correct" : ""}
-              ${feedbackState === "incorrect" ? "text-incorrect text-glow-incorrect" : ""}
-              ${feedbackState === "idle" ? "text-saffron text-glow-saffron" : ""}
-              transition-colors duration-300 drop-shadow-xl
-            `}
-          />
+          <span className="font-kannada text-4xl leading-relaxed text-saffron text-glow-saffron tracking-wide">
+            {displayedSentence}
+          </span>
         </motion.div>
-        <p className="text-xs text-sand-dim">What sound does this make?</p>
+        
+        <div className="flex flex-col gap-1.5 bg-white/5 border border-white/10 rounded-2xl p-4 w-full max-w-md">
+          <p className="text-sm text-sand-dim font-medium leading-relaxed">
+            <span className="text-xs text-sand-dim/50 uppercase tracking-widest block mb-0.5">Translation</span>
+            &ldquo;{exercise.hintText}&rdquo;
+          </p>
+          {exercise.teachingNote && (
+            <p className="text-xs text-sand-dim/60 italic leading-relaxed border-t border-white/5 pt-1.5 mt-1">
+              <span className="text-[10px] text-sand-dim/40 uppercase tracking-widest block not-italic">Pronunciation</span>
+              {exercise.teachingNote}
+            </p>
+          )}
+        </div>
+        
+        <p className="text-xs text-sand-dim">Choose the correct word to fill the blank</p>
       </div>
 
-      {/* Answer cards */}
-      <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+      {/* Answer options */}
+      <div className="grid grid-cols-2 gap-3 w-full max-w-sm mt-2">
         {exercise.options?.map((option, idx) => {
           const isSelected = selected === option;
-          const isCorrect = feedbackState !== "idle" && checkAnswer(exercise, option);
+          const isCorrect = feedbackState !== "idle" && option === exercise.correctAnswer;
           const isWrong = feedbackState === "incorrect" && isSelected && !isCorrect;
 
           return (
@@ -113,7 +129,7 @@ export default function VisualFlashcard({
               key={option}
               hover={feedbackState === "idle"}
               className={`
-                min-h-[96px] px-4 flex items-center justify-center text-center cursor-pointer select-none transition-all duration-300 relative
+                min-h-[80px] px-3 py-2 flex items-center justify-center text-center cursor-pointer select-none transition-all duration-300 relative
                 ${isCorrect ? "!border-correct/40 !bg-correct/10 shadow-[0_0_20px_rgba(74,222,128,0.2)]" : ""}
                 ${isWrong ? "!border-incorrect/40 !bg-incorrect/10 shadow-[0_0_20px_rgba(248,113,113,0.2)]" : ""}
                 ${feedbackState === "idle" ? "hover:shadow-[0_0_15px_rgba(255,255,255,0.05)]" : ""}
@@ -126,14 +142,16 @@ export default function VisualFlashcard({
               <span className="absolute top-1.5 left-2 text-[10px] text-sand-dim/50 font-medium select-none">
                 {OPTION_LABELS[idx]}
               </span>
-              <span className="text-xl font-semibold tracking-wide leading-none">{option}</span>
+              <span className="font-kannada text-2xl leading-none block text-sand">
+                {option}
+              </span>
             </GlassCard>
           );
         })}
       </div>
 
-      {/* Hint */}
-      <div className="w-full max-w-sm text-center min-h-[40px]">
+      {/* Hint / Continue */}
+      <div className="w-full max-w-sm text-center min-h-[44px]">
         <AnimatePresence mode="wait">
           {feedbackState === "idle" ? (
             <motion.div key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>

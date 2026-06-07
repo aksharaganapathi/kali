@@ -16,7 +16,10 @@ import MinimalPair from "./exercises/MinimalPair";
 import CharacterLearn from "./exercises/CharacterLearn";
 import VDTCompare from "./exercises/VDTCompare";
 import GhostBase from "./exercises/GhostBase";
+import TranslateMatch from "./exercises/TranslateMatch";
 import Onboarding from "./Onboarding";
+import ReverseRecall from "./exercises/ReverseRecall";
+import ContextFill from "./exercises/ContextFill";
 
 const ONBOARDING_KEY = "kali_onboarding_done";
 
@@ -28,7 +31,7 @@ const pageTransition = {
 };
 
 export default function KaliApp() {
-  const { state, dispatch } = useKaliReducer();
+  const { state, dispatch, startBrainWorkout } = useKaliReducer();
   const [hasOnboardingDone, setHasOnboardingDone] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem(ONBOARDING_KEY) === "1";
@@ -46,7 +49,6 @@ export default function KaliApp() {
   const handleOnboardingComplete = () => {
     localStorage.setItem(ONBOARDING_KEY, "1");
     setHasOnboardingDone(true);
-    // Auto-navigate to Level 1 intro
     dispatch({ type: "SELECT_LEVEL", level: 1 });
   };
 
@@ -90,6 +92,9 @@ export default function KaliApp() {
       case "minimal-pair":  return <MinimalPair key={currentExercise.id} {...props} />;
       case "scramble":      return <SyllableScramble key={currentExercise.id} {...props} />;
       case "phonetic":      return <PhoneticType key={currentExercise.id} {...props} />;
+      case "translate":     return <TranslateMatch key={currentExercise.id} {...props} />;
+      case "reverse-recall":return <ReverseRecall key={currentExercise.id} {...props} />;
+      case "context-fill":  return <ContextFill key={currentExercise.id} {...props} />;
       default:              return null;
     }
   };
@@ -106,7 +111,7 @@ export default function KaliApp() {
       <AnimatePresence mode="wait">
         {state.screen === "dashboard" && (
           <motion.div key="dashboard" {...pageTransition}>
-            <Dashboard state={state} dispatch={dispatch} />
+            <Dashboard state={state} dispatch={dispatch} onStartBrainWorkout={startBrainWorkout} />
           </motion.div>
         )}
 

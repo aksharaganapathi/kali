@@ -65,7 +65,7 @@ export default function PhoneticType({
             style={{ width: "min(14rem, 92vw)", minHeight: "9rem" }}
             glyphStyle={{ fontSize: Array.from(exercise.prompt.trim()).length >= 3 ? "3.5rem" : undefined }}
             glyphClassName={`
-              ${exercise.fontOverride || "font-kannada"} text-8xl leading-none drop-shadow-lg block
+              font-kannada text-8xl leading-none drop-shadow-lg block
               ${feedbackState === "correct" ? "text-correct text-glow-correct" : ""}
               ${feedbackState === "incorrect" ? "text-incorrect text-glow-incorrect" : ""}
               ${feedbackState === "idle" ? "text-saffron text-glow-saffron" : ""}

@@ -4,11 +4,10 @@ import { useReducer, useEffect, useRef } from "react";
 import { AppState, AppAction, ExercisePhase, LevelId } from "@/types";
 import { loadState, saveState } from "@/lib/storage";
 import { LEVELS } from "@/lib/curriculum";
-import { generateExerciseSet } from "@/lib/engine";
+import { generateExerciseSet, generateBrainWorkout } from "@/lib/engine";
 
 const LEVEL_ORDER: LevelId[] = LEVELS.map((level) => level.id) as LevelId[];
 const CONFUSABLE_MAP: Record<string, string[]> = {
-  // Consonant shape-pairs
   "ದ": ["ಧ", "ಥ"],
   "ಪ": ["ವ", "ಫ"],
   "ಬ": ["ಭ", "ಒ"],
@@ -24,7 +23,6 @@ const CONFUSABLE_MAP: Record<string, string[]> = {
   "ಮ": ["ಯ"],
   "ಸ": ["ಗ"],
   "ಒ": ["ಬ"],
-  // Vowel sign short/long pairs
   "ೆ": ["ೇ"],
   "ೊ": ["ೋ"],
   "ಿ": ["ೀ"],
@@ -36,6 +34,15 @@ const FLUENCY_WINDOW_MS = 2000;
 const BASE_MASTERY_GAIN = 8;
 const FLUENCY_BONUS_GAIN = 6;
 const INCORRECT_MASTERY_PENALTY = 6;
+
+// XP rewards
+const XP_CORRECT = 10;
+const XP_FLUENCY_BONUS = 5;
+const XP_LEVEL_COMPLETE = 100;
+const XP_STREAK_BONUS_CAP = 10;
+
+// SRS decay per day of inactivity
+const SRS_DECAY_PER_DAY = 2;
 
 const initialState: AppState = {
   screen: "dashboard",
@@ -53,7 +60,60 @@ const initialState: AppState = {
   hydrated: false,
   wordMastery: {},
   glyphResponseTimes: {},
+  nextReviewDates: {},
+  xp: 0,
+  streak: 0,
+  lastPracticeDate: "",
+  claimedQuests: {},
+  sessionCorrect: 0,
+  sessionFluent: 0,
+  isBrainWorkout: false,
+  soundEnabled: true,
 };
+
+function getTodayString(): string {
+  return new Date().toLocaleDateString("sv"); // "2026-05-22"
+}
+
+function getDaysDiff(dateA: string, dateB: string): number {
+  if (!dateA || !dateB) return Infinity;
+  const msA = new Date(dateA).getTime();
+  const msB = new Date(dateB).getTime();
+  return Math.round(Math.abs(msA - msB) / 86_400_000);
+}
+
+function getSRSIntervalDays(masteryScore: number): number {
+  if (masteryScore < 30) return 1;
+  if (masteryScore < 60) return 3;
+  if (masteryScore < 80) return 7;
+  if (masteryScore < 95) return 14;
+  return 30;
+}
+
+function getNextReviewDateString(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toLocaleDateString("sv"); // ISO format YYYY-MM-DD
+}
+
+function applyMasteryDecay(
+  glyphMastery: Record<string, number>,
+  wordMastery: Record<string, number>,
+  days: number
+): { glyphMastery: Record<string, number>; wordMastery: Record<string, number> } {
+  const decay = Math.min(days, 30) * SRS_DECAY_PER_DAY;
+  if (decay <= 0) return { glyphMastery, wordMastery };
+
+  const newGlyph: Record<string, number> = {};
+  for (const [k, v] of Object.entries(glyphMastery)) {
+    newGlyph[k] = Math.max(0, v - decay);
+  }
+  const newWord: Record<string, number> = {};
+  for (const [k, v] of Object.entries(wordMastery)) {
+    newWord[k] = Math.max(0, v - decay);
+  }
+  return { glyphMastery: newGlyph, wordMastery: newWord };
+}
 
 function getNextLevel(currentLevel: LevelId): LevelId | null {
   const index = LEVEL_ORDER.indexOf(currentLevel);
@@ -109,6 +169,12 @@ function toPersistedState(state: AppState) {
     confusableQueue: state.confusableQueue,
     wordMastery: state.wordMastery,
     glyphResponseTimes: state.glyphResponseTimes,
+    nextReviewDates: state.nextReviewDates,
+    xp: state.xp,
+    streak: state.streak,
+    lastPracticeDate: state.lastPracticeDate,
+    claimedQuests: state.claimedQuests,
+    soundEnabled: state.soundEnabled,
     screen: state.screen,
     exercisePhase: state.exercisePhase,
     exerciseIndex: state.exerciseIndex,
@@ -121,7 +187,39 @@ function reducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case "HYDRATE":
       {
-        const merged = { ...state, ...action.state, hydrated: true };
+        const today = getTodayString();
+        const lastDate = (action.state as AppState & { lastPracticeDate?: string }).lastPracticeDate ?? "";
+        const daysSince = getDaysDiff(today, lastDate);
+
+        let glyphMastery = (action.state as AppState).glyphMastery ?? {};
+        let wordMastery = (action.state as AppState).wordMastery ?? {};
+
+        // Apply SRS decay for missed days
+        if (lastDate && daysSince > 1) {
+          const decayed = applyMasteryDecay(glyphMastery, wordMastery, daysSince - 1);
+          glyphMastery = decayed.glyphMastery;
+          wordMastery = decayed.wordMastery;
+        }
+
+        // Break streak if more than 1 day has passed
+        const prevStreak = (action.state as AppState & { streak?: number }).streak ?? 0;
+        const streak = daysSince > 1 ? 0 : prevStreak;
+
+        // Reset daily quests if it's a new day
+        const prevLastDate = lastDate;
+        const claimedQuests = today !== prevLastDate
+          ? {}
+          : ((action.state as AppState & { claimedQuests?: Record<string, boolean> }).claimedQuests ?? {});
+
+        const merged = {
+          ...state,
+          ...action.state,
+          glyphMastery,
+          wordMastery,
+          streak,
+          claimedQuests,
+          hydrated: true,
+        };
         const unlockedLevels = deriveUnlockedLevels(merged.masteredCharacters);
         const currentLevel = unlockedLevels.includes(merged.currentLevel)
           ? merged.currentLevel
@@ -158,8 +256,25 @@ function reducer(state: AppState, action: AppAction): AppState {
           exerciseIndex: 0,
           exercises: [],
           feedbackState: "idle",
+          sessionCorrect: 0,
+          sessionFluent: 0,
+          isBrainWorkout: false,
         };
       }
+
+    case "START_BRAIN_WORKOUT":
+      return {
+        ...state,
+        screen: "exercise",
+        exercises: action.exercises,
+        exerciseIndex: 0,
+        exercisePhase: action.exercises[0]?.phase ?? ExercisePhase.Visual,
+        score: { correct: 0, total: 0 },
+        feedbackState: "idle",
+        sessionCorrect: 0,
+        sessionFluent: 0,
+        isBrainWorkout: true,
+      };
 
     case "RESUME_EXERCISE":
       if (state.exercises.length === 0 || state.exerciseIndex >= state.exercises.length) {
@@ -182,6 +297,9 @@ function reducer(state: AppState, action: AppAction): AppState {
         exercisePhase: firstPhase,
         score: { correct: 0, total: 0 },
         feedbackState: "idle",
+        sessionCorrect: 0,
+        sessionFluent: 0,
+        isBrainWorkout: false,
       };
     }
 
@@ -203,12 +321,50 @@ function reducer(state: AppState, action: AppAction): AppState {
       let confusableQueue = state.confusableQueue;
       let wordMastery = state.wordMastery;
       let glyphResponseTimes = state.glyphResponseTimes;
+      let xp = state.xp;
+      let streak = state.streak;
+      let lastPracticeDate = state.lastPracticeDate;
+      let sessionCorrect = state.sessionCorrect;
+      let sessionFluent = state.sessionFluent;
 
+      const today = getTodayString();
+
+      // ── Streak & first-practice-of-day tracking
+      if (action.correct) {
+        const daysDiff = getDaysDiff(today, lastPracticeDate);
+        if (!lastPracticeDate || daysDiff >= 1) {
+          // New day — advance or start streak
+          if (daysDiff === 1 || !lastPracticeDate) {
+            streak = streak + 1;
+          } else if (daysDiff > 1) {
+            // Missed days already decayed in HYDRATE, but reset streak here too
+            streak = 1;
+          }
+          lastPracticeDate = today;
+        }
+      }
+
+      // ── XP rewards
+      if (action.correct) {
+        let xpGain = XP_CORRECT;
+        if (isSpeedEligible) xpGain += XP_FLUENCY_BONUS;
+        // Streak bonus: +1 per day of streak, capped at XP_STREAK_BONUS_CAP
+        xpGain += Math.min(streak, XP_STREAK_BONUS_CAP);
+        xp += xpGain;
+        sessionCorrect += 1;
+        if (isSpeedEligible) sessionFluent += 1;
+      }
+
+      // ── Word mastery tracking
       const targetWord = currentExercise?.phase === ExercisePhase.Scramble
         ? currentExercise.correctAnswer
         : (currentExercise?.phase === ExercisePhase.Phonetic && currentExercise.prompt.length > 2)
           ? currentExercise.prompt
-          : null;
+          : currentExercise?.phase === ExercisePhase.Translate
+            ? (currentExercise.translateDirection === "kannada-to-english"
+                ? currentExercise.prompt
+                : currentExercise.correctAnswer)
+            : null;
 
       if (targetWord && isKannadaGlyphLike(targetWord)) {
         const prevWordMastery = wordMastery[targetWord] ?? 0;
@@ -219,6 +375,7 @@ function reducer(state: AppState, action: AppAction): AppState {
         }
       }
 
+      // ── Glyph response time tracking
       if (targetGlyph && action.elapsedMs !== undefined && action.elapsedMs > 0) {
         const currentTimes = glyphResponseTimes[targetGlyph] || [];
         glyphResponseTimes = {
@@ -227,6 +384,7 @@ function reducer(state: AppState, action: AppAction): AppState {
         };
       }
 
+      // ── Glyph mastery tracking
       if (targetGlyph) {
         const previousMastery = glyphMastery[targetGlyph] ?? 0;
         const previousStreak = glyphStreaks[targetGlyph] ?? 0;
@@ -308,6 +466,25 @@ function reducer(state: AppState, action: AppAction): AppState {
         }
       }
 
+      let nextReviewDates = state.nextReviewDates ?? {};
+      if (targetGlyph) {
+        const newScore = glyphMastery[targetGlyph] ?? 0;
+        const intervalDays = action.correct ? getSRSIntervalDays(newScore) : 1;
+        nextReviewDates = {
+          ...nextReviewDates,
+          [targetGlyph]: getNextReviewDateString(intervalDays),
+        };
+      }
+      
+      if (targetWord && isKannadaGlyphLike(targetWord)) {
+        const newScore = wordMastery[targetWord] ?? 0;
+        const intervalDays = action.correct ? getSRSIntervalDays(newScore) : 1;
+        nextReviewDates = {
+          ...nextReviewDates,
+          [targetWord]: getNextReviewDateString(intervalDays),
+        };
+      }
+
       return {
         ...state,
         feedbackState: action.correct ? "correct" : "incorrect",
@@ -317,6 +494,12 @@ function reducer(state: AppState, action: AppAction): AppState {
         confusableQueue,
         wordMastery,
         glyphResponseTimes,
+        nextReviewDates,
+        xp,
+        streak,
+        lastPracticeDate,
+        sessionCorrect,
+        sessionFluent,
         score: isReview
           ? state.score
           : {
@@ -329,6 +512,11 @@ function reducer(state: AppState, action: AppAction): AppState {
     case "NEXT_EXERCISE": {
       const nextIndex = state.exerciseIndex + 1;
       if (nextIndex >= state.exercises.length) {
+        // Brain workout ends at level-complete screen
+        if (state.isBrainWorkout) {
+          return { ...state, screen: "level-complete", feedbackState: "idle" };
+        }
+
         const level = LEVELS.find((l) => l.id === state.currentLevel);
         const levelChars = level ? level.characters.map((c) => c.glyph) : [];
         const hasMasteredAll = levelChars.every((glyph) =>
@@ -336,14 +524,12 @@ function reducer(state: AppState, action: AppAction): AppState {
         );
 
         if (!hasMasteredAll) {
-          // The user expects to seamlessly learn all characters in the level.
-          // Because of topological gating, children characters don't generate until parents are mastered.
-          // Let's generate the next semantic batch so the level naturally sweeps to completion!
           const nextBatch = generateExerciseSet(
             state.currentLevel,
             state.masteredCharacters,
             state.confusableQueue,
-            state.glyphMastery
+            state.glyphMastery,
+            state.nextReviewDates
           );
 
           if (nextBatch.length > 0) {
@@ -389,12 +575,29 @@ function reducer(state: AppState, action: AppAction): AppState {
           ? [...state.unlockedLevels, nextLevel]
           : state.unlockedLevels;
 
+      // Award level-complete XP bonus
+      const xpBonus = passed && !state.isBrainWorkout ? XP_LEVEL_COMPLETE : 0;
+
       return {
         ...state,
         screen: "dashboard",
         unlockedLevels: newUnlocked,
         feedbackState: "idle",
+        xp: state.xp + xpBonus,
+        isBrainWorkout: false,
       };
+    }
+
+    case "CLAIM_QUEST": {
+      return {
+        ...state,
+        xp: state.xp + action.xpReward,
+        claimedQuests: { ...state.claimedQuests, [action.questId]: true },
+      };
+    }
+
+    case "TOGGLE_SOUND": {
+      return { ...state, soundEnabled: !state.soundEnabled };
     }
 
     case "RETRY_LEVEL":
@@ -405,10 +608,17 @@ function reducer(state: AppState, action: AppAction): AppState {
         exerciseIndex: 0,
         exercises: [],
         feedbackState: "idle",
+        sessionCorrect: 0,
+        sessionFluent: 0,
       };
 
     case "GO_HOME":
-      return { ...state, screen: "dashboard", feedbackState: "idle" };
+      return {
+        ...state,
+        screen: "dashboard",
+        feedbackState: "idle",
+        isBrainWorkout: false,
+      };
 
     case "RESET":
       return { ...initialState, hydrated: true };
@@ -437,6 +647,12 @@ export function useKaliReducer() {
           confusableQueue: persisted.confusableQueue ?? {},
           wordMastery: persisted.wordMastery ?? {},
           glyphResponseTimes: persisted.glyphResponseTimes ?? {},
+          nextReviewDates: persisted.nextReviewDates ?? {},
+          xp: persisted.xp ?? 0,
+          streak: persisted.streak ?? 0,
+          lastPracticeDate: persisted.lastPracticeDate ?? "",
+          claimedQuests: persisted.claimedQuests ?? {},
+          soundEnabled: persisted.soundEnabled ?? true,
           ...(persisted.screen && { screen: persisted.screen }),
           ...(persisted.exercisePhase && { exercisePhase: persisted.exercisePhase }),
           ...(persisted.exerciseIndex !== undefined && { exerciseIndex: persisted.exerciseIndex }),
@@ -475,5 +691,26 @@ export function useKaliReducer() {
     };
   }, [state]);
 
-  return { state, dispatch };
+  // Sync sound enabled state to audioFX module
+  useEffect(() => {
+    if (!state.hydrated) return;
+    import("@/lib/audioFX").then(({ setSoundEnabled }) => {
+      setSoundEnabled(state.soundEnabled);
+    });
+  }, [state.soundEnabled, state.hydrated]);
+
+  // Expose brain workout generator for Dashboard
+  const startBrainWorkout = () => {
+    const exercises = generateBrainWorkout(
+      state.unlockedLevels,
+      state.masteredCharacters,
+      state.glyphMastery,
+      state.wordMastery
+    );
+    if (exercises.length > 0) {
+      dispatch({ type: "START_BRAIN_WORKOUT", exercises });
+    }
+  };
+
+  return { state, dispatch, startBrainWorkout };
 }

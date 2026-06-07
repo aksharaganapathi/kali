@@ -77,6 +77,36 @@ export default function AudioMatch({
     onNext();
   };
 
+  // Keyboard shortcuts (1-4 or A-D)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (feedbackState !== "idle") {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleContinue();
+        }
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+      let index = -1;
+
+      if (["1", "2", "3", "4"].includes(key)) {
+        index = parseInt(key, 10) - 1;
+      } else if (["a", "b", "c", "d"].includes(key)) {
+        index = ["a", "b", "c", "d"].indexOf(key);
+      }
+
+      if (index >= 0 && exercise.options && index < exercise.options.length) {
+        e.preventDefault();
+        handleSelect(exercise.options[index]);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [feedbackState, exercise.options]);
+
   return (
     <ExerciseLayout>
       {/* Speaker button */}

@@ -34,6 +34,8 @@ export default function GhostBase({ exercise, onNext }: GhostBaseProps) {
   const ghostBases: string[] = signChar?.ghostBases ?? ["ಕ"];
   const contextGlyph = exercise.prompt; // e.g. "ಕಾ"
   const baseConsonant = ghostBases[0] ?? "ಕ";
+  const ghostAlignNudgeX = signChar?.ghostAlignNudge?.xRem ?? 0;
+  const ghostAlignNudgeY = signChar?.ghostAlignNudge?.yRem ?? 0;
 
   // Build slideshow composites: vowel sign applied to each ghost base
   const composites = ghostBases.map((base) => base + targetGlyph);
@@ -108,7 +110,11 @@ export default function GhostBase({ exercise, onNext }: GhostBaseProps) {
               <CenteredGlyph
                 glyph={baseConsonant}
                 className="font-kannada text-white/15 select-none absolute"
-                style={{ fontSize: "5rem", lineHeight: 1 }}
+                style={{
+                  fontSize: "5rem",
+                  lineHeight: 1,
+                  transform: `translate(${ghostAlignNudgeX}rem, ${ghostAlignNudgeY}rem)`,
+                }}
               />
               {/* Full composite on top */}
               <CenteredGlyph
@@ -186,7 +192,11 @@ export default function GhostBase({ exercise, onNext }: GhostBaseProps) {
                   <CenteredGlyph
                     glyph={ghostBases[slideIndex]}
                     className="font-kannada text-white/15 select-none absolute"
-                    style={{ fontSize: "5rem", lineHeight: 1 }}
+                    style={{
+                      fontSize: "5rem",
+                      lineHeight: 1,
+                      transform: `translate(${ghostAlignNudgeX}rem, ${ghostAlignNudgeY}rem)`,
+                    }}
                   />
                   {/* Composite */}
                   <CenteredGlyph

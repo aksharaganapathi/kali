@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { LEVELS } from "@/lib/curriculum";
 import { AppState, AppAction } from "@/types";
+import { playAudioFX } from "@/lib/audioFX";
 import Button from "./ui/Button";
 import ProgressRing from "./ui/ProgressRing";
 
@@ -11,10 +13,22 @@ interface LevelCompleteProps {
   dispatch: React.Dispatch<AppAction>;
 }
 
-export default function LevelComplete({
-  state,
-  dispatch,
-}: LevelCompleteProps) {
+const RANKS = [
+  { min: 0,    max: 100,  label: "Script Novice",      icon: "🌱" },
+  { min: 100,  max: 300,  label: "Glyph Gatherer",     icon: "📖" },
+  { min: 300,  max: 600,  label: "Syllable Apprentice", icon: "⚡" },
+  { min: 600,  max: 1000, label: "Word Weaver",         icon: "🔤" },
+  { min: 1000, max: 1500, label: "Sentence Scout",      icon: "🗺️" },
+  { min: 1500, max: 2200, label: "Kannada Explorer",    icon: "🌍" },
+  { min: 2200, max: 3000, label: "Script Scholar",      icon: "🏛️" },
+  { min: 3000, max: Infinity, label: "Fluent Decipherer", icon: "🔥" },
+];
+
+function getRank(xp: number) {
+  return RANKS.find((r) => xp >= r.min && xp < r.max) ?? RANKS[RANKS.length - 1];
+}
+
+export default function LevelComplete({ state, dispatch }: LevelCompleteProps) {
   const level = LEVELS.find((l) => l.id === state.currentLevel);
   const accuracy =
     state.score.total > 0
@@ -27,18 +41,30 @@ export default function LevelComplete({
   );
 
   const passed = accuracy >= 80 && hasMasteredAll;
+  const xpBonus = passed && !state.isBrainWorkout ? 100 : 0;
+  const isBrainWorkout = state.isBrainWorkout;
 
-  const handleContinue = () => {
-    dispatch({ type: "COMPLETE_LEVEL" });
-  };
+  const currentXP = state.xp ?? 0;
+  const prevXP = currentXP - xpBonus; // approximate pre-completion XP for animation
+  const rank = getRank(currentXP);
+  const nextRank = RANKS.find((r) => r.min > currentXP && r.min !== Infinity);
+  const rankProgress = nextRank
+    ? (currentXP - rank.min) / (nextRank.min - rank.min)
+    : 1;
 
-  const handleRetry = () => {
-    dispatch({ type: "RETRY_LEVEL" });
-  };
+  // Play fanfare/chime on mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (passed || isBrainWorkout) {
+        void playAudioFX("level-complete");
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [passed, isBrainWorkout]);
 
-  const handleGoHome = () => {
-    dispatch({ type: "GO_HOME" });
-  };
+  const handleContinue = () => dispatch({ type: "COMPLETE_LEVEL" });
+  const handleRetry = () => dispatch({ type: "RETRY_LEVEL" });
+  const handleGoHome = () => dispatch({ type: "GO_HOME" });
 
   const particles = Array.from({ length: 20 }, (_, i) => {
     const phase = i * 0.618;
@@ -54,13 +80,14 @@ export default function LevelComplete({
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-8 flex flex-col items-center justify-center relative overflow-hidden">
-      {particles.map((p) => (
+      {/* Confetti particles */}
+      {(passed || isBrainWorkout) && particles.map((p) => (
         <motion.div
           key={p.id}
           className="absolute w-2 h-2 rounded-full"
           style={{
             background:
-              p.id % 3 === 0 ? "#F1B24A" : p.id % 3 === 1 ? "#4ADE80" : "#D4CDBC",
+              p.id % 3 === 0 ? "#F1B24A" : p.id % 3 === 1 ? "#4ADE80" : p.id % 5 === 0 ? "#818CF8" : "#D4CDBC",
             left: "50%",
             top: "50%",
           }}
@@ -72,11 +99,7 @@ export default function LevelComplete({
             scale: p.scale,
             rotate: p.rotation,
           }}
-          transition={{
-            duration: 1.6,
-            delay: p.delay,
-            ease: "easeOut",
-          }}
+          transition={{ duration: 1.6, delay: p.delay, ease: "easeOut" }}
         />
       ))}
 
@@ -84,98 +107,119 @@ export default function LevelComplete({
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="text-center max-w-sm relative z-10"
+        className="text-center max-w-sm relative z-10 w-full"
       >
+        {/* Icon */}
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
           className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-8 ${
-            passed
+            passed || isBrainWorkout
               ? "bg-correct/10 border border-correct/20"
               : "bg-saffron/10 border border-saffron/20"
           }`}
         >
-          {passed ? (
-            <svg
-              className="w-10 h-10 text-correct"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="m4.5 12.75 6 6 9-13.5"
-              />
+          {isBrainWorkout ? (
+            <span className="text-4xl">🧠</span>
+          ) : passed ? (
+            <svg className="w-10 h-10 text-correct" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
             </svg>
           ) : (
-            <svg
-              className="w-10 h-10 text-saffron"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"
-              />
+            <svg className="w-10 h-10 text-saffron" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182" />
             </svg>
           )}
         </motion.div>
 
+        {/* Title */}
         <h1 className="text-2xl font-semibold mb-2">
-          {passed ? "Level Mastered!" : "Keep Practicing!"}
+          {isBrainWorkout ? "Brain Workout Complete!" : passed ? "Level Mastered!" : "Keep Practicing!"}
         </h1>
-        <p className="font-kannada text-saffron text-lg mb-1">
-          {level?.kannadaName}
-        </p>
-        {!passed && (
+        {!isBrainWorkout && (
+          <p className="font-kannada text-saffron text-lg mb-1">{level?.kannadaName}</p>
+        )}
+        {!passed && !isBrainWorkout && (
           <p className="text-sm text-sand-dim mb-4">
             Score 80% and master all characters to unlock the next level
           </p>
         )}
 
-        <div className="flex justify-center gap-8 mb-8 mt-4">
+        {/* Stats */}
+        <div className="flex justify-center gap-8 mb-6 mt-4">
           <div className="text-center">
-            <ProgressRing
-              progress={accuracy / 100}
-              size={56}
-              strokeWidth={3}
-            />
+            <ProgressRing progress={accuracy / 100} size={56} strokeWidth={3} />
             <p className="text-xs text-sand-dim mt-2">Accuracy</p>
             <p className="text-lg font-semibold text-saffron">{accuracy}%</p>
           </div>
           <div className="text-center">
             <div className="w-14 h-14 flex items-center justify-center">
-              <span className="text-2xl font-semibold text-saffron">
-                {state.score.correct}
-              </span>
+              <span className="text-2xl font-semibold text-saffron">{state.score.correct}</span>
             </div>
             <p className="text-xs text-sand-dim mt-2">Correct</p>
             <p className="text-lg font-semibold">
               <span className="text-sand-dim">of {state.score.total}</span>
             </p>
           </div>
-          <div className="text-center">
-            <div className="w-14 h-14 flex items-center justify-center">
-              <span className="text-2xl font-semibold text-saffron">
-                {level?.characters.length ?? 0}
-              </span>
+          {!isBrainWorkout && (
+            <div className="text-center">
+              <div className="w-14 h-14 flex items-center justify-center">
+                <span className="text-2xl font-semibold text-saffron">{level?.characters.length ?? 0}</span>
+              </div>
+              <p className="text-xs text-sand-dim mt-2">Characters</p>
+              <p className="text-lg font-semibold text-sand-dim">
+                {hasMasteredAll ? "Mastered" : "To Master"}
+              </p>
             </div>
-            <p className="text-xs text-sand-dim mt-2">Characters</p>
-            <p className="text-lg font-semibold text-sand-dim">
-              {hasMasteredAll ? "Mastered" : "To Master"}
-            </p>
-          </div>
+          )}
         </div>
 
-        {passed ? (
+        {/* XP Reward Banner */}
+        {(xpBonus > 0 || isBrainWorkout) && (
+          <motion.div
+            initial={{ opacity: 0, y: 12, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.6 }}
+            className="mb-5 rounded-2xl border border-saffron/25 bg-saffron/8 px-5 py-4"
+          >
+            {xpBonus > 0 && (
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <span className="text-2xl">⭐</span>
+                <p className="text-saffron font-bold text-lg">+{xpBonus} XP Earned!</p>
+              </div>
+            )}
+            {isBrainWorkout && (
+              <p className="text-xs text-sand-dim mb-3 text-center">
+                SRS recall session complete. Your weak spots are being reinforced.
+              </p>
+            )}
+            {/* Rank progress bar */}
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-lg">{rank.icon}</span>
+              <span className="text-xs text-sand font-medium flex-1">{rank.label}</span>
+              <span className="text-xs text-sand-dim">{currentXP.toLocaleString()} XP</span>
+            </div>
+            <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+              <motion.div
+                className="h-full rounded-full bg-saffron"
+                initial={{ width: `${((prevXP - rank.min) / ((nextRank?.min ?? rank.min + 1) - rank.min)) * 100}%` }}
+                animate={{ width: `${rankProgress * 100}%` }}
+                transition={{ duration: 1.2, ease: "easeOut", delay: 0.8 }}
+              />
+            </div>
+            {nextRank && (
+              <p className="text-[10px] text-sand-dim mt-1 text-right">
+                {nextRank.min - currentXP} XP to {nextRank.label}
+              </p>
+            )}
+          </motion.div>
+        )}
+
+        {/* Actions */}
+        {passed || isBrainWorkout ? (
           <Button size="lg" onClick={handleContinue}>
-            Continue
+            {isBrainWorkout ? "Back to Dashboard" : "Continue"}
           </Button>
         ) : (
           <div className="flex flex-col items-center gap-3">

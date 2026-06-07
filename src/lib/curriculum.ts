@@ -38,8 +38,8 @@ const vowelSignsPart1: Character[] = [
   { glyph: "ಾ", romanization: "aa", aliases: ["aa", "ā"], type: "vowel-sign", audioLabel: "ಕಾ" },
   { glyph: "ಿ", romanization: "i", aliases: ["i"], type: "vowel-sign", audioLabel: "ಕಿ" },
   { glyph: "ೀ", romanization: "ee", aliases: ["ee", "ī"], type: "vowel-sign", audioLabel: "ಕೀ", parentGlyph: "ಿ", vdtDelta: "Tail extended and looped downwards" },
-  { glyph: "ು", romanization: "u", aliases: ["u"], type: "vowel-sign", audioLabel: "ಕು" },
-  { glyph: "ೂ", romanization: "uu", aliases: ["uu", "ū"], type: "vowel-sign", audioLabel: "ಕೂ", parentGlyph: "ು", vdtDelta: "Right loop extended downwards" },
+  { glyph: "ು", romanization: "u", aliases: ["u"], type: "vowel-sign", audioLabel: "ಕು", ghostAlignNudge: { xRem: 0.06, yRem: 1.35 } },
+  { glyph: "ೂ", romanization: "uu", aliases: ["uu", "ū"], type: "vowel-sign", audioLabel: "ಕೂ", parentGlyph: "ು", vdtDelta: "Right loop extended downwards", ghostAlignNudge: { xRem: 0.1, yRem: 1.45 } },
   { glyph: "ೃ", romanization: "ri", aliases: ["ri", "ru"], type: "vowel-sign", audioLabel: "ಕೃ" },
 ];
 

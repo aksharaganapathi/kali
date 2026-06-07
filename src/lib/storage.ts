@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const STORAGE_KEY = "kali_state";
 const VERSION_KEY = "kali_version";
-const STORAGE_VERSION = 2;
+const STORAGE_VERSION = 3;
 
 const LevelIdSchema = z.union([
   z.literal(1),
@@ -29,6 +29,9 @@ const ExercisePhaseSchema = z.enum([
   ExercisePhase.MinimalPair,
   ExercisePhase.VdtCompare,
   ExercisePhase.GhostBase,
+  ExercisePhase.Translate,
+  ExercisePhase.ReverseRecall,
+  ExercisePhase.ContextFill,
 ]);
 
 const ScreenSchema = z.enum(["dashboard", "level-intro", "exercise", "level-complete"]);
@@ -55,7 +58,7 @@ const ExerciseSchema = z.object({
   decodeSteps: z.array(z.string()).optional(),
   hintText: z.string().optional(),
   teachingNote: z.string().optional(),
-  fontOverride: z.string().optional(),
+  translateDirection: z.enum(["kannada-to-english", "english-to-kannada"]).optional(),
 }).strict();
 
 interface PersistedState {
@@ -67,6 +70,12 @@ interface PersistedState {
   confusableQueue: Record<string, number>;
   wordMastery: Record<string, number>;
   glyphResponseTimes: Record<string, number[]>;
+  nextReviewDates?: Record<string, string>;
+  xp?: number;
+  streak?: number;
+  lastPracticeDate?: string;
+  claimedQuests?: Record<string, boolean>;
+  soundEnabled?: boolean;
   screen?: Screen;
   exercisePhase?: ExercisePhase;
   exerciseIndex?: number;
@@ -86,12 +95,18 @@ const PersistedStateSchema: z.ZodType<PersistedState> = z.object({
     z.string(),
     z.array(z.number().int().positive()).max(5)
   ),
+  nextReviewDates: z.record(z.string(), z.string()).optional(),
+  xp: z.number().int().nonnegative().optional(),
+  streak: z.number().int().nonnegative().optional(),
+  lastPracticeDate: z.string().optional(),
+  claimedQuests: z.record(z.string(), z.boolean()).optional(),
+  soundEnabled: z.boolean().optional(),
   screen: ScreenSchema.optional(),
   exercisePhase: ExercisePhaseSchema.optional(),
   exerciseIndex: z.number().int().nonnegative().optional(),
   exercises: z.array(ExerciseSchema).optional(),
   score: ScoreSchema.optional(),
-}).strict();
+});
 
 function clearPersistedState(): void {
   localStorage.removeItem(STORAGE_KEY);
@@ -100,7 +115,7 @@ function clearPersistedState(): void {
 export function loadState(): PersistedState | null {
   if (typeof window === "undefined") return null;
   try {
-    // Clean reset if version mismatch (v1 → v2 curriculum reorder)
+    // Clean reset if version mismatch
     const version = localStorage.getItem(VERSION_KEY);
     const parsedVersion = version ? parseInt(version, 10) : NaN;
     if (!version || Number.isNaN(parsedVersion) || parsedVersion < STORAGE_VERSION) {

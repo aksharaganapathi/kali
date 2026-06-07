@@ -9,24 +9,22 @@ type RawWordEntry = Omit<WordEntry, "minLevel" | "category"> & {
 
 /** Maps individual characters to the level that introduces them. */
 const CHAR_LEVEL: Map<string, LevelId> = new Map([
-  // L1: Core Vowels
-  ...["ಅ","ಆ","ಇ","ಈ","ಉ","ಊ","ಎ","ಏ","ಒ","ಓ"].map(c => [c, 1 as LevelId] as const),
-  // L2: HF Consonants
+  // L1: Vowels (including yogavaahas)
+  ...["ಅ","ಆ","ಇ","ಈ","ಉ","ಊ","ಋ","ಎ","ಏ","ಐ","ಒ","ಓ","ಔ","ಂ","ಃ"].map(c => [c, 1 as LevelId] as const),
+  // L2: Core Consonants
   ...["ಕ","ನ","ರ","ಲ","ತ","ದ","ಮ","ಸ","ಹ","ಗ"].map(c => [c, 2 as LevelId] as const),
-  // L3: Core Kagunita
-  ...["ಾ","ಿ","ು"].map(c => [c, 3 as LevelId] as const),
-  // L4: Extended Consonants
-  ...["ಪ","ಬ","ಜ","ಚ","ಯ","ವ"].map(c => [c, 4 as LevelId] as const),
-  // L5: Remaining Kagunita
-  ...["ೀ","ೂ","ೆ","ೇ","ೈ","ೊ","ೋ","ೌ","ೃ"].map(c => [c, 5 as LevelId] as const),
-  // L6: Anusvara + Visarga
-  ...["ಂ","ಃ"].map(c => [c, 6 as LevelId] as const),
-  // L7: Aspirated
+  // L3: Vowel Signs Part 1
+  ...["ಾ","ಿ","ೀ","ು","ೂ","ೃ"].map(c => [c, 3 as LevelId] as const),
+  // L4: Secondary & Nasals
+  ...["ಪ","ಬ","ಜ","ಚ","ಯ","ವ","ಙ","ಞ"].map(c => [c, 4 as LevelId] as const),
+  // L5: Vowel Signs Part 2
+  ...["ೆ","ೇ","ೈ","ೊ","ೋ","ೌ"].map(c => [c, 5 as LevelId] as const),
+  // L6: Structural Logic (halant)
+  ...["್"].map(c => [c, 6 as LevelId] as const),
+  // L7: Aspirated Consonants
   ...["ಖ","ಘ","ಛ","ಝ","ಥ","ಧ","ಫ","ಭ"].map(c => [c, 7 as LevelId] as const),
-  // L8: Retroflexes
-  ...["ಟ","ಠ","ಡ","ಢ","ಣ","ಳ"].map(c => [c, 8 as LevelId] as const),
-  // L9: Sibilants + Rare Vowels
-  ...["ಶ","ಷ","ಋ","ಐ","ಔ"].map(c => [c, 9 as LevelId] as const),
+  // L8: Retroflexes & Sibilants
+  ...["ಟ","ಠ","ಡ","ಢ","ಣ","ಳ","ಶ","ಷ"].map(c => [c, 8 as LevelId] as const),
 ]);
 
 function charLevelRank(char: string): number {
@@ -122,9 +120,9 @@ const RAW_DICTIONARY: RawWordEntry[] = [
   { kannada: "ದಯ", romanization: "daya", meaning: "kindness", requiredChars: ["ದ", "ಯ"], minLevel: 4 },
   { kannada: "ಜಲ", romanization: "jala", meaning: "water", requiredChars: ["ಜ", "ಲ"], minLevel: 4 },
   { kannada: "ಗಜ", romanization: "gaja", meaning: "elephant", requiredChars: ["ಗ", "ಜ"], minLevel: 4 },
-  { kannada: "ನಗ", romanization: "naga", meaning: "serpent / mountain", requiredChars: ["ನ", "ಗ"], minLevel: 2 },
+  { kannada: "ನಗ", romanization: "naga", meaning: "jewel / mountain", requiredChars: ["ನ", "ಗ"], minLevel: 2 },
   { kannada: "ರವ", romanization: "rava", meaning: "sound", requiredChars: ["ರ", "ವ"], minLevel: 4 },
-  { kannada: "ಹರ", romanization: "hara", meaning: "garland / Shiva", requiredChars: ["ಹ", "ರ"], minLevel: 2 },
+  { kannada: "ಹರ", romanization: "hara", meaning: "Lord Shiva / destroyer", requiredChars: ["ಹ", "ರ"], minLevel: 2 },
   { kannada: "ಸಮ", romanization: "sama", meaning: "equal", requiredChars: ["ಸ", "ಮ"], minLevel: 2 },
   { kannada: "ಕಲ", romanization: "kala", meaning: "art / skill", requiredChars: ["ಕ", "ಲ"], minLevel: 2 },
   { kannada: "ಬರ", romanization: "bara", meaning: "famine / drought", requiredChars: ["ಬ", "ರ"], minLevel: 4 },
@@ -152,7 +150,7 @@ const RAW_DICTIONARY: RawWordEntry[] = [
   { kannada: "ಊರು", romanization: "ooru", meaning: "town / village", requiredChars: ["ಊ", "ರ", "ು"], minLevel: 3 },
   { kannada: "ಬಾಗಿಲು", romanization: "baagilu", meaning: "door", requiredChars: ["ಬ", "ಾ", "ಗ", "ಿ", "ಲ", "ು"], minLevel: 3 },
   { kannada: "ಮೊಲ", romanization: "mola", meaning: "rabbit", requiredChars: ["ಮ", "ೊ", "ಲ"], minLevel: 5 },
-  { kannada: "ಕೊಡ", romanization: "koda", meaning: "give", requiredChars: ["ಕ", "ೊ", "ಡ"], minLevel: 8 },
+  { kannada: "ಕೊಡ", romanization: "koda", meaning: "pitcher / pot", requiredChars: ["ಕ", "ೊ", "ಡ"], minLevel: 8 },
   { kannada: "ಹಾವು", romanization: "haavu", meaning: "snake", requiredChars: ["ಹ", "ಾ", "ವ", "ು"], minLevel: 4 },
   { kannada: "ನಾಡು", romanization: "naadu", meaning: "land / country", requiredChars: ["ನ", "ಾ", "ಡ", "ು"], minLevel: 8 },
   { kannada: "ಹಾಡು", romanization: "haadu", meaning: "song", requiredChars: ["ಹ", "ಾ", "ಡ", "ು"], minLevel: 8 },
@@ -177,7 +175,7 @@ const RAW_DICTIONARY: RawWordEntry[] = [
   { kannada: "ಕೂಸು", romanization: "kuusu", meaning: "baby", requiredChars: ["ಕ", "ೂ", "ಸ", "ು"], minLevel: 3 },
   { kannada: "ತಾಯಿ", romanization: "taayi", meaning: "mother", requiredChars: ["ತ", "ಾ", "ಯ", "ಿ"], minLevel: 4 },
   { kannada: "ನೀಲಿ", romanization: "neeli", meaning: "blue", requiredChars: ["ನ", "ೀ", "ಲ", "ಿ"], minLevel: 5 },
-  { kannada: "ಕೆಂಪು", romanization: "kempu", meaning: "red", requiredChars: ["ಕ", "ೆ", "ಪ", "ು", "ಂ"], minLevel: 6 },
+  { kannada: "ಕೆಂಪು", romanization: "kempu", meaning: "red", requiredChars: ["ಕ", "ೆ", "ಪ", "ು", "ಂ"], minLevel: 6, category: "Colors" },
   { kannada: "ಹಸಿರು", romanization: "hasiru", meaning: "green", requiredChars: ["ಹ", "ಸ", "ಿ", "ರ", "ು"], minLevel: 3 },
   { kannada: "ಬಿಳಿ", romanization: "bili", meaning: "white", requiredChars: ["ಬ", "ಿ", "ಳ", "ಿ"], minLevel: 8 },
   { kannada: "ಕಪ್ಪು", romanization: "kappu", meaning: "black", requiredChars: ["ಕ", "ಪ", "ು"], minLevel: 5 },
@@ -185,7 +183,7 @@ const RAW_DICTIONARY: RawWordEntry[] = [
   { kannada: "ಜೇನು", romanization: "jaenu", meaning: "honey", requiredChars: ["ಜ", "ೇ", "ನ", "ು"], minLevel: 5 },
   { kannada: "ಹಾದಿ", romanization: "haadi", meaning: "path", requiredChars: ["ಹ", "ಾ", "ದ", "ಿ"], minLevel: 3 },
   { kannada: "ರಾತ್ರಿ", romanization: "raatri", meaning: "night", requiredChars: ["ರ", "ಾ", "ತ", "ಿ"], minLevel: 5 },
-  { kannada: "ಬೆಳಗು", romanization: "belagu", meaning: "morning", requiredChars: ["ಬ", "ೆ", "ಳ", "ಗ", "ು"], minLevel: 8 },
+  { kannada: "ಬೆಳಗು", romanization: "belagu", meaning: "dawn / morning light", requiredChars: ["ಬ", "ೆ", "ಳ", "ಗ", "ು"], minLevel: 8 },
   { kannada: "ದಿನ", romanization: "dina", meaning: "day", requiredChars: ["ದ", "ಿ", "ನ"], minLevel: 3 },
   { kannada: "ವಾರ", romanization: "vaara", meaning: "week", requiredChars: ["ವ", "ಾ", "ರ"], minLevel: 3 },
   { kannada: "ತಿಂಗಳು", romanization: "tingalu", meaning: "month / moon", requiredChars: ["ತ", "ಿ", "ಗ", "ಳ", "ು", "ಂ"], minLevel: 8 },
@@ -207,7 +205,7 @@ const RAW_DICTIONARY: RawWordEntry[] = [
   { kannada: "ಕೆಲಸ", romanization: "kelasa", meaning: "work", requiredChars: ["ಕ", "ೆ", "ಲ", "ಸ"], minLevel: 5 },
   { kannada: "ಜೀವ", romanization: "jeeva", meaning: "life", requiredChars: ["ಜ", "ೀ", "ವ"], minLevel: 5 },
   { kannada: "ಸೇಬು", romanization: "sebu", meaning: "apple", requiredChars: ["ಸ", "ೇ", "ಬ", "ು"], minLevel: 5 },
-  { kannada: "ಮಾವು", romanization: "maavu", meaning: "mango tree", requiredChars: ["ಮ", "ಾ", "ವ", "ು"], minLevel: 4 },
+  { kannada: "ಮಾವು", romanization: "maavu", meaning: "mango", requiredChars: ["ಮ", "ಾ", "ವ", "ು"], minLevel: 4 },
   { kannada: "ತೆಂಗು", romanization: "tengu", meaning: "coconut", requiredChars: ["ತ", "ೆ", "ಗ", "ು", "ಂ"], minLevel: 6 },
   { kannada: "ಹಸು", romanization: "hasu", meaning: "cow", requiredChars: ["ಹ", "ಸ", "ು"], minLevel: 3 },
   { kannada: "ಕುದುರೆ", romanization: "kudure", meaning: "horse", requiredChars: ["ಕ", "ು", "ದ", "ರ", "ೆ"], minLevel: 5 },

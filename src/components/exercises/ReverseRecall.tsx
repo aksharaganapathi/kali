@@ -6,9 +6,9 @@ import { Exercise } from "@/types";
 import { checkAnswer } from "@/lib/engine";
 import GlassCard from "../ui/GlassCard";
 import ExerciseLayout from "./ExerciseLayout";
-import GlyphStage from "../ui/GlyphStage";
+import CenteredGlyph from "../ui/CenteredGlyph";
 
-interface VisualFlashcardProps {
+interface ReverseRecallProps {
   exercise: Exercise;
   onAnswer: (correct: boolean, userAnswer?: string, elapsedMs?: number) => void;
   onNext: () => void;
@@ -17,18 +17,18 @@ interface VisualFlashcardProps {
 
 const OPTION_LABELS = ["A", "B", "C", "D"];
 
-export default function VisualFlashcard({
+export default function ReverseRecall({
   exercise,
   onAnswer,
   onNext,
   feedbackState,
-}: VisualFlashcardProps) {
+}: ReverseRecallProps) {
   const [selected, setSelected] = useState<string | null>(null);
   const [hintLevel, setHintLevel] = useState(0);
 
   const hints = useMemo(() => {
-    const first = exercise.hintText ?? "Say each option out loud and match the glyph shape.";
-    const second = exercise.teachingNote ?? "Look for a distinguishing loop or tail before selecting.";
+    const first = exercise.hintText ?? "Match the sound to its visual shape.";
+    const second = exercise.teachingNote ?? "Eliminate incorrect options first.";
     return [first, second];
   }, [exercise.hintText, exercise.teachingNote]);
 
@@ -79,26 +79,19 @@ export default function VisualFlashcard({
 
   return (
     <ExerciseLayout>
-      {/* Glyph prompt */}
+      {/* Romanization Prompt */}
       <div className="flex flex-col items-center gap-2">
         <motion.div
           key={exercise.id}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
+          className="h-32 flex items-center justify-center"
         >
-          <GlyphStage
-            glyph={exercise.prompt}
-            className="bg-white/4 border border-white/8"
-            glyphClassName={`
-              font-kannada text-8xl leading-none block
-              ${feedbackState === "correct" ? "text-correct text-glow-correct" : ""}
-              ${feedbackState === "incorrect" ? "text-incorrect text-glow-incorrect" : ""}
-              ${feedbackState === "idle" ? "text-saffron text-glow-saffron" : ""}
-              transition-colors duration-300 drop-shadow-xl
-            `}
-          />
+          <span className="text-5xl font-bold tracking-wide text-saffron text-glow-saffron">
+            {exercise.prompt}
+          </span>
         </motion.div>
-        <p className="text-xs text-sand-dim">What sound does this make?</p>
+        <p className="text-xs text-sand-dim">Select the matching Kannada glyph</p>
       </div>
 
       {/* Answer cards */}
@@ -126,7 +119,7 @@ export default function VisualFlashcard({
               <span className="absolute top-1.5 left-2 text-[10px] text-sand-dim/50 font-medium select-none">
                 {OPTION_LABELS[idx]}
               </span>
-              <span className="text-xl font-semibold tracking-wide leading-none">{option}</span>
+              <CenteredGlyph glyph={option} className="font-kannada text-4xl leading-none block" />
             </GlassCard>
           );
         })}

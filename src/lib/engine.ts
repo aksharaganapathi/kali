@@ -1,6 +1,7 @@
-import { Character, Exercise, ExercisePhase, LevelId } from "@/types";
+import { Character, Exercise, ExercisePhase, LevelId, WordEntry } from "@/types";
 import { LEVELS, ALL_CHARACTERS } from "./curriculum";
 import { DICTIONARY } from "./dictionary";
+import { CONTEXT_SENTENCES, ContextSentence } from "./sentences";
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -77,6 +78,74 @@ function generateDistractors(
   return pick(others, Math.min(count, others.length));
 }
 
+function padRomanizations(
+  existing: string[],
+  correctRomanization: string,
+  targetCount: number = 3
+): string[] {
+  const result = [...existing];
+  if (result.length >= targetCount) return result.slice(0, targetCount);
+
+  const candidates = ALL_CHARACTERS.map((c) => c.romanization)
+    .filter((r) => r !== correctRomanization && !result.includes(r));
+  
+  const shuffledCandidates = shuffle([...new Set(candidates)]);
+  while (result.length < targetCount && shuffledCandidates.length > 0) {
+    const next = shuffledCandidates.pop();
+    if (next) result.push(next);
+  }
+  return result;
+}
+
+function padGlyphs(
+  existing: string[],
+  correctGlyph: string,
+  correctRomanization: string,
+  targetCount: number = 3
+): string[] {
+  const result = [...existing];
+  if (result.length >= targetCount) return result.slice(0, targetCount);
+
+  const candidates = ALL_CHARACTERS.map((c) => c.context ?? c.glyph)
+    .filter((g) => {
+      if (g === correctGlyph) return false;
+      if (result.includes(g)) return false;
+      const charObj = ALL_CHARACTERS.find((c) => (c.context ?? c.glyph) === g);
+      if (charObj && charObj.romanization === correctRomanization) return false;
+      return true;
+    });
+
+  const shuffledCandidates = shuffle([...new Set(candidates)]);
+  while (result.length < targetCount && shuffledCandidates.length > 0) {
+    const next = shuffledCandidates.pop();
+    if (next) result.push(next);
+  }
+  return result;
+}
+
+function padTranslateDistractors(
+  existing: WordEntry[],
+  correctWord: WordEntry,
+  targetCount: number = 3
+): WordEntry[] {
+  const result = [...existing];
+  if (result.length >= targetCount) return result.slice(0, targetCount);
+
+  const candidates = DICTIONARY.filter((w) => {
+    if (w.kannada === correctWord.kannada) return false;
+    if (w.meaning === correctWord.meaning) return false;
+    if (result.some((r) => r.kannada === w.kannada || r.meaning === w.meaning)) return false;
+    return true;
+  });
+
+  const shuffledCandidates = shuffle(candidates);
+  while (result.length < targetCount && shuffledCandidates.length > 0) {
+    const next = shuffledCandidates.pop();
+    if (next) result.push(next);
+  }
+  return result;
+}
+
 /**
  * Returns review characters weighted by mastery weakness.
  * Characters with mastery < 60 appear twice (Leitner-style prioritisation).
@@ -84,33 +153,34 @@ function generateDistractors(
 function getReviewCharacters(
   currentLevelId: LevelId,
   masteredChars: string[],
-  glyphMastery: Record<string, number> = {}
+  glyphMastery: Record<string, number> = {},
+  nextReviewDates: Record<string, string> = {}
 ): Character[] {
   const masteredSet = new Set(masteredChars);
   const reviewPool: Character[] = [];
   const currentIndex = levelIndex(currentLevelId);
+  const today = new Date().toLocaleDateString("sv");
 
   for (const level of LEVELS) {
     if (levelIndex(level.id) >= currentIndex) break;
     for (const char of level.characters) {
       if (masteredSet.has(char.glyph)) {
-        reviewPool.push(char);
-        // Weak characters (mastery < 60) get an extra slot
-        if ((glyphMastery[char.glyph] ?? 0) < 60) {
+        // Only include if due for review under SRS scheduler
+        const reviewDate = nextReviewDates[char.glyph];
+        const isDue = !reviewDate || reviewDate <= today;
+        
+        if (isDue) {
           reviewPool.push(char);
+          // Weak characters (mastery < 60) get an extra slot
+          if ((glyphMastery[char.glyph] ?? 0) < 60) {
+            reviewPool.push(char);
+          }
         }
       }
     }
   }
 
   return reviewPool;
-}
-
-function getFontOverride(masteryScore: number): string | undefined {
-  if (masteryScore > 80 && Math.random() < 0.3) {
-    return Math.random() < 0.5 ? "font-tiro" : "font-baloo";
-  }
-  return undefined;
 }
 
 function createVisualExercise(
@@ -132,19 +202,20 @@ function createVisualExercise(
   const coreDistractors = generateDistractors(
     char.romanization,
     pool
-      .filter((c) => c.glyph !== char.glyph)
+      .filter((c) => c.glyph !== char.glyph && c.romanization !== char.romanization)
       .map((c) => c.romanization)
   );
 
   const forcedRomanizations = forcedDistractors
-    .filter((d) => d.glyph !== char.glyph)
-    .map((d) => d.romanization)
-    .filter((r) => r !== char.romanization);
+    .filter((d) => d.glyph !== char.glyph && d.romanization !== char.romanization)
+    .map((d) => d.romanization);
 
   const distractorRomanizations = [
     ...new Set([...sameBaseVowelDistractors, ...forcedRomanizations, ...coreDistractors]),
-  ].slice(0, 3);
-  const options = shuffle([char.romanization, ...distractorRomanizations]);
+  ].filter((r) => r !== char.romanization);
+
+  const paddedDistractors = padRomanizations(distractorRomanizations, char.romanization, 3);
+  const options = shuffle([char.romanization, ...paddedDistractors]);
 
   return {
     id: uid(),
@@ -158,7 +229,6 @@ function createVisualExercise(
     targetGlyph: char.glyph,
     hintText: `Sound anchor: ${char.romanization}`,
     teachingNote: `Spot ${char.context ?? char.glyph} by its unique outer stroke before deciding.`,
-    fontOverride: getFontOverride(masteryScore),
   };
 }
 
@@ -183,14 +253,20 @@ function createAudioExercise(
 ): Exercise {
   const coreDistractors = generateDistractors(
     char.context ?? char.glyph,
-    pool.map((c) => c.context ?? c.glyph)
+    pool
+      .filter((c) => c.glyph !== char.glyph && c.romanization !== char.romanization)
+      .map((c) => c.context ?? c.glyph)
   );
   const forcedGlyphs = forcedDistractors
-    .filter((d) => d.glyph !== char.glyph)
+    .filter((d) => d.glyph !== char.glyph && d.romanization !== char.romanization)
     .map((d) => d.context ?? d.glyph);
 
-  const distractorGlyphs = [...new Set([...forcedGlyphs, ...coreDistractors])].slice(0, 3);
-  const options = shuffle([char.context ?? char.glyph, ...distractorGlyphs]);
+  const distractorGlyphs = [...new Set([...forcedGlyphs, ...coreDistractors])].filter(
+    (g) => g !== (char.context ?? char.glyph)
+  );
+  
+  const paddedDistractors = padGlyphs(distractorGlyphs, char.context ?? char.glyph, char.romanization, 3);
+  const options = shuffle([char.context ?? char.glyph, ...paddedDistractors]);
 
   return {
     id: uid(),
@@ -250,9 +326,81 @@ function createGhostBaseExercise(char: Character): Exercise {
   };
 }
 
+function createReverseRecallExercise(
+  char: Character,
+  pool: Character[],
+  forcedDistractors: Character[] = []
+): Exercise {
+  const sameBaseVowelDistractors =
+    char.type === "vowel-sign" && char.context
+      ? ALL_CHARACTERS.filter(
+        (candidate) =>
+          candidate.type === "vowel-sign" &&
+          candidate.context?.[0] === char.context?.[0] &&
+          candidate.romanization !== char.romanization
+      ).map((candidate) => candidate.context ?? candidate.glyph)
+      : [];
 
+  const coreDistractors = generateDistractors(
+    char.context ?? char.glyph,
+    pool
+      .filter((c) => c.glyph !== char.glyph && c.romanization !== char.romanization)
+      .map((c) => c.context ?? c.glyph)
+  );
 
-function createScrambleExercise(
+  const forcedGlyphs = forcedDistractors
+    .filter((d) => d.glyph !== char.glyph && d.romanization !== char.romanization)
+    .map((d) => d.context ?? d.glyph);
+
+  const distractorGlyphs = [...new Set([...sameBaseVowelDistractors, ...forcedGlyphs, ...coreDistractors])].filter(
+    (g) => g !== (char.context ?? char.glyph)
+  );
+
+  const paddedDistractors = padGlyphs(distractorGlyphs, char.context ?? char.glyph, char.romanization, 3);
+  const options = shuffle([char.context ?? char.glyph, ...paddedDistractors]);
+
+  return {
+    id: uid(),
+    createdAtMs: Date.now(),
+    phase: ExercisePhase.ReverseRecall,
+    prompt: char.romanization,
+    correctAnswer: char.context ?? char.glyph,
+    options,
+    targetGlyph: char.glyph,
+    hintText: `Look for the glyph that makes the "${char.romanization}" sound.`,
+    teachingNote: `The correct shape for "${char.romanization}" is ${char.context ?? char.glyph}.`,
+  };
+}
+
+function createContextFillExercise(
+  sentence: ContextSentence,
+  availableWords: WordEntry[]
+): Exercise {
+  const correctWord = sentence.blankWord;
+  const filteredWords = availableWords.filter((w) => w.kannada !== correctWord);
+  
+  const distractors = pick(filteredWords, 3).map((w) => w.kannada);
+  const finalDistractors = [...new Set(distractors)];
+  while (finalDistractors.length < 3) {
+    const backup = pick(DICTIONARY.filter(w => w.kannada !== correctWord && !finalDistractors.includes(w.kannada)), 1)[0];
+    if (backup) finalDistractors.push(backup.kannada);
+    else break;
+  }
+  
+  const options = shuffle([correctWord, ...finalDistractors]);
+  const promptWithBlank = sentence.kannada.replace(correctWord, "____");
+
+  return {
+    id: uid(),
+    createdAtMs: Date.now(),
+    phase: ExercisePhase.ContextFill,
+    prompt: promptWithBlank,
+    correctAnswer: correctWord,
+    options,
+    hintText: sentence.english,
+    teachingNote: sentence.romanization,
+  };
+}function createScrambleExercise(
   word: { kannada: string; romanization: string; meaning: string }
 ): Exercise {
   const parts = splitKannadaWord(word.kannada);
@@ -296,8 +444,62 @@ function createCharPhoneticExercise(char: Character, masteryScore: number = 0): 
     targetGlyph: char.glyph,
     hintText: `Base sound: ${char.romanization}`,
     teachingNote: `Say ${char.romanization} and map it to ${char.context ?? char.glyph}.`,
-    fontOverride: getFontOverride(masteryScore),
   };
+}
+
+/**
+ * Creates a bidirectional vocabulary translation exercise.
+ * direction "kannada-to-english": show Kannada word, pick English meaning
+ * direction "english-to-kannada": show English meaning, pick Kannada word
+ */
+function createTranslateExercise(
+  word: WordEntry,
+  distractorWords: WordEntry[],
+  direction: "kannada-to-english" | "english-to-kannada" = "kannada-to-english",
+  isReview: boolean = false
+): Exercise {
+  const distractors = distractorWords.filter(
+    (d) => d.kannada !== word.kannada && d.meaning !== word.meaning
+  );
+
+  const paddedDistractors = padTranslateDistractors(distractors, word, 3);
+
+  if (direction === "kannada-to-english") {
+    const options = shuffle([
+      word.meaning,
+      ...paddedDistractors.map((d) => d.meaning),
+    ]);
+    return {
+      id: uid(),
+      createdAtMs: Date.now(),
+      phase: ExercisePhase.Translate,
+      prompt: word.kannada,
+      correctAnswer: word.meaning,
+      options,
+      aliases: [word.romanization],
+      translateDirection: "kannada-to-english",
+      isReview,
+      hintText: `Sounds like: ${word.romanization}`,
+    };
+  } else {
+    // english-to-kannada: prompt is the English meaning, pick correct Kannada script
+    const options = shuffle([
+      word.kannada,
+      ...paddedDistractors.map((d) => d.kannada),
+    ]);
+    return {
+      id: uid(),
+      createdAtMs: Date.now(),
+      phase: ExercisePhase.Translate,
+      prompt: word.meaning,
+      correctAnswer: word.kannada,
+      options,
+      aliases: [word.romanization],
+      translateDirection: "english-to-kannada",
+      isReview,
+      hintText: `Romanization: ${word.romanization}`,
+    };
+  }
 }
 
 
@@ -327,7 +529,8 @@ export function generateExerciseSet(
   levelId: LevelId,
   masteredCharacters: string[],
   confusableQueue: Record<string, number> = {},
-  glyphMastery: Record<string, number> = {}
+  glyphMastery: Record<string, number> = {},
+  nextReviewDates: Record<string, string> = {}
 ): Exercise[] {
   const level = LEVELS.find((l) => l.id === levelId);
   if (!level) return [];
@@ -409,6 +612,11 @@ export function generateExerciseSet(
       practiceExercises.push(createCharPhoneticExercise(char, score));
     }
 
+    // Add ReverseRecall for active recall if the user has a base level of familiarity
+    if (score >= 30 || isMastered) {
+      practiceExercises.push(createReverseRecallExercise(char, distractorPool, distractorList));
+    }
+
     // Proactive confusable pairs: if this new char has confusables already mastered
     const confusables = char.confusablesWith ?? [];
     for (const confGlyph of confusables) {
@@ -433,7 +641,7 @@ export function generateExerciseSet(
   }
 
   // ─── 3. WEIGHTED REVIEW (previous levels, mastery-prioritised) ────────────
-  const reviewChars = getReviewCharacters(levelId, masteredCharacters, glyphMastery);
+  const reviewChars = getReviewCharacters(levelId, masteredCharacters, glyphMastery, nextReviewDates);
   const reviewExercises: Exercise[] = [];
   for (const char of shuffle(reviewChars)) {
     const score = glyphMastery[char.glyph] ?? 0;
@@ -468,6 +676,18 @@ export function generateExerciseSet(
       if (isReviewWord) scrEx.isReview = true;
       wordExercises.push(scrEx);
     }
+
+    // Translate exercises: alternate directions for variety
+    const dir = Math.random() < 0.5 ? "kannada-to-english" : "english-to-kannada";
+    const translateEx = createTranslateExercise(word, availableWords, dir, isReviewWord);
+    wordExercises.push(translateEx);
+  }
+
+  // ─── 4b. CONTEXT SENTENCE EXERCISES ────────────────────────────────────────
+  const availableSentences = CONTEXT_SENTENCES.filter((s) => s.minLevel === levelId);
+  const sentenceExercises: Exercise[] = [];
+  for (const sentence of availableSentences) {
+    sentenceExercises.push(createContextFillExercise(sentence, availableWords));
   }
 
   // ─── 5. ASSEMBLE & CAP ────────────────────────────────────────────────────
@@ -476,6 +696,7 @@ export function generateExerciseSet(
     ...minimalPairExercises,
     ...practiceExercises,
     ...wordExercises,
+    ...sentenceExercises,
   ]);
 
   const secondaryPool = shuffle(reviewExercises);
@@ -538,4 +759,81 @@ export function checkAnswer(exercise: Exercise, userAnswer: string): boolean {
   if (exercise.aliases?.some((a) => normalise(a) === answer)) return true;
 
   return false;
+}
+
+/**
+ * Generates a SRS "Daily Brain Workout" — an active recall session
+ * drawing from the user's weakest characters and vocabulary across all unlocked levels.
+ * Targets characters with mastery < 80 and words with mastery < 70.
+ * Session is always 15 exercises mixing phonetic recall and bidirectional translation.
+ */
+export function generateBrainWorkout(
+  unlockedLevels: LevelId[],
+  masteredCharacters: string[],
+  glyphMastery: Record<string, number>,
+  wordMastery: Record<string, number>
+): Exercise[] {
+  const WORKOUT_SIZE = 15;
+  const allPool = ALL_CHARACTERS;
+
+  // ── 1. Weak characters: mastered but mastery score < 80
+  const weakChars: Character[] = [];
+  for (const levelId of unlockedLevels) {
+    const level = LEVELS.find((l) => l.id === levelId);
+    if (!level) continue;
+    for (const char of level.characters) {
+      if (masteredCharacters.includes(char.glyph)) {
+        const score = glyphMastery[char.glyph] ?? 0;
+        if (score < 80) weakChars.push(char);
+      }
+    }
+  }
+
+  // Sort weakest first
+  weakChars.sort((a, b) => (glyphMastery[a.glyph] ?? 0) - (glyphMastery[b.glyph] ?? 0));
+
+  // ── 2. Weak words from unlocked levels
+  const maxLevel = unlockedLevels[unlockedLevels.length - 1] ?? 1;
+  const availableWords = getDynamicWords(masteredCharacters, maxLevel);
+  const weakWords = availableWords
+    .filter((w) => (wordMastery[w.kannada] ?? 0) < 70)
+    .sort((a, b) => (wordMastery[a.kannada] ?? 0) - (wordMastery[b.kannada] ?? 0));
+
+  const exercises: Exercise[] = [];
+
+  // ── 3. Build char phonetic recall exercises (active recall: no multiple choice)
+  const charSlots = Math.min(Math.ceil(WORKOUT_SIZE * 0.5), weakChars.length);
+  for (const char of weakChars.slice(0, charSlots)) {
+    const ex = createCharPhoneticExercise(char, glyphMastery[char.glyph] ?? 0);
+    ex.isReview = true;
+    exercises.push(ex);
+  }
+
+  // ── 4. Build vocabulary translate exercises (bidirectional)
+  const wordSlots = Math.min(WORKOUT_SIZE - exercises.length, weakWords.length * 2);
+  let added = 0;
+  for (const word of weakWords) {
+    if (added >= wordSlots) break;
+    // Alternate direction each iteration
+    const dir = added % 2 === 0 ? "kannada-to-english" : "english-to-kannada";
+    const ex = createTranslateExercise(word, availableWords, dir, true);
+    exercises.push(ex);
+    added++;
+  }
+
+  // ── 5. If we still have room, fill with visual and reverse recall of weak chars
+  if (exercises.length < WORKOUT_SIZE) {
+    const remaining = WORKOUT_SIZE - exercises.length;
+    const visualPool = weakChars.slice(0, remaining);
+    for (let i = 0; i < visualPool.length; i++) {
+      const char = visualPool[i];
+      const ex = i % 2 === 0
+        ? createVisualExercise(char, allPool, [], glyphMastery[char.glyph] ?? 0)
+        : createReverseRecallExercise(char, allPool, []);
+      ex.isReview = true;
+      exercises.push(ex);
+    }
+  }
+
+  return shuffle(exercises).slice(0, WORKOUT_SIZE);
 }

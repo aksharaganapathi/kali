@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppState, ExercisePhase } from "@/types";
+import { playAudioFX } from "@/lib/audioFX";
 
 interface ExerciseShellProps {
   state: AppState;
@@ -10,33 +12,64 @@ interface ExerciseShellProps {
 }
 
 const PHASE_LABELS: Record<ExercisePhase, { label: string; icon: string; toast: string }> = {
-  [ExercisePhase.Learn]:         { label: "Learn",    icon: "🌱", toast: "Meet your new character" },
-  [ExercisePhase.Visual]:        { label: "Identify", icon: "👁",  toast: "Can you identify it?" },
-  [ExercisePhase.Audio]:         { label: "Listen",   icon: "🔊", toast: "Train your ear" },
-  [ExercisePhase.MinimalPair]:   { label: "Contrast", icon: "⚖",  toast: "Spot the difference" },
-  [ExercisePhase.Scramble]:      { label: "Build",    icon: "🧩", toast: "Assemble the word" },
-  [ExercisePhase.Phonetic]:      { label: "Decode",   icon: "⌨",  toast: "Now type what you know" },
-  [ExercisePhase.VdtCompare]:    { label: "Compare",  icon: "🔍", toast: "Spot the difference" },
-  [ExercisePhase.GhostBase]:     { label: "Signs",    icon: "✨", toast: "See the base" },
+  [ExercisePhase.Learn]:         { label: "Learn",     icon: "🌱", toast: "Meet your new character" },
+  [ExercisePhase.Visual]:        { label: "Identify",  icon: "👁",  toast: "Can you identify it?" },
+  [ExercisePhase.Audio]:         { label: "Listen",    icon: "🔊", toast: "Train your ear" },
+  [ExercisePhase.MinimalPair]:   { label: "Contrast",  icon: "⚖",  toast: "Spot the difference" },
+  [ExercisePhase.Scramble]:      { label: "Build",     icon: "🧩", toast: "Assemble the word" },
+  [ExercisePhase.Phonetic]:      { label: "Decode",    icon: "⌨",  toast: "Now type what you know" },
+  [ExercisePhase.VdtCompare]:    { label: "Compare",   icon: "🔍", toast: "Spot the difference" },
+  [ExercisePhase.GhostBase]:     { label: "Signs",     icon: "✨", toast: "See the base" },
+  [ExercisePhase.Translate]:     { label: "Translate", icon: "🌐", toast: "Connect script to meaning" },
+  [ExercisePhase.ReverseRecall]: { label: "Recall",    icon: "🧠", toast: "Recall the glyph shape" },
+  [ExercisePhase.ContextFill]:   { label: "Context",   icon: "✍",  toast: "Fill in the blank" },
 };
+
+// Particle config for correct-answer burst
+const PARTICLES = Array.from({ length: 14 }, (_, i) => {
+  const angle = (i / 14) * 360;
+  const rad = (angle * Math.PI) / 180;
+  const dist = 55 + (i % 3) * 22;
+  return {
+    id: i,
+    x: Math.cos(rad) * dist,
+    y: Math.sin(rad) * dist,
+    color: i % 3 === 0 ? "#F1B24A" : i % 3 === 1 ? "#4ADE80" : "#818CF8",
+    delay: (i % 5) * 0.04,
+  };
+});
 
 export default function ExerciseShell({
   state,
   onBack,
   children,
 }: ExerciseShellProps) {
-  const { exerciseIndex, exercises, exercisePhase, score, glyphStreaks } = state;
+  const { exerciseIndex, exercises, exercisePhase, score, glyphStreaks, feedbackState, isBrainWorkout } = state;
   const total = exercises.length;
   const phaseInfo = PHASE_LABELS[exercisePhase] ?? { label: exercisePhase, icon: "", toast: "" };
 
-  // Animate phase toast when phase key changes (but not on first exercise).
   const shouldShowPhaseToast = exerciseIndex > 0;
 
-  // ── Per-character streak indicator (phonetic phase only) ─
   const currentExercise = exercises[exerciseIndex];
   const targetGlyph = currentExercise?.targetGlyph;
   const streak = targetGlyph ? (glyphStreaks[targetGlyph] ?? 0) : 0;
   const showStreak = exercisePhase === "phonetic" && !!targetGlyph;
+
+  const [showParticles, setShowParticles] = useState(false);
+
+  // Play sound FX and trigger particle burst on feedback change
+  useEffect(() => {
+    if (feedbackState === "correct") {
+      void playAudioFX("correct");
+      setShowParticles(true);
+      const t = setTimeout(() => setShowParticles(false), 900);
+      return () => clearTimeout(t);
+    } else if (feedbackState === "incorrect") {
+      void playAudioFX("incorrect");
+    }
+  }, [feedbackState]);
+
+  const progress = total > 0 ? ((exerciseIndex + 1) / total) * 100 : 0;
 
   return (
     <div className="min-h-screen px-4 py-6 sm:px-8 max-w-2xl mx-auto flex flex-col">
@@ -60,9 +93,12 @@ export default function ExerciseShell({
           animate={{ opacity: 1, y: 0 }}
           className="justify-self-center flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10"
         >
+          {isBrainWorkout && (
+            <span className="text-xs mr-0.5">🧠</span>
+          )}
           <span className="text-sm">{phaseInfo.icon}</span>
           <span className="text-xs font-medium text-sand uppercase tracking-wider">
-            {phaseInfo.label}
+            {isBrainWorkout ? "Brain Workout" : phaseInfo.label}
           </span>
         </motion.div>
 
@@ -95,11 +131,13 @@ export default function ExerciseShell({
       </div>
 
       {/* ── Progress bar ── */}
-      <div className="h-1 rounded-full bg-white/5 mb-7 overflow-hidden">
+      <div className="h-1.5 rounded-full bg-white/5 mb-7 overflow-hidden">
         <motion.div
-          className="h-full rounded-full bg-saffron"
+          className={`h-full rounded-full transition-colors duration-500 ${
+            isBrainWorkout ? "bg-violet-400" : "bg-saffron"
+          }`}
           initial={{ width: 0 }}
-          animate={{ width: `${total > 0 ? ((exerciseIndex + 1) / total) * 100 : 0}%` }}
+          animate={{ width: `${progress}%` }}
           transition={{ duration: 0.4, ease: "easeOut" }}
         />
       </div>
@@ -119,6 +157,24 @@ export default function ExerciseShell({
               {phaseInfo.icon} {phaseInfo.toast}
             </span>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Correct-answer particle burst ── */}
+      <AnimatePresence>
+        {showParticles && (
+          <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
+            {PARTICLES.map((p) => (
+              <motion.div
+                key={p.id}
+                className="absolute w-2.5 h-2.5 rounded-full"
+                style={{ background: p.color }}
+                initial={{ opacity: 1, x: 0, y: 0, scale: 0 }}
+                animate={{ opacity: [1, 1, 0], x: p.x, y: p.y, scale: [0, 1, 0.4] }}
+                transition={{ duration: 0.75, delay: p.delay, ease: "easeOut" }}
+              />
+            ))}
+          </div>
         )}
       </AnimatePresence>
 

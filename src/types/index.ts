@@ -6,7 +6,10 @@ export enum ExercisePhase {
   Phonetic = "phonetic",
   MinimalPair = "minimal-pair",
   VdtCompare = "vdt-compare",
-  GhostBase = "ghost-base"
+  GhostBase = "ghost-base",
+  Translate = "translate",
+  ReverseRecall = "reverse-recall",
+  ContextFill = "context-fill",
 }
 
 export type LevelId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
@@ -62,6 +65,11 @@ export interface Character {
   frequencyRank?: number;
   /** Base consonants used for Ghost Base multi-base demo */
   ghostBases?: string[];
+  /** Fine-tune ghost overlay alignment for Ghost Base (rem offsets from centered anchor) */
+  ghostAlignNudge?: {
+    xRem?: number;
+    yRem?: number;
+  };
 }
 
 export interface Level {
@@ -99,11 +107,11 @@ export interface Exercise {
   timedMode?: boolean;
   targetGlyph?: string;
   contrastGlyph?: string;
-  decodeSteps?: string[];
+  decodeSteps?: string[]
   hintText?: string;
   teachingNote?: string;
-  /** CSS font-family override for Font Jitter mode */
-  fontOverride?: string;
+  /** Direction of translate exercise */
+  translateDirection?: "kannada-to-english" | "english-to-kannada";
 }
 
 export interface Score {
@@ -129,6 +137,24 @@ export interface AppState {
   wordMastery: Record<string, number>;
   /** Last N response times per glyph for fluency tracking */
   glyphResponseTimes: Record<string, number[]>;
+  /** Map of glyphs/words to next scheduled review date (ISO string YYYY-MM-DD) */
+  nextReviewDates: Record<string, string>;
+  /** Total XP accumulated */
+  xp: number;
+  /** Daily consecutive practice streak (days) */
+  streak: number;
+  /** Last practice date string e.g. "2026-05-22" */
+  lastPracticeDate: string;
+  /** Which daily quests have been claimed today */
+  claimedQuests: Record<string, boolean>;
+  /** Correct answers in the current session (for quest tracking) */
+  sessionCorrect: number;
+  /** Fluent answers in the current session (for quest tracking) */
+  sessionFluent: number;
+  /** Whether the current session is the SRS Brain Workout */
+  isBrainWorkout: boolean;
+  /** Sound effects enabled */
+  soundEnabled: boolean;
 }
 
 export type AppAction =
@@ -146,4 +172,7 @@ export type AppAction =
   | { type: "COMPLETE_LEVEL" }
   | { type: "GO_HOME" }
   | { type: "RETRY_LEVEL" }
-  | { type: "RESET" };
+  | { type: "RESET" }
+  | { type: "CLAIM_QUEST"; questId: string; xpReward: number }
+  | { type: "START_BRAIN_WORKOUT"; exercises: Exercise[] }
+  | { type: "TOGGLE_SOUND" };

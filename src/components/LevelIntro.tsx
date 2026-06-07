@@ -44,7 +44,8 @@ export default function LevelIntro({ state, dispatch }: LevelIntroProps) {
       level.id,
       state.masteredCharacters,
       state.confusableQueue,
-      state.glyphMastery
+      state.glyphMastery,
+      state.nextReviewDates
     );
     dispatch({ type: "START_EXERCISE", exercises });
   };
