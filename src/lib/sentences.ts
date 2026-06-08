@@ -156,11 +156,11 @@ export const CONTEXT_SENTENCES: ContextSentence[] = [
   },
   {
     id: "sent_19",
-    kannada: "ಮಗು ನಗು ಕಮಲದ ಹಾಗೆ",
+    kannada: "ಮಗುವಿನ ನಗು ಕಮಲದ ಹಾಗೆ",
     english: "A child's smile is like a lotus.",
-    romanization: "magu nagu kamalada haage",
+    romanization: "maguvina nagu kamalada haage",
     blankWord: "ನಗು",
-    minLevel: 3,
+    minLevel: 4,
   },
   {
     id: "sent_20",
@@ -244,9 +244,9 @@ export const CONTEXT_SENTENCES: ContextSentence[] = [
   },
   {
     id: "sent_30",
-    kannada: "ಅಮ್ಮ ನಗು ಮನಸ್ಸಿಗೆ ಸಂತೋಷ",
+    kannada: "ಅಮ್ಮನ ನಗು ಮನಸ್ಸಿಗೆ ಸಂತೋಷ",
     english: "Mother's smile is happiness to the heart.",
-    romanization: "amma nagu manassige santosha",
+    romanization: "ammana nagu manassige santosha",
     blankWord: "ಸಂತೋಷ",
     minLevel: 9,
   },

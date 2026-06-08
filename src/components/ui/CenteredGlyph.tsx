@@ -105,6 +105,13 @@ export default function CenteredGlyph({ glyph, className = "", style, ...rest }:
     measure();
     window.addEventListener("resize", measure);
 
+    const observer = new ResizeObserver(() => {
+      measure();
+    });
+    if (glyphRef.current) {
+      observer.observe(glyphRef.current);
+    }
+
     let cancelled = false;
     if ("fonts" in document) {
       void (document.fonts as FontFaceSet).ready.then(() => {
@@ -116,6 +123,7 @@ export default function CenteredGlyph({ glyph, className = "", style, ...rest }:
 
     return () => {
       cancelled = true;
+      observer.disconnect();
       window.removeEventListener("resize", measure);
     };
   }, [glyph, fontStyleDeps]);

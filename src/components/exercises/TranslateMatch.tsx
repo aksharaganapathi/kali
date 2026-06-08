@@ -7,6 +7,7 @@ import { checkAnswer } from "@/lib/engine";
 import { speak } from "@/lib/speech";
 import GlassCard from "../ui/GlassCard";
 import ExerciseLayout from "./ExerciseLayout";
+import CenteredGlyph from "../ui/CenteredGlyph";
 
 interface TranslateMatchProps {
   exercise: Exercise;
@@ -116,16 +117,15 @@ export default function TranslateMatch({
         >
           {isKannadaToEnglish ? (
             <>
-              <span
-                className={`font-kannada text-5xl leading-none select-none
+              <CenteredGlyph
+                glyph={exercise.prompt}
+                className={`font-kannada text-5xl select-none block
                   ${feedbackState === "correct" ? "text-correct" : ""}
                   ${feedbackState === "incorrect" ? "text-incorrect" : ""}
                   ${feedbackState === "idle" ? "text-saffron" : ""}
                   transition-colors duration-300
                 `}
-              >
-                {exercise.prompt}
-              </span>
+              />
               <button
                 onClick={handleSpeak}
                 className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center border transition-all duration-200
@@ -189,13 +189,14 @@ export default function TranslateMatch({
 
               {/* Render Kannada glyphs large, English text normally */}
               {!isKannadaToEnglish && /[\u0C80-\u0CFF]/.test(option) ? (
-                <span className={`font-kannada text-2xl leading-none transition-colors duration-300
-                  ${isCorrect ? "text-correct" : ""}
-                  ${isWrong ? "text-incorrect" : ""}
-                  ${!isCorrect && !isWrong ? "text-sand" : ""}
-                `}>
-                  {option}
-                </span>
+                <CenteredGlyph
+                  glyph={option}
+                  className={`font-kannada text-2xl transition-colors duration-300 block
+                    ${isCorrect ? "text-correct" : ""}
+                    ${isWrong ? "text-incorrect" : ""}
+                    ${!isCorrect && !isWrong ? "text-sand" : ""}
+                  `}
+                />
               ) : (
                 <span className={`text-base font-medium leading-snug transition-colors duration-300
                   ${isCorrect ? "text-correct" : ""}

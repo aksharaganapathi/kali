@@ -1,5 +1,7 @@
 # Kali (ಕಲಿ) — Learn to Read Kannada
 
+An open-source Kannada script learning app by Akshara Ganapathi.
+
 Kali is a simple and effective tool designed to help you learn the Kannada script. Instead of just memorizing letters, you'll learn how to "decode" the language by matching shapes to sounds and building them into real words.
 
 ## How it Works

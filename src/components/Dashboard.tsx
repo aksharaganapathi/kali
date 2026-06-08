@@ -618,7 +618,7 @@ export default function Dashboard({ state, dispatch, onStartBrainWorkout }: Dash
         className="mt-16 text-center"
       >
         <p className="text-xs text-sand-dim/50">
-          Kali — Scaffolded Kannada Script Deciphering
+          Kali by Akshara Ganapathi
         </p>
       </motion.footer>
 

@@ -63,7 +63,7 @@ export default function PhoneticType({
             glyph={exercise.prompt}
             className="bg-white/4 border border-white/8"
             style={{ width: "min(14rem, 92vw)", minHeight: "9rem" }}
-            glyphStyle={{ fontSize: Array.from(exercise.prompt.trim()).length >= 3 ? "3.5rem" : undefined }}
+            glyphStyle={Array.from(exercise.prompt.trim()).length >= 3 ? { fontSize: "3.5rem" } : {}}
             glyphClassName={`
               font-kannada text-8xl leading-none drop-shadow-lg block
               ${feedbackState === "correct" ? "text-correct text-glow-correct" : ""}

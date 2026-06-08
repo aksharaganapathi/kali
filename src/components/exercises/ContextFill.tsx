@@ -6,6 +6,7 @@ import { Exercise } from "@/types";
 import { checkAnswer } from "@/lib/engine";
 import GlassCard from "../ui/GlassCard";
 import ExerciseLayout from "./ExerciseLayout";
+import CenteredGlyph from "../ui/CenteredGlyph";
 
 interface ContextFillProps {
   exercise: Exercise;
@@ -142,9 +143,10 @@ export default function ContextFill({
               <span className="absolute top-1.5 left-2 text-[10px] text-sand-dim/50 font-medium select-none">
                 {OPTION_LABELS[idx]}
               </span>
-              <span className="font-kannada text-2xl leading-none block text-sand">
-                {option}
-              </span>
+              <CenteredGlyph
+                glyph={option}
+                className="font-kannada text-2xl text-sand block"
+              />
             </GlassCard>
           );
         })}
