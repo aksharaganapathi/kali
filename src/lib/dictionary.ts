@@ -105,7 +105,6 @@ const RAW_DICTIONARY: RawWordEntry[] = [
   { kannada: "ಬಾವಿ", romanization: "baavi", meaning: "well (water)", requiredChars: ["ಬ", "ಾ", "ವ", "ಿ"], minLevel: 4 },
   { kannada: "ಬೀದಿ", romanization: "beedi", meaning: "street", requiredChars: ["ಬ", "ೀ", "ದ", "ಿ"], minLevel: 5 },
   { kannada: "ದಾಹ", romanization: "daaha", meaning: "thirst", requiredChars: ["ದ", "ಾ", "ಹ"], minLevel: 3 },
-  { kannada: "ಮಾಮ", romanization: "maama", meaning: "uncle", requiredChars: ["ಮ", "ಾ"], minLevel: 3 },
   { kannada: "ಮಾವ", romanization: "maava", meaning: "uncle", requiredChars: ["ಮ", "ಾ", "ವ"], minLevel: 4 },
   { kannada: "ನಮನ", romanization: "namana", meaning: "bow / salute", requiredChars: ["ನ", "ಮ"], minLevel: 2 },
   { kannada: "ಮನ", romanization: "mana", meaning: "mind", requiredChars: ["ಮ", "ನ"], minLevel: 2 },
