@@ -500,12 +500,10 @@ function reducer(state: AppState, action: AppAction): AppState {
         lastPracticeDate,
         sessionCorrect,
         sessionFluent,
-        score: isReview
-          ? state.score
-          : {
-            correct: state.score.correct + (action.correct ? 1 : 0),
-            total: state.score.total + 1,
-          },
+        score: {
+          correct: state.score.correct + (action.correct ? 1 : 0),
+          total: state.score.total + 1,
+        },
       };
     }
 
