@@ -81,6 +81,9 @@ interface PersistedState {
   exerciseIndex?: number;
   exercises?: Exercise[];
   score?: Score;
+  dailyCorrect?: number;
+  dailyFluent?: number;
+  dailySessions?: number;
 }
 
 const PersistedStateSchema: z.ZodType<PersistedState> = z.object({
@@ -106,6 +109,9 @@ const PersistedStateSchema: z.ZodType<PersistedState> = z.object({
   exerciseIndex: z.number().int().nonnegative().optional(),
   exercises: z.array(ExerciseSchema).optional(),
   score: ScoreSchema.optional(),
+  dailyCorrect: z.number().int().nonnegative().optional(),
+  dailyFluent: z.number().int().nonnegative().optional(),
+  dailySessions: z.number().int().nonnegative().optional(),
 });
 
 function clearPersistedState(): void {
@@ -147,6 +153,9 @@ export function loadState(): PersistedState | null {
         lastPracticeDate: typeof p.lastPracticeDate === "string" ? p.lastPracticeDate : "",
         claimedQuests: p.claimedQuests && typeof p.claimedQuests === "object" ? p.claimedQuests : {},
         soundEnabled: typeof p.soundEnabled === "boolean" ? p.soundEnabled : true,
+        dailyCorrect: typeof p.dailyCorrect === "number" ? p.dailyCorrect : 0,
+        dailyFluent: typeof p.dailyFluent === "number" ? p.dailyFluent : 0,
+        dailySessions: typeof p.dailySessions === "number" ? p.dailySessions : 0,
       };
       return recovered;
     }

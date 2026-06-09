@@ -67,6 +67,9 @@ const initialState: AppState = {
   claimedQuests: {},
   sessionCorrect: 0,
   sessionFluent: 0,
+  dailyCorrect: 0,
+  dailyFluent: 0,
+  dailySessions: 0,
   isBrainWorkout: false,
   soundEnabled: true,
 };
@@ -180,14 +183,29 @@ function toPersistedState(state: AppState) {
     exerciseIndex: state.exerciseIndex,
     exercises: state.exercises,
     score: state.score,
+    dailyCorrect: state.dailyCorrect,
+    dailyFluent: state.dailyFluent,
+    dailySessions: state.dailySessions,
   };
 }
 
 function reducer(state: AppState, action: AppAction): AppState {
+  const today = getTodayString();
+
+  // Detect calendar day boundary rollover for active sessions without reloading
+  if (action.type !== "HYDRATE" && state.lastPracticeDate && state.lastPracticeDate !== today) {
+    state = {
+      ...state,
+      claimedQuests: {},
+      dailyCorrect: 0,
+      dailyFluent: 0,
+      dailySessions: 0,
+    };
+  }
+
   switch (action.type) {
     case "HYDRATE":
       {
-        const today = getTodayString();
         const lastDate = (action.state as AppState & { lastPracticeDate?: string }).lastPracticeDate ?? "";
         const daysSince = getDaysDiff(today, lastDate);
 
@@ -205,11 +223,15 @@ function reducer(state: AppState, action: AppAction): AppState {
         const prevStreak = (action.state as AppState & { streak?: number }).streak ?? 0;
         const streak = daysSince > 1 ? 0 : prevStreak;
 
-        // Reset daily quests if it's a new day
-        const prevLastDate = lastDate;
-        const claimedQuests = today !== prevLastDate
+        // Reset daily quests and stats if it's a new day
+        const isNewDay = today !== lastDate;
+        const claimedQuests = isNewDay
           ? {}
           : ((action.state as AppState & { claimedQuests?: Record<string, boolean> }).claimedQuests ?? {});
+        
+        const dailyCorrect = isNewDay ? 0 : ((action.state as AppState).dailyCorrect ?? 0);
+        const dailyFluent = isNewDay ? 0 : ((action.state as AppState).dailyFluent ?? 0);
+        const dailySessions = isNewDay ? 0 : ((action.state as AppState).dailySessions ?? 0);
 
         const merged = {
           ...state,
@@ -218,6 +240,9 @@ function reducer(state: AppState, action: AppAction): AppState {
           wordMastery,
           streak,
           claimedQuests,
+          dailyCorrect,
+          dailyFluent,
+          dailySessions,
           hydrated: true,
         };
         const unlockedLevels = deriveUnlockedLevels(merged.masteredCharacters);
@@ -326,6 +351,8 @@ function reducer(state: AppState, action: AppAction): AppState {
       let lastPracticeDate = state.lastPracticeDate;
       let sessionCorrect = state.sessionCorrect;
       let sessionFluent = state.sessionFluent;
+      let dailyCorrect = state.dailyCorrect;
+      let dailyFluent = state.dailyFluent;
 
       const today = getTodayString();
 
@@ -352,7 +379,11 @@ function reducer(state: AppState, action: AppAction): AppState {
         xpGain += Math.min(streak, XP_STREAK_BONUS_CAP);
         xp += xpGain;
         sessionCorrect += 1;
-        if (isSpeedEligible) sessionFluent += 1;
+        dailyCorrect += 1;
+        if (isSpeedEligible) {
+          sessionFluent += 1;
+          dailyFluent += 1;
+        }
       }
 
       // ── Word mastery tracking
@@ -500,6 +531,8 @@ function reducer(state: AppState, action: AppAction): AppState {
         lastPracticeDate,
         sessionCorrect,
         sessionFluent,
+        dailyCorrect,
+        dailyFluent,
         score: {
           correct: state.score.correct + (action.correct ? 1 : 0),
           total: state.score.total + 1,
@@ -583,6 +616,7 @@ function reducer(state: AppState, action: AppAction): AppState {
         feedbackState: "idle",
         xp: state.xp + xpBonus,
         isBrainWorkout: false,
+        dailySessions: state.dailySessions + 1,
       };
     }
 
@@ -651,6 +685,9 @@ export function useKaliReducer() {
           lastPracticeDate: persisted.lastPracticeDate ?? "",
           claimedQuests: persisted.claimedQuests ?? {},
           soundEnabled: persisted.soundEnabled ?? true,
+          dailyCorrect: persisted.dailyCorrect ?? 0,
+          dailyFluent: persisted.dailyFluent ?? 0,
+          dailySessions: persisted.dailySessions ?? 0,
           ...(persisted.screen && { screen: persisted.screen }),
           ...(persisted.exercisePhase && { exercisePhase: persisted.exercisePhase }),
           ...(persisted.exerciseIndex !== undefined && { exerciseIndex: persisted.exerciseIndex }),

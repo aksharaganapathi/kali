@@ -151,6 +151,12 @@ export interface AppState {
   sessionCorrect: number;
   /** Fluent answers in the current session (for quest tracking) */
   sessionFluent: number;
+  /** Cumulative correct answers today */
+  dailyCorrect: number;
+  /** Cumulative fluent answers today */
+  dailyFluent: number;
+  /** Cumulative sessions completed today */
+  dailySessions: number;
   /** Whether the current session is the SRS Brain Workout */
   isBrainWorkout: boolean;
   /** Sound effects enabled */

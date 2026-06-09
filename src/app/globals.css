@@ -34,90 +34,6 @@
     radial-gradient(at 50% 100%,rgba(241,178,74,0.03) 0px, transparent 50%);
 }
 
-/* ─── LIGHT ──────────────────────────────────────────────── */
-html.light {
-  --bg-base:          #F0EBE0;
-  --bg-card:          rgba(255,255,255,0.88);
-  --bg-card-hover:    rgba(255,255,255,0.98);
-  --border-card:      rgba(120,100,60,0.14);
-  --border-hover:     rgba(120,100,60,0.28);
-  --text-primary:     #1A1205;
-  --text-dim:         #4A4030;
-  --text-dimmer:      #7A6E5E;
-  --shadow-card:      0 2px 12px 0 rgba(80,60,20,0.10), 0 1px 3px 0 rgba(80,60,20,0.07);
-  --shadow-hover:     0 6px 24px 0 rgba(80,60,20,0.15), 0 2px 6px 0 rgba(80,60,20,0.10);
-  --inset-card:       inset 0 1px 0 rgba(255,255,255,0.9);
-  --inset-hover:      inset 0 1px 0 rgba(255,255,255,1);
-  --scrollbar-track:  #E5DDD0;
-  --scrollbar-thumb:  #C0B49E;
-  --bg-gradient:
-    radial-gradient(at 0% 0%,   rgba(241,178,74,0.15) 0px, transparent 55%),
-    radial-gradient(at 100% 0%, rgba(180,160,241,0.08) 0px, transparent 55%),
-    radial-gradient(at 50% 100%,rgba(241,178,74,0.10) 0px, transparent 55%);
-  --color-sand:     #4A4030;
-  --color-sand-dim: #7A6E5E;
-}
-
-/* ─── LIGHT MODE: white-opacity bg/border overrides ─────────
-   Tailwind's bg-white/N and border-white/N classes are nearly
-   invisible on a light background. Map them to warm-dark tints. */
-html.light [class*="bg-white\/"] {
-  background-color: rgba(255,255,255,0.7) !important;
-}
-/* Specific overrides for faint values that need more contrast */
-html.light .bg-white\/4,
-html.light .bg-white\/5 {
-  background-color: rgba(180,160,120,0.08) !important;
-}
-html.light .bg-white\/10 {
-  background-color: rgba(180,160,120,0.12) !important;
-}
-html.light [class*="border-white\/"] {
-  border-color: rgba(120,100,60,0.20) !important;
-}
-html.light .border-white\/5 {
-  border-color: rgba(120,100,60,0.18) !important;
-}
-html.light .border-white\/8,
-html.light .border-white\/10 {
-  border-color: rgba(120,100,60,0.22) !important;
-}
-html.light .border-white\/15 {
-  border-color: rgba(120,100,60,0.26) !important;
-}
-html.light .border-white\/20 {
-  border-color: rgba(120,100,60,0.28) !important;
-}
-
-/* ─── LIGHT MODE: saffron-opacity bg overrides ───────────────
-   bg-saffron/8 on white looks like faint yellow — use a proper
-   warm tint instead. */
-html.light .bg-saffron\/8,
-html.light .bg-saffron\/10 {
-  background-color: rgba(241,178,74,0.12) !important;
-}
-html.light .border-saffron\/20 {
-  border-color: rgba(180,130,30,0.35) !important;
-}
-html.light .border-saffron\/25 {
-  border-color: rgba(180,130,30,0.40) !important;
-}
-
-/* ─── LIGHT MODE: input fields ───────────────────────────── */
-html.light input {
-  color: var(--text-primary);
-  background-color: rgba(255,255,255,0.7);
-}
-html.light input::placeholder {
-  color: var(--text-dimmer);
-  opacity: 0.7;
-}
-
-/* ─── LIGHT MODE: misc overrides ─────────────────────────── */
-html.light .text-white { color: var(--text-primary) !important; }
-html.light .text-sand  { color: var(--text-dim); }
-html.light .text-sand-dim { color: var(--text-dimmer); }
-
 /* ─── BODY ───────────────────────────────────────────────── */
 body {
   background-color: var(--bg-base);
@@ -129,7 +45,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
   overflow-y: scroll;
-  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /* ─── SCROLLBAR ───────────────────────────────────────────── */
@@ -181,19 +96,4 @@ body {
 
 @utility text-glow-incorrect {
   text-shadow: 0 0 20px rgba(248,113,113,0.4);
-}
-
-/* ─── LIGHT MODE TEXT OVERRIDES ───────────────────────────── */
-/* In light mode, classes like text-white and text-sand need to map to dark text */
-html.light .text-white { color: var(--text-primary) !important; }
-html.light .text-sand  { color: var(--text-dim); }
-html.light .text-sand-dim { color: var(--text-dimmer); }
-
-/* Input fields */
-html.light input {
-  color: var(--text-primary);
-}
-html.light input::placeholder {
-  color: var(--text-dimmer);
-  opacity: 0.6;
 }
