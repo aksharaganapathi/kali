@@ -4,6 +4,9 @@ import { CSSProperties, HTMLAttributes, useEffect, useMemo, useRef, useState } f
 
 interface CenteredGlyphProps extends HTMLAttributes<HTMLSpanElement> {
   glyph: string;
+  ghostGlyph?: string;
+  ghostClassName?: string;
+  ghostStyle?: CSSProperties;
 }
 
 interface Offset {
@@ -23,7 +26,15 @@ function getMeasureContext(): CanvasRenderingContext2D | null {
   return sharedCanvas.getContext("2d");
 }
 
-export default function CenteredGlyph({ glyph, className = "", style, ...rest }: CenteredGlyphProps) {
+export default function CenteredGlyph({
+  glyph,
+  ghostGlyph,
+  ghostClassName = "",
+  ghostStyle,
+  className = "",
+  style,
+  ...rest
+}: CenteredGlyphProps) {
   const glyphRef = useRef<HTMLSpanElement>(null);
   const [offset, setOffset] = useState<Offset>({ x: 0, y: 0 });
 
@@ -135,7 +146,18 @@ export default function CenteredGlyph({ glyph, className = "", style, ...rest }:
   };
 
   return (
-    <span ref={glyphRef} className={className} style={mergedStyle} {...rest}>
+    <span ref={glyphRef} className={`${className} relative`} style={mergedStyle} {...rest}>
+      {ghostGlyph && (
+        <span
+          className={`absolute left-0 top-0 select-none pointer-events-none ${ghostClassName}`}
+          style={{
+            textShadow: "none",
+            ...ghostStyle,
+          }}
+        >
+          {ghostGlyph}
+        </span>
+      )}
       {glyph}
     </span>
   );

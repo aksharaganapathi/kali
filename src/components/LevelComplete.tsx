@@ -13,20 +13,7 @@ interface LevelCompleteProps {
   dispatch: React.Dispatch<AppAction>;
 }
 
-const RANKS = [
-  { min: 0,    max: 100,  label: "Script Novice",      icon: "🌱" },
-  { min: 100,  max: 300,  label: "Glyph Gatherer",     icon: "📖" },
-  { min: 300,  max: 600,  label: "Syllable Apprentice", icon: "⚡" },
-  { min: 600,  max: 1000, label: "Word Weaver",         icon: "🔤" },
-  { min: 1000, max: 1500, label: "Sentence Scout",      icon: "🗺️" },
-  { min: 1500, max: 2200, label: "Kannada Explorer",    icon: "🌍" },
-  { min: 2200, max: 3000, label: "Script Scholar",      icon: "🏛️" },
-  { min: 3000, max: Infinity, label: "Fluent Decipherer", icon: "🔥" },
-];
 
-function getRank(xp: number) {
-  return RANKS.find((r) => xp >= r.min && xp < r.max) ?? RANKS[RANKS.length - 1];
-}
 
 export default function LevelComplete({ state, dispatch }: LevelCompleteProps) {
   const level = LEVELS.find((l) => l.id === state.currentLevel);
@@ -45,12 +32,6 @@ export default function LevelComplete({ state, dispatch }: LevelCompleteProps) {
   const isBrainWorkout = state.isBrainWorkout;
 
   const currentXP = state.xp ?? 0;
-  const prevXP = currentXP - xpBonus; // approximate pre-completion XP for animation
-  const rank = getRank(currentXP);
-  const nextRank = RANKS.find((r) => r.min > currentXP && r.min !== Infinity);
-  const rankProgress = nextRank
-    ? (currentXP - rank.min) / (nextRank.min - rank.min)
-    : 1;
 
   // Play fanfare/chime on mount
   useEffect(() => {
@@ -194,25 +175,11 @@ export default function LevelComplete({ state, dispatch }: LevelCompleteProps) {
                 SRS recall session complete. Your weak spots are being reinforced.
               </p>
             )}
-            {/* Rank progress bar */}
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-lg">{rank.icon}</span>
-              <span className="text-xs text-sand font-medium flex-1">{rank.label}</span>
-              <span className="text-xs text-sand-dim">{currentXP.toLocaleString()} XP</span>
+            {/* Total XP stats */}
+            <div className="flex items-center justify-between text-xs text-sand-dim bg-white/5 border border-white/10 rounded-xl px-4 py-3 mt-2">
+              <span>Total Progress</span>
+              <span className="font-semibold text-saffron text-sm">{currentXP.toLocaleString()} XP</span>
             </div>
-            <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-              <motion.div
-                className="h-full rounded-full bg-saffron"
-                initial={{ width: `${((prevXP - rank.min) / ((nextRank?.min ?? rank.min + 1) - rank.min)) * 100}%` }}
-                animate={{ width: `${rankProgress * 100}%` }}
-                transition={{ duration: 1.2, ease: "easeOut", delay: 0.8 }}
-              />
-            </div>
-            {nextRank && (
-              <p className="text-[10px] text-sand-dim mt-1 text-right">
-                {nextRank.min - currentXP} XP to {nextRank.label}
-              </p>
-            )}
           </motion.div>
         )}
 

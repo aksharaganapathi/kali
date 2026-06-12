@@ -106,20 +106,12 @@ export default function GhostBase({ exercise, onNext }: GhostBaseProps) {
           >
             {/* Ghost overlay glyph */}
             <div className="relative flex items-center justify-center w-40 h-40 rounded-3xl bg-saffron/6 border border-saffron/20 shadow-[0_0_40px_rgba(241,178,74,0.06)]">
-              {/* Ghost: bare consonant */}
-              <CenteredGlyph
-                glyph={baseConsonant}
-                className="font-kannada text-white/15 select-none absolute"
-                style={{
-                  fontSize: "5rem",
-                  lineHeight: 1,
-                  transform: `translate(${ghostAlignNudgeX}rem, ${ghostAlignNudgeY}rem)`,
-                }}
-              />
-              {/* Full composite on top */}
+              {/* Full composite with ghost base aligned to its layout origin */}
               <CenteredGlyph
                 glyph={contextGlyph}
+                ghostGlyph={baseConsonant}
                 className="font-kannada text-saffron text-glow-saffron select-none relative"
+                ghostClassName="text-white/15"
                 style={{ fontSize: "5rem", lineHeight: 1 }}
               />
             </div>
@@ -188,20 +180,11 @@ export default function GhostBase({ exercise, onNext }: GhostBaseProps) {
                   transition={{ duration: 0.3 }}
                   className="flex flex-col items-center"
                 >
-                  {/* Ghost base */}
-                  <CenteredGlyph
-                    glyph={ghostBases[slideIndex]}
-                    className="font-kannada text-white/15 select-none absolute"
-                    style={{
-                      fontSize: "5rem",
-                      lineHeight: 1,
-                      transform: `translate(${ghostAlignNudgeX}rem, ${ghostAlignNudgeY}rem)`,
-                    }}
-                  />
-                  {/* Composite */}
                   <CenteredGlyph
                     glyph={composites[slideIndex]}
+                    ghostGlyph={ghostBases[slideIndex]}
                     className="font-kannada text-saffron text-glow-saffron select-none relative"
+                    ghostClassName="text-white/15"
                     style={{ fontSize: "5rem", lineHeight: 1 }}
                   />
                 </motion.div>

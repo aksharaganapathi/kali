@@ -17,21 +17,7 @@ interface DashboardProps {
   onStartBrainWorkout: () => void;
 }
 
-// ── XP Rank System ──────────────────────────────────────────────
-const RANKS = [
-  { min: 0,    max: 100,  label: "Script Novice",      icon: "🌱", color: "from-emerald-600/40 to-emerald-500/20" },
-  { min: 100,  max: 300,  label: "Glyph Gatherer",     icon: "📖", color: "from-sky-600/40 to-sky-500/20" },
-  { min: 300,  max: 600,  label: "Syllable Apprentice", icon: "⚡", color: "from-yellow-600/40 to-yellow-500/20" },
-  { min: 600,  max: 1000, label: "Word Weaver",         icon: "🔤", color: "from-orange-600/40 to-orange-500/20" },
-  { min: 1000, max: 1500, label: "Sentence Scout",      icon: "🗺️", color: "from-rose-600/40 to-rose-500/20" },
-  { min: 1500, max: 2200, label: "Kannada Explorer",    icon: "🌍", color: "from-purple-600/40 to-purple-500/20" },
-  { min: 2200, max: 3000, label: "Script Scholar",      icon: "🏛️", color: "from-indigo-600/40 to-indigo-500/20" },
-  { min: 3000, max: Infinity, label: "Fluent Decipherer", icon: "🔥", color: "from-saffron/40 to-saffron/20" },
-];
 
-function getRank(xp: number) {
-  return RANKS.find((r) => xp >= r.min && xp < r.max) ?? RANKS[RANKS.length - 1];
-}
 
 // ── Animation variants ──────────────────────────────────────────
 const container = {
@@ -95,12 +81,7 @@ export default function Dashboard({ state, dispatch, onStartBrainWorkout }: Dash
     return days;
   }, [streak, isStreakActiveToday]);
 
-  // ── Rank ──
-  const rank = getRank(xp);
-  const nextRank = RANKS.find((r) => r.min > xp && r.min !== Infinity);
-  const rankProgress = nextRank
-    ? (xp - rank.min) / (nextRank.min - rank.min)
-    : 1;
+
 
   // ── Quests ──
   const QUESTS = useMemo(() => [
@@ -262,6 +243,10 @@ export default function Dashboard({ state, dispatch, onStartBrainWorkout }: Dash
           {/* Stats cluster */}
           <div className="flex items-center gap-4 sm:gap-6">
             <div className="text-right">
+              <p className="text-[10px] sm:text-xs text-sand-dim uppercase tracking-wider">XP</p>
+              <p className="text-base sm:text-lg font-semibold text-saffron">{xp.toLocaleString()}</p>
+            </div>
+            <div className="text-right">
               <p className="text-[10px] sm:text-xs text-sand-dim uppercase tracking-wider">Words</p>
               <p className="text-base sm:text-lg font-semibold text-saffron">{masteredWordsCount}</p>
             </div>
@@ -285,43 +270,13 @@ export default function Dashboard({ state, dispatch, onStartBrainWorkout }: Dash
         </div>
       </motion.header>
 
-      {/* ── Gamification Top Row: XP + Streak + Brain Workout + Reading Arena ── */}
+      {/* ── Gamification Top Row: Streak + Brain Workout + Reading Arena ── */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"
       >
-        {/* XP Rank Card */}
-        <div className={`col-span-1 rounded-2xl border border-white/10 bg-linear-to-br ${rank.color} p-5 flex flex-col gap-3`}>
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{rank.icon}</span>
-            <div>
-              <p className="text-xs text-sand-dim uppercase tracking-wider">Rank</p>
-              <p className="text-base font-bold text-white leading-tight">{rank.label}</p>
-            </div>
-            <div className="ml-auto text-right">
-              <p className="text-xs text-sand-dim">Total XP</p>
-              <p className="text-xl font-bold text-saffron">{xp.toLocaleString()}</p>
-            </div>
-          </div>
-          {nextRank && (
-            <div>
-              <div className="flex justify-between text-[10px] text-sand-dim mb-1">
-                <span>→ {nextRank.label}</span>
-                <span>{nextRank.min - xp} XP to go</span>
-              </div>
-              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full bg-saffron"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${rankProgress * 100}%` }}
-                  transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* Daily Streak Card */}
         <div className="col-span-1 rounded-2xl border border-white/10 bg-white/3 p-5 flex flex-col gap-2 justify-between">
