@@ -100,6 +100,31 @@ Respond strictly in JSON format. Do not include markdown codeblocks (e.g. \`\`\`
       }
     }
 
+    const FALLBACK_PASSAGES = [
+      {
+        kannada: "ಮಗ ಈಗ ನಗು. ತಾತ ಸದಾ ನಗು.",
+        english: "Son, smile now. Grandfather always smiles.",
+        romanization: "maga eega nagu. taata sadaa nagu."
+      },
+      {
+        kannada: "ನಾನು ಮನೆಗೆ ಹೋಗುತ್ತೇನೆ.",
+        english: "I am going home.",
+        romanization: "naanu manege hoogutteene."
+      },
+      {
+        kannada: "ನೀನು ನೀರು ಕುಡಿ. ಅವನು ಹಣ್ಣು ತಿನ್ನುತ್ತಾನೆ.",
+        english: "You, drink water. He is eating fruit.",
+        romanization: "neenu neeru kudi. avan hannu tinnuttaane."
+      }
+    ];
+
+    if (!passageData) {
+      const decodableFallback = FALLBACK_PASSAGES.find(p => isTextDecodable(p.kannada, masteredCharacters));
+      if (decodableFallback) {
+        passageData = decodableFallback;
+      }
+    }
+
     if (!passageData) {
       return NextResponse.json(
         { 
