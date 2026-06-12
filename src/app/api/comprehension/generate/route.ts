@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isTextDecodable } from "@/lib/comprehensionValidator";
+import { DICTIONARY } from "@/lib/dictionary";
 
 export const maxDuration = 30; // next.js runtime limit
 
@@ -17,23 +17,37 @@ export async function POST(request: Request) {
       );
     }
 
-    const apiKey = process.env.NVIDIA_API_KEY;
-    if (!apiKey) {
+    const groqKey = process.env.GROQ_API_KEY;
+    if (!groqKey) {
       return NextResponse.json(
-        { error: "NVIDIA_API_KEY is not configured on the server. Please add it to your .env file." },
+        { error: "GROQ_API_KEY is not configured on the server. Please add it to your .env file." },
         { status: 500 }
       );
     }
 
-    const maxRetries = 3;
-    let attempts = 0;
-    let passageData = null;
+    // Compile list of real, decodable words for this user's current mastered set
+    const masteredSet = new Set(masteredCharacters);
+    const decodableWords = DICTIONARY.filter((word) => {
+      // Every character/modifier of the word must be in the mastered set
+      return word.requiredChars.every((c) => masteredSet.has(c));
+    }).map((word) => word.kannada);
 
-    // Allowed punctuation/special characters for prompt reference
+    // Shuffle and select a random subset of 25 words to maximize variety in generated stories
+    const shuffledWords = [...decodableWords].sort(() => Math.random() - 0.5);
+    const wordSubset = shuffledWords.slice(0, 25);
+
     const allowedListString = masteredCharacters.join(", ");
+    const decodableWordsString = wordSubset.join(", ");
+
     const lengthGuideline = levelId <= 3 
       ? "Write exactly 1 or 2 short sentences." 
       : "Write a short paragraph of 3 to 5 sentences.";
+
+    const vocabularyGuideline = decodableWords.length > 0
+      ? `CRITICAL CONSTRAINT: You are ONLY allowed to build sentences using the exact words in the following list: [${decodableWordsString}]. 
+DO NOT add any suffixes, prefixes, grammatical endings, or characters to these words. You must only combine them using spaces and standard punctuation (periods or commas) to form simple, logical sentences.
+Example of a valid sentence: "ಮಗ ಈಗ ನಗು. ತಾತ ಸದಾ ನಗು."`
+      : "Since the student only knows individual characters/vowels, you can output a simple sequence of these characters to form basic sounds.";
 
     const systemPrompt = `You are a professional Kannada language tutor.
 The student is learning Kannada step-by-step. They have only unlocked a limited set of letters.
@@ -41,7 +55,9 @@ The student is learning Kannada step-by-step. They have only unlocked a limited 
 CRITICAL INSTRUCTION: You MUST write a short reading comprehension passage using ONLY the characters (letters, vowel signs, structural markings, and vattus) present in the following list:
 [${allowedListString}]
 
-DO NOT use any other Kannada consonants, vowels, vowel signs (matras), virama/halant (್), or vattu conjunct subscripts that are not in the list. Double check every single letter in your generated text.
+DO NOT use any other Kannada consonants, vowels, vowel signs, virama, or vattu conjunct subscripts. Double check every single letter in your generated text.
+
+${vocabularyGuideline}
 
 ${lengthGuideline}
 
@@ -52,89 +68,60 @@ Respond strictly in JSON format. Do not include markdown codeblocks (e.g. \`\`\`
   "romanization": "Space-separated romanized pronunciation of the Kannada text"
 }`;
 
-    while (attempts < maxRetries) {
-      attempts++;
-      try {
-        const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "nvidia/llama-3.1-nemotron-70b-instruct",
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: "Generate a reading comprehension passage." }
-            ],
-            temperature: 0.1, // low temperature for high instruction adherence
-            max_tokens: 1024,
-          }),
-        });
+    const userPrompt = decodableWords.length > 0
+      ? `Generate a Kannada reading comprehension passage.
+CRITICAL CONSTRAINTS:
+1. You MUST ONLY use the allowed characters: [${allowedListString}]
+2. You MUST ONLY build sentences using the exact words in this list: [${decodableWordsString}]. DO NOT use any other words, prefixes, suffixes, or vowel signs.
+3. ${lengthGuideline}
+Example: "ಮಗ ಈಗ ನಗು. ತಾತ ಸದಾ ನಗು."`
+      : `Generate a short pattern of Kannada sounds.
+CRITICAL CONSTRAINTS:
+1. You MUST ONLY use the characters present in this list: [${allowedListString}]
+2. Output a simple sequence of these characters to form basic sounds.`;
 
-        if (!response.ok) {
-          throw new Error(`NVIDIA API returned status: ${response.status}`);
-        }
-
-        const data = await response.json() as {
-          choices: Array<{ message: { content: string } }>;
-        };
-
-        const content = data.choices?.[0]?.message?.content?.trim();
-        if (!content) throw new Error("Received empty completion from Nvidia NIM.");
-
-        // Strip markdown code block wrappers if the model included them
-        const jsonText = content.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
-        const parsed = JSON.parse(jsonText) as {
-          kannada: string;
-          english: string;
-          romanization: string;
-        };
-
-        if (parsed.kannada && isTextDecodable(parsed.kannada, masteredCharacters)) {
-          passageData = parsed;
-          break; // Validation passed!
-        }
-      } catch (err) {
-        console.warn(`Attempt ${attempts} failed:`, err);
-      }
-    }
-
-    const FALLBACK_PASSAGES = [
-      {
-        kannada: "ಮಗ ಈಗ ನಗು. ತಾತ ಸದಾ ನಗು.",
-        english: "Son, smile now. Grandfather always smiles.",
-        romanization: "maga eega nagu. taata sadaa nagu."
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${groqKey}`,
+        "Content-Type": "application/json",
       },
-      {
-        kannada: "ನಾನು ಮನೆಗೆ ಹೋಗುತ್ತೇನೆ.",
-        english: "I am going home.",
-        romanization: "naanu manege hoogutteene."
-      },
-      {
-        kannada: "ನೀನು ನೀರು ಕುಡಿ. ಅವನು ಹಣ್ಣು ತಿನ್ನುತ್ತಾನೆ.",
-        english: "You, drink water. He is eating fruit.",
-        romanization: "neenu neeru kudi. avan hannu tinnuttaane."
-      }
-    ];
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 1024,
+      }),
+    });
 
-    if (!passageData) {
-      const decodableFallback = FALLBACK_PASSAGES.find(p => isTextDecodable(p.kannada, masteredCharacters));
-      if (decodableFallback) {
-        passageData = decodableFallback;
-      }
+    if (!response.ok) {
+      throw new Error(`Groq API returned status: ${response.status}`);
     }
 
-    if (!passageData) {
-      return NextResponse.json(
-        { 
-          error: "Failed to generate a passage that strictly adheres to your unlocked characters after multiple attempts. Please try again."
-        },
-        { status: 502 }
-      );
-    }
+    const data = await response.json() as {
+      choices: Array<{ message: { content: string } }>;
+    };
 
-    return NextResponse.json(passageData);
+    const content = data.choices?.[0]?.message?.content?.trim();
+    if (!content) throw new Error("Received empty completion from Groq API.");
+
+    // Robust JSON extraction using regex to capture everything between curly braces
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    const jsonText = jsonMatch ? jsonMatch[0] : content;
+    
+    // Sanitize: Replace literal line breaks/carriage returns with spaces to prevent JSON parser crashing on raw newlines inside strings
+    const sanitizedJson = jsonText.replace(/[\n\r]/g, " ");
+    
+    const parsed = JSON.parse(sanitizedJson) as {
+      kannada: string;
+      english: string;
+      romanization: string;
+    };
+
+    return NextResponse.json(parsed);
   } catch (error) {
     console.error("API error in generate route:", error);
     return NextResponse.json(

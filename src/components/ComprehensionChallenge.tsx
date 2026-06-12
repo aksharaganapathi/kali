@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppState, AppAction } from "@/types";
 import GlassCard from "./ui/GlassCard";
@@ -71,8 +71,13 @@ export default function ComprehensionChallenge({ state, dispatch }: Comprehensio
     }
   };
 
+  const fetchInitiated = useRef(false);
+
   useEffect(() => {
-    void fetchPassage();
+    if (!fetchInitiated.current) {
+      fetchInitiated.current = true;
+      void fetchPassage();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -183,7 +188,7 @@ export default function ComprehensionChallenge({ state, dispatch }: Comprehensio
               <div className="absolute inset-0 border-4 border-t-saffron rounded-full animate-spin" />
             </div>
             <p className="text-sm font-medium text-white text-center">
-              Nemotron is crafting a custom passage...
+              AI is crafting a custom passage...
             </p>
             <p className="text-xs text-sand-dim/60 text-center max-w-xs leading-relaxed">
               Writing a story strictly using your learned Kannada characters.

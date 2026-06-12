@@ -17,10 +17,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const apiKey = process.env.NVIDIA_API_KEY;
-    if (!apiKey) {
+    const groqKey = process.env.GROQ_API_KEY;
+    if (!groqKey) {
       return NextResponse.json(
-        { error: "NVIDIA_API_KEY is not configured on the server." },
+        { error: "GROQ_API_KEY is not configured on the server. Please add it to your .env file." },
         { status: 500 }
       );
     }
@@ -55,14 +55,14 @@ Respond strictly in JSON format. Do not include markdown codeblocks (e.g. \`\`\`
   ]
 }`;
 
-    const response = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": `Bearer ${groqKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "nvidia/llama-3.1-nemotron-70b-instruct",
+        model: "llama-3.3-70b-versatile",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: "Grade my translation." }
@@ -73,7 +73,7 @@ Respond strictly in JSON format. Do not include markdown codeblocks (e.g. \`\`\`
     });
 
     if (!response.ok) {
-      throw new Error(`NVIDIA API returned status: ${response.status}`);
+      throw new Error(`Groq API returned status: ${response.status}`);
     }
 
     const data = await response.json() as {
@@ -81,7 +81,7 @@ Respond strictly in JSON format. Do not include markdown codeblocks (e.g. \`\`\`
     };
 
     const content = data.choices?.[0]?.message?.content?.trim();
-    if (!content) throw new Error("Received empty completion from Nvidia NIM.");
+    if (!content) throw new Error("Received empty completion from Groq API.");
 
     const jsonText = content.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
     const parsed = JSON.parse(jsonText);
