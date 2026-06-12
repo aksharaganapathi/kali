@@ -333,7 +333,7 @@ function reducer(state: AppState, action: AppAction): AppState {
       const isReview = currentExercise?.isReview;
       const targetGlyph = currentExercise?.targetGlyph;
       const isCharacterActiveRecall =
-        currentExercise?.phase === ExercisePhase.Phonetic && !!targetGlyph;
+        (currentExercise?.phase === ExercisePhase.Phonetic || currentExercise?.phase === ExercisePhase.ReverseRecall) && !!targetGlyph;
       const isSpeedEligible =
         currentExercise?.timedMode &&
         (currentExercise.phase === ExercisePhase.Visual || currentExercise.phase === ExercisePhase.Phonetic) &&
@@ -420,23 +420,30 @@ function reducer(state: AppState, action: AppAction): AppState {
         const previousMastery = glyphMastery[targetGlyph] ?? 0;
         const previousStreak = glyphStreaks[targetGlyph] ?? 0;
 
-        if (action.correct) {
+         if (action.correct) {
           const gain = BASE_MASTERY_GAIN + (isSpeedEligible ? FLUENCY_BONUS_GAIN : 0);
+          const nextMastery = clampScore(previousMastery + gain);
           glyphMastery = {
             ...glyphMastery,
-            [targetGlyph]: clampScore(previousMastery + gain),
+            [targetGlyph]: nextMastery,
           };
 
-          if (currentExercise?.phase === ExercisePhase.Phonetic) {
-            const nextStreak = previousStreak + 1;
+          const isRecallPhase = currentExercise?.phase === ExercisePhase.Phonetic || currentExercise?.phase === ExercisePhase.ReverseRecall;
+          let newStreak = previousStreak;
+
+          if (isRecallPhase) {
+            newStreak = previousStreak + 1;
             glyphStreaks = {
               ...glyphStreaks,
-              [targetGlyph]: nextStreak,
+              [targetGlyph]: newStreak,
             };
+          }
 
-            if (nextStreak >= 3 && !masteredCharacters.includes(targetGlyph)) {
-              masteredCharacters = [...masteredCharacters, targetGlyph];
-            }
+          const meetsStreak = isRecallPhase && newStreak >= 3;
+          const meetsMastery = nextMastery >= 80;
+
+          if ((meetsStreak || meetsMastery) && !masteredCharacters.includes(targetGlyph)) {
+            masteredCharacters = [...masteredCharacters, targetGlyph];
           }
         } else if (isCharacterActiveRecall) {
           glyphMastery = {
