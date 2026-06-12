@@ -652,6 +652,21 @@ function reducer(state: AppState, action: AppAction): AppState {
         isBrainWorkout: false,
       };
 
+    case "START_COMPREHENSION":
+      return {
+        ...state,
+        screen: "comprehension",
+        feedbackState: "idle",
+      };
+
+    case "COMPLETE_COMPREHENSION":
+      return {
+        ...state,
+        screen: "dashboard",
+        feedbackState: "idle",
+        xp: state.xp + action.xpReward,
+      };
+
     case "RESET":
       return { ...initialState, hydrated: true };
 

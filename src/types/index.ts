@@ -36,7 +36,8 @@ export type Screen =
   | "dashboard"
   | "level-intro"
   | "exercise"
-  | "level-complete";
+  | "level-complete"
+  | "comprehension";
 
 export interface Character {
   glyph: string;
@@ -181,4 +182,6 @@ export type AppAction =
   | { type: "RESET" }
   | { type: "CLAIM_QUEST"; questId: string; xpReward: number }
   | { type: "START_BRAIN_WORKOUT"; exercises: Exercise[] }
-  | { type: "TOGGLE_SOUND" };
+  | { type: "TOGGLE_SOUND" }
+  | { type: "START_COMPREHENSION" }
+  | { type: "COMPLETE_COMPREHENSION"; xpReward: number };
