@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
 
     const connectSrc = IS_PROD
       ? "connect-src 'self'"
-      : "connect-src 'self' ws: http: https://api.sarvam.ai";
+      : "connect-src 'self' ws: http:";
 
     return [
       {

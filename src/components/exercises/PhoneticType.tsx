@@ -34,7 +34,7 @@ export default function PhoneticType({
     if (feedbackState !== "idle" || !input.trim()) return;
     const correct = checkAnswer(exercise, input);
     const eventEpochMs = performance.timeOrigin + e.timeStamp;
-    const elapsedMs = Math.max(0, eventEpochMs - (exercise.createdAtMs ?? eventEpochMs));
+    const elapsedMs = Math.round(Math.max(0, eventEpochMs - (exercise.createdAtMs ?? eventEpochMs)));
     onAnswer(correct, input, elapsedMs);
   };
 

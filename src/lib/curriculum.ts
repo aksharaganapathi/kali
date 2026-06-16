@@ -129,8 +129,28 @@ const minimalPairs: Character[] = [
   { glyph: "ಡ", romanization: "Da", aliases: ["Da"], type: "consonant", audioLabel: "ಡ", description: "Retroflex vs Dental (ದ)" },
 ];
 
-/* ─── L11: Unique Conjuncts (12) ─────────────── */
-const conjuncts: Character[] = [
+/* ─── L11: Regular Conjuncts (Vattus) (15) ───────────────── */
+const regularConjuncts: Character[] = [
+  { glyph: "್ಕ", romanization: "ka-vattu", aliases: ["kka", "k-vattu"], type: "vattu", audioLabel: "ಕ್ಕ", parentGlyph: "ಕ", description: "Regular vattu for Ka" },
+  { glyph: "್ಗ", romanization: "ga-vattu", aliases: ["gga", "g-vattu"], type: "vattu", audioLabel: "ಗ್ಗ", parentGlyph: "ಗ", description: "Regular vattu for Ga" },
+  { glyph: "್ಚ", romanization: "cha-vattu", aliases: ["ccha", "ch-vattu"], type: "vattu", audioLabel: "ಚ್ಚ", parentGlyph: "ಚ", description: "Regular vattu for Cha" },
+  { glyph: "್ಜ", romanization: "ja-vattu", aliases: ["jja", "j-vattu"], type: "vattu", audioLabel: "ಜ್ಜ", parentGlyph: "ಜ", description: "Regular vattu for Ja" },
+  { glyph: "್ಟ", romanization: "Ta-vattu", aliases: ["TTa", "T-vattu"], type: "vattu", audioLabel: "ಟ್ಟ", parentGlyph: "ಟ", description: "Regular vattu for Retroflex Ta" },
+  { glyph: "್ಠ", romanization: "Tha-vattu", aliases: ["TTha", "Th-vattu"], type: "vattu", audioLabel: "ಟ್ಠ", parentGlyph: "ಠ", description: "Regular vattu for Retroflex Tha" },
+  { glyph: "್ಡ", romanization: "Da-vattu", aliases: ["DDa", "D-vattu"], type: "vattu", audioLabel: "ಡ್ಡ", parentGlyph: "ಡ", description: "Regular vattu for Retroflex Da" },
+  { glyph: "್ಣ", romanization: "Na-vattu", aliases: ["NNa", "N-vattu"], type: "vattu", audioLabel: "ಣ್ಣ", parentGlyph: "ಣ", description: "Regular vattu for Retroflex Na" },
+  { glyph: "್ದ", romanization: "da-vattu", aliases: ["dda", "d-vattu"], type: "vattu", audioLabel: "ದ್ದ", parentGlyph: "ದ", description: "Regular vattu for Da" },
+  { glyph: "್ಪ", romanization: "pa-vattu", aliases: ["ppa", "p-vattu"], type: "vattu", audioLabel: "ಪ್ಪ", parentGlyph: "ಪ", description: "Regular vattu for Pa" },
+  { glyph: "್ಬ", romanization: "ba-vattu", aliases: ["bba", "b-vattu"], type: "vattu", audioLabel: "ಬ್ಬ", parentGlyph: "ಬ", description: "Regular vattu for Ba" },
+  { glyph: "್ಭ", romanization: "bha-vattu", aliases: ["bbha", "bh-vattu"], type: "vattu", audioLabel: "ಬ್ಭ", parentGlyph: "ಭ", description: "Regular vattu for Bha" },
+  { glyph: "್ಷ", romanization: "Sha-vattu", aliases: ["Sha-vattu", "ShSha"], type: "vattu", audioLabel: "ಕ್ಷ", parentGlyph: "ಷ", description: "Regular vattu for Retroflex Sha" },
+  { glyph: "್ಸ", romanization: "sa-vattu", aliases: ["ssa", "s-vattu"], type: "vattu", audioLabel: "ಸ್ಸ", parentGlyph: "ಸ", description: "Regular vattu for Sa" },
+  { glyph: "್ಹ", romanization: "ha-vattu", aliases: ["hha", "h-vattu"], type: "vattu", audioLabel: "ಹ್ಹ", parentGlyph: "ಹ", description: "Regular vattu for Ha" },
+  { glyph: "್ಳ", romanization: "La-vattu", aliases: ["LLa", "L-vattu"], type: "vattu", audioLabel: "ಳ್ಳ", parentGlyph: "ಳ", description: "Regular vattu for Retroflex La" },
+];
+
+/* ─── L12: Unique Conjuncts (9) ──────────────── */
+const uniqueConjuncts: Character[] = [
   { glyph: "್ಮ", romanization: "ma-vattu", aliases: ["ma-vattu", "mma"], type: "vattu", audioLabel: "ತ್ಮ", parentGlyph: "ಮ", vdtDelta: "Changes to purely lower-right subscript loop", description: "Unique shape for Ma" },
   { glyph: "್ಯ", romanization: "ya-vattu", aliases: ["ya-vattu", "yya"], type: "vattu", audioLabel: "ತ್ಯ", parentGlyph: "ಯ", vdtDelta: "Extends as a long sweeping right-side curve", description: "Unique shape for Ya" },
   { glyph: "್ವ", romanization: "va-vattu", aliases: ["va-vattu", "vva"], type: "vattu", audioLabel: "ತ್ವ", parentGlyph: "ವ", vdtDelta: "Shrinks into a right-side subscript hook", description: "Unique shape for Va" },
@@ -138,14 +158,11 @@ const conjuncts: Character[] = [
   { glyph: "್ನ", romanization: "na-vattu", aliases: ["na-vattu", "nna"], type: "vattu", audioLabel: "ನ್ನ", parentGlyph: "ನ", vdtDelta: "Forms an angled subscript hook below base", description: "Unique shape for Na" },
   { glyph: "್ಲ", romanization: "la-vattu", aliases: ["la-vattu", "lla"], type: "vattu", audioLabel: "ಲ್ಲ", parentGlyph: "ಲ", vdtDelta: "Forms an open right-facing cup below base", description: "Unique shape for La" },
   { glyph: "್ರ", romanization: "ra-vattu", aliases: ["ra-vattu", "rra"], type: "vattu", audioLabel: "ತ್ರ", parentGlyph: "ರ", vdtDelta: "Attaches as an angular hook to the right", description: "Unique shape for Ra" },
-  { glyph: "್ಸ", romanization: "sa-vattu", aliases: ["sa-vattu", "ssa"], type: "vattu", audioLabel: "ಸ್ಸ", parentGlyph: "ಸ", vdtDelta: "Subscript form can blend visually with surrounding text", description: "Can blend visually with text" },
-  { glyph: "್ಚ", romanization: "cha-vattu", aliases: ["cha-vattu", "ccha"], type: "vattu", audioLabel: "ಚ್ಚ", parentGlyph: "ಚ", vdtDelta: "Subscript form can blend visually with surrounding text", description: "Can blend visually with text" },
-  { glyph: "್ಷ", romanization: "Sha-vattu", aliases: ["Sha-vattu", "ShSha"], type: "vattu", audioLabel: "ಕ್ಷ", parentGlyph: "ಷ", vdtDelta: "Shrinks to miniature base shape", description: "Miniature base shape, matches Retroflex Sha" },
   { glyph: "ಕ್ಷ", romanization: "ksha", aliases: ["ksha", "x"], type: "conjunct", audioLabel: "ಕ್ಷ" },
   { glyph: "ಜ್ಞ", romanization: "gnya", aliases: ["gnya", "jna"], type: "conjunct", audioLabel: "ಜ್ಞ", description: "Pronunciation varies" },
 ];
 
-/* ─── L12: Numerals (10) ─────────────────────────────────── */
+/* ─── L13: Numerals (10) ─────────────────────────────────── */
 const numerals: Character[] = [
   { glyph: "೦", romanization: "0", aliases: ["0", "zero"], type: "numeral", audioLabel: "ಸೊನ್ನೆ" },
   { glyph: "೧", romanization: "1", aliases: ["1", "one"], type: "numeral", audioLabel: "ಒಂದು" },
@@ -232,13 +249,20 @@ export const LEVELS: Level[] = [
   },
   {
     id: 11,
-    name: "Unique Conjuncts",
-    kannadaName: "ವಿಶಿಷ್ಟ ಒತ್ತಕ್ಷರಗಳು",
-    description: "Conjunct and vattu forms that change shape significantly.",
-    characters: conjuncts,
+    name: "Regular Conjuncts",
+    kannadaName: "ಕ್ರಮಬದ್ಧ ಒತ್ತಕ್ಷರಗಳು",
+    description: "Standard vattu conjuncts that follow consistent size and placement rules.",
+    characters: regularConjuncts,
   },
   {
     id: 12,
+    name: "Unique Conjuncts",
+    kannadaName: "ವಿಶಿಷ್ಟ ಒತ್ತಕ್ಷರಗಳು",
+    description: "Conjunct and vattu forms that change shape significantly.",
+    characters: uniqueConjuncts,
+  },
+  {
+    id: 13,
     name: "Numerals",
     kannadaName: "ಅಂಕೆಗಳು",
     description: "Kannada numerals from zero through nine.",

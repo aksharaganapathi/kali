@@ -12,7 +12,7 @@ export enum ExercisePhase {
   ContextFill = "context-fill",
 }
 
-export type LevelId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+export type LevelId = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13;
 
 export type WordCategory =
   | "Family"
@@ -36,8 +36,7 @@ export type Screen =
   | "dashboard"
   | "level-intro"
   | "exercise"
-  | "level-complete"
-  | "comprehension";
+  | "level-complete";
 
 export interface Character {
   glyph: string;
@@ -182,6 +181,4 @@ export type AppAction =
   | { type: "RESET" }
   | { type: "CLAIM_QUEST"; questId: string; xpReward: number }
   | { type: "START_BRAIN_WORKOUT"; exercises: Exercise[] }
-  | { type: "TOGGLE_SOUND" }
-  | { type: "START_COMPREHENSION" }
-  | { type: "COMPLETE_COMPREHENSION"; xpReward: number };
+  | { type: "TOGGLE_SOUND" };

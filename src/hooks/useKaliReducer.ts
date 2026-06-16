@@ -409,9 +409,10 @@ function reducer(state: AppState, action: AppAction): AppState {
       // ── Glyph response time tracking
       if (targetGlyph && action.elapsedMs !== undefined && action.elapsedMs > 0) {
         const currentTimes = glyphResponseTimes[targetGlyph] || [];
+        const roundedTime = Math.round(action.elapsedMs);
         glyphResponseTimes = {
           ...glyphResponseTimes,
-          [targetGlyph]: [...currentTimes, action.elapsedMs].slice(-5),
+          [targetGlyph]: [...currentTimes, roundedTime].slice(-5),
         };
       }
 
@@ -659,20 +660,7 @@ function reducer(state: AppState, action: AppAction): AppState {
         isBrainWorkout: false,
       };
 
-    case "START_COMPREHENSION":
-      return {
-        ...state,
-        screen: "comprehension",
-        feedbackState: "idle",
-      };
 
-    case "COMPLETE_COMPREHENSION":
-      return {
-        ...state,
-        screen: "dashboard",
-        feedbackState: "idle",
-        xp: state.xp + action.xpReward,
-      };
 
     case "RESET":
       return { ...initialState, hydrated: true };

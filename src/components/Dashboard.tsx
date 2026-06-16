@@ -48,7 +48,6 @@ export default function Dashboard({ state, dispatch, onStartBrainWorkout }: Dash
 
   // Has any mastered characters (brain workout available)
   const canBrainWorkout = masteredCount > 0;
-  const canComprehension = masteredCount >= 5;
 
   const dueCount = useMemo(() => {
     const todayStr = new Date().toLocaleDateString("sv");
@@ -270,12 +269,12 @@ export default function Dashboard({ state, dispatch, onStartBrainWorkout }: Dash
         </div>
       </motion.header>
 
-      {/* ── Gamification Top Row: Streak + Brain Workout + Reading Arena ── */}
+      {/* ── Gamification Top Row: Streak + Brain Workout ── */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8"
+        className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8"
       >
 
         {/* Daily Streak Card */}
@@ -366,31 +365,6 @@ export default function Dashboard({ state, dispatch, onStartBrainWorkout }: Dash
               }`}
           >
             {canBrainWorkout ? "Start Workout →" : "Master characters first"}
-          </button>
-        </div>
-
-        {/* AI Reading Comprehension Card */}
-        <div className="col-span-1 rounded-2xl border border-amber-500/25 bg-linear-to-br from-amber-600/15 to-saffron/10 p-5 flex flex-col gap-3 justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🤖</span>
-            <div className="flex-1">
-              <p className="text-xs text-amber-300 uppercase tracking-wider font-medium">AI Reading Arena</p>
-              <p className="text-sm font-semibold text-white">Comprehension Challenge</p>
-            </div>
-          </div>
-          <p className="text-xs text-sand-dim leading-relaxed flex-1">
-            Read custom stories at your level and get graded feedback.
-          </p>
-          <button
-            onClick={() => dispatch({ type: "START_COMPREHENSION" })}
-            disabled={!canComprehension}
-            className={`w-full py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all active:scale-95
-              ${canComprehension
-                ? "bg-saffron hover:opacity-90 text-onyx shadow-[0_0_20px_rgba(241,178,74,0.35)] hover:shadow-[0_0_28px_rgba(241,178,74,0.5)]"
-                : "bg-white/5 text-sand-dim/50 cursor-not-allowed"
-              }`}
-          >
-            {canComprehension ? "Enter Arena →" : "Master 5+ characters first"}
           </button>
         </div>
       </motion.div>

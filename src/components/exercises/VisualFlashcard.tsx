@@ -37,7 +37,7 @@ export default function VisualFlashcard({
     setSelected(option);
     const correct = checkAnswer(exercise, option);
     const eventEpochMs = performance.timeOrigin + eventTimeStamp;
-    const elapsedMs = Math.max(0, eventEpochMs - (exercise.createdAtMs ?? eventEpochMs));
+    const elapsedMs = Math.round(Math.max(0, eventEpochMs - (exercise.createdAtMs ?? eventEpochMs)));
     onAnswer(correct, option, elapsedMs);
   };
 

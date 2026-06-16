@@ -18,6 +18,7 @@ const LevelIdSchema = z.union([
   z.literal(10),
   z.literal(11),
   z.literal(12),
+  z.literal(13),
 ]);
 
 const ExercisePhaseSchema = z.enum([
@@ -146,7 +147,23 @@ export function loadState(): PersistedState | null {
         glyphStreaks: p.glyphStreaks && typeof p.glyphStreaks === "object" ? p.glyphStreaks : {},
         confusableQueue: p.confusableQueue && typeof p.confusableQueue === "object" ? p.confusableQueue : {},
         wordMastery: p.wordMastery && typeof p.wordMastery === "object" ? p.wordMastery : {},
-        glyphResponseTimes: p.glyphResponseTimes && typeof p.glyphResponseTimes === "object" ? p.glyphResponseTimes : {},
+        glyphResponseTimes: (() => {
+          if (p.glyphResponseTimes && typeof p.glyphResponseTimes === "object") {
+            const cleaned: Record<string, number[]> = {};
+            for (const [k, v] of Object.entries(p.glyphResponseTimes)) {
+              if (Array.isArray(v)) {
+                const times = v
+                  .map((t) => Math.round(Number(t)))
+                  .filter((t) => !Number.isNaN(t) && t > 0);
+                if (times.length > 0) {
+                  cleaned[k] = times.slice(-5);
+                }
+              }
+            }
+            return cleaned;
+          }
+          return {};
+        })(),
         nextReviewDates: p.nextReviewDates && typeof p.nextReviewDates === "object" ? p.nextReviewDates : {},
         xp: typeof p.xp === "number" ? p.xp : 0,
         streak: typeof p.streak === "number" ? p.streak : 0,

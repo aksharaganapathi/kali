@@ -20,7 +20,6 @@ import TranslateMatch from "./exercises/TranslateMatch";
 import Onboarding from "./Onboarding";
 import ReverseRecall from "./exercises/ReverseRecall";
 import ContextFill from "./exercises/ContextFill";
-import ComprehensionChallenge from "./ComprehensionChallenge";
 
 const ONBOARDING_KEY = "kali_onboarding_done";
 
@@ -147,12 +146,6 @@ export default function KaliApp() {
         {state.screen === "level-complete" && (
           <motion.div key="level-complete" {...pageTransition}>
             <LevelComplete state={state} dispatch={dispatch} />
-          </motion.div>
-        )}
-
-        {state.screen === "comprehension" && (
-          <motion.div key="comprehension" {...pageTransition}>
-            <ComprehensionChallenge state={state} dispatch={dispatch} />
           </motion.div>
         )}
       </AnimatePresence>

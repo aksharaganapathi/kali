@@ -1,6 +1,6 @@
 import { WordEntry, WordCategory, LevelId } from "@/types";
 
-const LEVEL_ORDER: LevelId[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+const LEVEL_ORDER: LevelId[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 
 type RawWordEntry = Omit<WordEntry, "minLevel" | "category"> & {
   minLevel: number;
@@ -42,7 +42,14 @@ function levelRank(level: LevelId): number {
  * This ensures words like "ನೀನು" aren't shown until vowel signs (L3/L5) are mastered.
  */
 function recategorizeLevel(entry: RawWordEntry): LevelId {
-  if (entry.kannada.includes("\u0CCD")) return 11;
+  // Check for unique/irregular conjuncts first
+  const uniquePatterns = ["್ಮ", "್ಯ", "್ವ", "್ತ", "್ನ", "್ಲ", "್ರ", "ಕ್ಷ", "ಜ್ಞ"];
+  if (uniquePatterns.some((pat) => entry.kannada.includes(pat))) {
+    return 12;
+  }
+  if (entry.kannada.includes("\u0CCD")) {
+    return 11;
+  }
   
   let maxRank = 0;
   const allChars = entry.kannada.split(""); 
