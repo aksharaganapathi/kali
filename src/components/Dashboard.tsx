@@ -40,11 +40,9 @@ export default function Dashboard({ state, dispatch, onStartBrainWorkout }: Dash
   ).length;
   const masteredWordsCount = Object.values(state.wordMastery || {}).filter((s) => s >= 80).length;
 
-  const xp = state.xp ?? 0;
   const streak = state.streak ?? 0;
   const today = typeof window !== "undefined" ? new Date().toLocaleDateString("sv") : "";
   const isStreakActiveToday = state.lastPracticeDate === today;
-  const claimedQuests = state.claimedQuests ?? {};
 
   // Has any mastered characters (brain workout available)
   const canBrainWorkout = masteredCount > 0;
@@ -82,44 +80,7 @@ export default function Dashboard({ state, dispatch, onStartBrainWorkout }: Dash
 
 
 
-  // ── Quests ──
-  const QUESTS = useMemo(() => [
-    {
-      id: "daily-warmup",
-      label: "Daily Warm-Up",
-      desc: "Get 10 correct answers today",
-      icon: "🎯",
-      reward: 50,
-      progress: Math.min(state.dailyCorrect ?? 0, 10),
-      target: 10,
-      complete: (state.dailyCorrect ?? 0) >= 10,
-    },
-    {
-      id: "speed-demon",
-      label: "Speed Demon",
-      desc: "Answer 3 characters fluently today (< 2s)",
-      icon: "⚡",
-      reward: 50,
-      progress: Math.min(state.dailyFluent ?? 0, 3),
-      target: 3,
-      complete: (state.dailyFluent ?? 0) >= 3,
-    },
-    {
-      id: "session-explorer",
-      label: "Session Explorer",
-      desc: "Complete 2 practice sessions today",
-      icon: "🧭",
-      reward: 50,
-      progress: Math.min(state.dailySessions ?? 0, 2),
-      target: 2,
-      complete: (state.dailySessions ?? 0) >= 2,
-    },
-  ], [state.dailyCorrect, state.dailyFluent, state.dailySessions]);
 
-  const handleClaimQuest = (questId: string, reward: number) => {
-    dispatch({ type: "CLAIM_QUEST", questId, xpReward: reward });
-    void playAudioFX("quest-complete");
-  };
 
   const handleReset = () => {
     clearState();
@@ -150,7 +111,7 @@ export default function Dashboard({ state, dispatch, onStartBrainWorkout }: Dash
             >
               <h3 className="text-lg font-semibold mb-2">Reset All Progress?</h3>
               <p className="text-sm text-sand-dim mb-6">
-                This will clear all mastered characters, XP, streaks, and scores. This action cannot be undone.
+                This will clear all mastered characters, streaks, and scores. This action cannot be undone.
               </p>
               <div className="flex gap-3">
                 <button
@@ -239,12 +200,7 @@ export default function Dashboard({ state, dispatch, onStartBrainWorkout }: Dash
           {/* Divider */}
           <div className="hidden sm:block h-8 w-px bg-white/10" />
 
-          {/* Stats cluster */}
           <div className="flex items-center gap-4 sm:gap-6">
-            <div className="text-right">
-              <p className="text-[10px] sm:text-xs text-sand-dim uppercase tracking-wider">XP</p>
-              <p className="text-base sm:text-lg font-semibold text-saffron">{xp.toLocaleString()}</p>
-            </div>
             <div className="text-right">
               <p className="text-[10px] sm:text-xs text-sand-dim uppercase tracking-wider">Words</p>
               <p className="text-base sm:text-lg font-semibold text-saffron">{masteredWordsCount}</p>
@@ -369,70 +325,7 @@ export default function Dashboard({ state, dispatch, onStartBrainWorkout }: Dash
         </div>
       </motion.div>
 
-      {/* ── Today's Quests ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.18 }}
-        className="mb-8 rounded-2xl border border-white/10 bg-white/2 p-5"
-      >
-        <div className="flex items-center gap-2 mb-4">
-          <span className="text-lg">📋</span>
-          <p className="text-sm font-semibold text-white uppercase tracking-wider">Today&apos;s Quests</p>
-          <p className="text-xs text-sand-dim ml-auto">Resets daily</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {QUESTS.map((quest) => {
-            const claimed = claimedQuests[quest.id] ?? false;
-            const canClaim = quest.complete && !claimed;
-            const pct = (quest.progress / quest.target) * 100;
 
-            return (
-              <div
-                key={quest.id}
-                className={`rounded-xl border p-3 flex flex-col gap-2 transition-colors duration-300
-                  ${claimed ? "border-correct/20 bg-correct/5" : "border-white/8 bg-white/3"}
-                `}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{quest.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-white truncate">{quest.label}</p>
-                    <p className="text-[10px] text-sand-dim truncate">{quest.desc}</p>
-                  </div>
-                  {claimed && (
-                    <span className="text-correct text-sm font-bold shrink-0">✓</span>
-                  )}
-                </div>
-                <div className="h-1.5 rounded-full bg-white/8 overflow-hidden">
-                  <motion.div
-                    className={`h-full rounded-full ${claimed ? "bg-correct" : "bg-saffron"}`}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${claimed ? 100 : pct}%` }}
-                    transition={{ duration: 0.8, ease: "easeOut", delay: 0.4 }}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-sand-dim">
-                    {claimed ? "Claimed!" : `${quest.progress}/${quest.target}`}
-                  </span>
-                  <button
-                    onClick={() => handleClaimQuest(quest.id, quest.reward)}
-                    disabled={!canClaim}
-                    className={`text-[10px] px-2.5 py-1 rounded-lg font-semibold transition-all
-                      ${canClaim
-                        ? "bg-saffron text-onyx hover:bg-saffron/80 active:scale-95 shadow-[0_0_10px_rgba(241,178,74,0.3)]"
-                        : "bg-white/5 text-sand-dim/40 cursor-not-allowed"
-                      }`}
-                  >
-                    {claimed ? "Done" : `Claim +${quest.reward} XP`}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </motion.div>
 
       {/* ── Level Grid ── */}
       <motion.div

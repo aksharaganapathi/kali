@@ -28,10 +28,7 @@ export default function LevelComplete({ state, dispatch }: LevelCompleteProps) {
   );
 
   const passed = accuracy >= 80 && hasMasteredAll;
-  const xpBonus = passed && !state.isBrainWorkout ? 100 : 0;
   const isBrainWorkout = state.isBrainWorkout;
-
-  const currentXP = state.xp ?? 0;
 
   // Play fanfare/chime on mount
   useEffect(() => {
@@ -156,30 +153,18 @@ export default function LevelComplete({ state, dispatch }: LevelCompleteProps) {
           )}
         </div>
 
-        {/* XP Reward Banner */}
-        {(xpBonus > 0 || isBrainWorkout) && (
+        {/* Workout Complete Banner */}
+        {isBrainWorkout && (
           <motion.div
             initial={{ opacity: 0, y: 12, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ delay: 0.6 }}
-            className="mb-5 rounded-2xl border border-saffron/25 bg-saffron/8 px-5 py-4"
+            className="mb-5 rounded-2xl border border-violet-500/20 bg-violet-500/5 px-5 py-4 text-center"
           >
-            {xpBonus > 0 && (
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <span className="text-2xl">⭐</span>
-                <p className="text-saffron font-bold text-lg">+{xpBonus} XP Earned!</p>
-              </div>
-            )}
-            {isBrainWorkout && (
-              <p className="text-xs text-sand-dim mb-3 text-center">
-                SRS recall session complete. Your weak spots are being reinforced.
-              </p>
-            )}
-            {/* Total XP stats */}
-            <div className="flex items-center justify-between text-xs text-sand-dim bg-white/5 border border-white/10 rounded-xl px-4 py-3 mt-2">
-              <span>Total Progress</span>
-              <span className="font-semibold text-saffron text-sm">{currentXP.toLocaleString()} XP</span>
-            </div>
+            <p className="text-sm font-semibold text-white">Daily Workout Complete</p>
+            <p className="text-xs text-sand-dim mt-1">
+              SRS recall session complete. Your weak spots are being reinforced.
+            </p>
           </motion.div>
         )}
 

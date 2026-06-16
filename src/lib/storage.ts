@@ -72,19 +72,14 @@ interface PersistedState {
   wordMastery: Record<string, number>;
   glyphResponseTimes: Record<string, number[]>;
   nextReviewDates?: Record<string, string>;
-  xp?: number;
   streak?: number;
   lastPracticeDate?: string;
-  claimedQuests?: Record<string, boolean>;
   soundEnabled?: boolean;
   screen?: Screen;
   exercisePhase?: ExercisePhase;
   exerciseIndex?: number;
   exercises?: Exercise[];
   score?: Score;
-  dailyCorrect?: number;
-  dailyFluent?: number;
-  dailySessions?: number;
 }
 
 const PersistedStateSchema: z.ZodType<PersistedState> = z.object({
@@ -100,19 +95,14 @@ const PersistedStateSchema: z.ZodType<PersistedState> = z.object({
     z.array(z.number().int().positive()).max(5)
   ),
   nextReviewDates: z.record(z.string(), z.string()).optional(),
-  xp: z.number().int().nonnegative().optional(),
   streak: z.number().int().nonnegative().optional(),
   lastPracticeDate: z.string().optional(),
-  claimedQuests: z.record(z.string(), z.boolean()).optional(),
   soundEnabled: z.boolean().optional(),
   screen: ScreenSchema.optional(),
   exercisePhase: ExercisePhaseSchema.optional(),
   exerciseIndex: z.number().int().nonnegative().optional(),
   exercises: z.array(ExerciseSchema).optional(),
   score: ScoreSchema.optional(),
-  dailyCorrect: z.number().int().nonnegative().optional(),
-  dailyFluent: z.number().int().nonnegative().optional(),
-  dailySessions: z.number().int().nonnegative().optional(),
 });
 
 function clearPersistedState(): void {
@@ -165,14 +155,9 @@ export function loadState(): PersistedState | null {
           return {};
         })(),
         nextReviewDates: p.nextReviewDates && typeof p.nextReviewDates === "object" ? p.nextReviewDates : {},
-        xp: typeof p.xp === "number" ? p.xp : 0,
         streak: typeof p.streak === "number" ? p.streak : 0,
         lastPracticeDate: typeof p.lastPracticeDate === "string" ? p.lastPracticeDate : "",
-        claimedQuests: p.claimedQuests && typeof p.claimedQuests === "object" ? p.claimedQuests : {},
         soundEnabled: typeof p.soundEnabled === "boolean" ? p.soundEnabled : true,
-        dailyCorrect: typeof p.dailyCorrect === "number" ? p.dailyCorrect : 0,
-        dailyFluent: typeof p.dailyFluent === "number" ? p.dailyFluent : 0,
-        dailySessions: typeof p.dailySessions === "number" ? p.dailySessions : 0,
       };
       return recovered;
     }

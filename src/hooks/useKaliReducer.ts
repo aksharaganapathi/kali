@@ -35,12 +35,6 @@ const BASE_MASTERY_GAIN = 8;
 const FLUENCY_BONUS_GAIN = 6;
 const INCORRECT_MASTERY_PENALTY = 6;
 
-// XP rewards
-const XP_CORRECT = 10;
-const XP_FLUENCY_BONUS = 5;
-const XP_LEVEL_COMPLETE = 100;
-const XP_STREAK_BONUS_CAP = 10;
-
 // SRS decay per day of inactivity
 const SRS_DECAY_PER_DAY = 2;
 
@@ -61,15 +55,8 @@ const initialState: AppState = {
   wordMastery: {},
   glyphResponseTimes: {},
   nextReviewDates: {},
-  xp: 0,
   streak: 0,
   lastPracticeDate: "",
-  claimedQuests: {},
-  sessionCorrect: 0,
-  sessionFluent: 0,
-  dailyCorrect: 0,
-  dailyFluent: 0,
-  dailySessions: 0,
   isBrainWorkout: false,
   soundEnabled: true,
 };
@@ -173,35 +160,19 @@ function toPersistedState(state: AppState) {
     wordMastery: state.wordMastery,
     glyphResponseTimes: state.glyphResponseTimes,
     nextReviewDates: state.nextReviewDates,
-    xp: state.xp,
     streak: state.streak,
     lastPracticeDate: state.lastPracticeDate,
-    claimedQuests: state.claimedQuests,
     soundEnabled: state.soundEnabled,
     screen: state.screen,
     exercisePhase: state.exercisePhase,
     exerciseIndex: state.exerciseIndex,
     exercises: state.exercises,
     score: state.score,
-    dailyCorrect: state.dailyCorrect,
-    dailyFluent: state.dailyFluent,
-    dailySessions: state.dailySessions,
   };
 }
 
 function reducer(state: AppState, action: AppAction): AppState {
   const today = getTodayString();
-
-  // Detect calendar day boundary rollover for active sessions without reloading
-  if (action.type !== "HYDRATE" && state.lastPracticeDate && state.lastPracticeDate !== today) {
-    state = {
-      ...state,
-      claimedQuests: {},
-      dailyCorrect: 0,
-      dailyFluent: 0,
-      dailySessions: 0,
-    };
-  }
 
   switch (action.type) {
     case "HYDRATE":
@@ -223,26 +194,12 @@ function reducer(state: AppState, action: AppAction): AppState {
         const prevStreak = (action.state as AppState & { streak?: number }).streak ?? 0;
         const streak = daysSince > 1 ? 0 : prevStreak;
 
-        // Reset daily quests and stats if it's a new day
-        const isNewDay = today !== lastDate;
-        const claimedQuests = isNewDay
-          ? {}
-          : ((action.state as AppState & { claimedQuests?: Record<string, boolean> }).claimedQuests ?? {});
-        
-        const dailyCorrect = isNewDay ? 0 : ((action.state as AppState).dailyCorrect ?? 0);
-        const dailyFluent = isNewDay ? 0 : ((action.state as AppState).dailyFluent ?? 0);
-        const dailySessions = isNewDay ? 0 : ((action.state as AppState).dailySessions ?? 0);
-
         const merged = {
           ...state,
           ...action.state,
           glyphMastery,
           wordMastery,
           streak,
-          claimedQuests,
-          dailyCorrect,
-          dailyFluent,
-          dailySessions,
           hydrated: true,
         };
         const unlockedLevels = deriveUnlockedLevels(merged.masteredCharacters);
@@ -281,8 +238,6 @@ function reducer(state: AppState, action: AppAction): AppState {
           exerciseIndex: 0,
           exercises: [],
           feedbackState: "idle",
-          sessionCorrect: 0,
-          sessionFluent: 0,
           isBrainWorkout: false,
         };
       }
@@ -296,8 +251,6 @@ function reducer(state: AppState, action: AppAction): AppState {
         exercisePhase: action.exercises[0]?.phase ?? ExercisePhase.Visual,
         score: { correct: 0, total: 0 },
         feedbackState: "idle",
-        sessionCorrect: 0,
-        sessionFluent: 0,
         isBrainWorkout: true,
       };
 
@@ -322,8 +275,6 @@ function reducer(state: AppState, action: AppAction): AppState {
         exercisePhase: firstPhase,
         score: { correct: 0, total: 0 },
         feedbackState: "idle",
-        sessionCorrect: 0,
-        sessionFluent: 0,
         isBrainWorkout: false,
       };
     }
@@ -346,13 +297,8 @@ function reducer(state: AppState, action: AppAction): AppState {
       let confusableQueue = state.confusableQueue;
       let wordMastery = state.wordMastery;
       let glyphResponseTimes = state.glyphResponseTimes;
-      let xp = state.xp;
       let streak = state.streak;
       let lastPracticeDate = state.lastPracticeDate;
-      let sessionCorrect = state.sessionCorrect;
-      let sessionFluent = state.sessionFluent;
-      let dailyCorrect = state.dailyCorrect;
-      let dailyFluent = state.dailyFluent;
 
       const today = getTodayString();
 
@@ -368,21 +314,6 @@ function reducer(state: AppState, action: AppAction): AppState {
             streak = 1;
           }
           lastPracticeDate = today;
-        }
-      }
-
-      // ── XP rewards
-      if (action.correct) {
-        let xpGain = XP_CORRECT;
-        if (isSpeedEligible) xpGain += XP_FLUENCY_BONUS;
-        // Streak bonus: +1 per day of streak, capped at XP_STREAK_BONUS_CAP
-        xpGain += Math.min(streak, XP_STREAK_BONUS_CAP);
-        xp += xpGain;
-        sessionCorrect += 1;
-        dailyCorrect += 1;
-        if (isSpeedEligible) {
-          sessionFluent += 1;
-          dailyFluent += 1;
         }
       }
 
@@ -534,13 +465,8 @@ function reducer(state: AppState, action: AppAction): AppState {
         wordMastery,
         glyphResponseTimes,
         nextReviewDates,
-        xp,
         streak,
         lastPracticeDate,
-        sessionCorrect,
-        sessionFluent,
-        dailyCorrect,
-        dailyFluent,
         score: {
           correct: state.score.correct + (action.correct ? 1 : 0),
           total: state.score.total + 1,
@@ -614,25 +540,12 @@ function reducer(state: AppState, action: AppAction): AppState {
           ? [...state.unlockedLevels, nextLevel]
           : state.unlockedLevels;
 
-      // Award level-complete XP bonus
-      const xpBonus = passed && !state.isBrainWorkout ? XP_LEVEL_COMPLETE : 0;
-
       return {
         ...state,
         screen: "dashboard",
         unlockedLevels: newUnlocked,
         feedbackState: "idle",
-        xp: state.xp + xpBonus,
         isBrainWorkout: false,
-        dailySessions: state.dailySessions + 1,
-      };
-    }
-
-    case "CLAIM_QUEST": {
-      return {
-        ...state,
-        xp: state.xp + action.xpReward,
-        claimedQuests: { ...state.claimedQuests, [action.questId]: true },
       };
     }
 
@@ -648,8 +561,6 @@ function reducer(state: AppState, action: AppAction): AppState {
         exerciseIndex: 0,
         exercises: [],
         feedbackState: "idle",
-        sessionCorrect: 0,
-        sessionFluent: 0,
       };
 
     case "GO_HOME":
@@ -690,14 +601,9 @@ export function useKaliReducer() {
           wordMastery: persisted.wordMastery ?? {},
           glyphResponseTimes: persisted.glyphResponseTimes ?? {},
           nextReviewDates: persisted.nextReviewDates ?? {},
-          xp: persisted.xp ?? 0,
           streak: persisted.streak ?? 0,
           lastPracticeDate: persisted.lastPracticeDate ?? "",
-          claimedQuests: persisted.claimedQuests ?? {},
           soundEnabled: persisted.soundEnabled ?? true,
-          dailyCorrect: persisted.dailyCorrect ?? 0,
-          dailyFluent: persisted.dailyFluent ?? 0,
-          dailySessions: persisted.dailySessions ?? 0,
           ...(persisted.screen && { screen: persisted.screen }),
           ...(persisted.exercisePhase && { exercisePhase: persisted.exercisePhase }),
           ...(persisted.exerciseIndex !== undefined && { exerciseIndex: persisted.exerciseIndex }),

@@ -139,24 +139,10 @@ export interface AppState {
   glyphResponseTimes: Record<string, number[]>;
   /** Map of glyphs/words to next scheduled review date (ISO string YYYY-MM-DD) */
   nextReviewDates: Record<string, string>;
-  /** Total XP accumulated */
-  xp: number;
   /** Daily consecutive practice streak (days) */
   streak: number;
   /** Last practice date string e.g. "2026-05-22" */
   lastPracticeDate: string;
-  /** Which daily quests have been claimed today */
-  claimedQuests: Record<string, boolean>;
-  /** Correct answers in the current session (for quest tracking) */
-  sessionCorrect: number;
-  /** Fluent answers in the current session (for quest tracking) */
-  sessionFluent: number;
-  /** Cumulative correct answers today */
-  dailyCorrect: number;
-  /** Cumulative fluent answers today */
-  dailyFluent: number;
-  /** Cumulative sessions completed today */
-  dailySessions: number;
   /** Whether the current session is the SRS Brain Workout */
   isBrainWorkout: boolean;
   /** Sound effects enabled */
@@ -179,6 +165,5 @@ export type AppAction =
   | { type: "GO_HOME" }
   | { type: "RETRY_LEVEL" }
   | { type: "RESET" }
-  | { type: "CLAIM_QUEST"; questId: string; xpReward: number }
   | { type: "START_BRAIN_WORKOUT"; exercises: Exercise[] }
   | { type: "TOGGLE_SOUND" };

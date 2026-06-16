@@ -102,13 +102,7 @@ function playLevelComplete(ctx: AudioContext): void {
   });
 }
 
-/** Quest complete splash: sparkling major chord C5-E5-G5-C6 */
-function playQuestComplete(ctx: AudioContext): void {
-  const notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
-  notes.forEach((freq, i) => {
-    playTone(ctx, freq, ctx.currentTime + i * 0.07, 0.45, "sine", 0.14);
-  });
-}
+
 
 /** Streak milestone jingle (3+ day streak) */
 function playStreakMilestone(ctx: AudioContext): void {
@@ -118,7 +112,7 @@ function playStreakMilestone(ctx: AudioContext): void {
   });
 }
 
-export type SoundFX = "correct" | "incorrect" | "level-complete" | "quest-complete" | "streak-milestone";
+export type SoundFX = "correct" | "incorrect" | "level-complete" | "streak-milestone";
 
 export function playAudioFX(fx: SoundFX): void {
   if (!getEnabled()) return;
@@ -132,7 +126,6 @@ export function playAudioFX(fx: SoundFX): void {
       case "correct":           playCorrect(ctx); break;
       case "incorrect":         playIncorrect(ctx); break;
       case "level-complete":    playLevelComplete(ctx); break;
-      case "quest-complete":    playQuestComplete(ctx); break;
       case "streak-milestone":  playStreakMilestone(ctx); break;
     }
   });
